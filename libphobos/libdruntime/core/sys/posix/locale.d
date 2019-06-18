@@ -34,16 +34,61 @@ version (NetBSD)
 version (DragonflyBSD)
     version = DarwinBSDLocale;
 
+<<<<<<< HEAD
 version (CRuntime_Glibc)
     version = GNULinuxLocale;
 version (CRuntime_Bionic)
     version = GNULinuxLocale;
 version (CRuntime_UClibc)
     version = GNULinuxLocale;
+=======
+///
+struct lconv
+{
+    char*    currency_symbol;
+    char*    decimal_point;
+    char     frac_digits;
+    char*    grouping;
+    char*    int_curr_symbol;
+    char     int_frac_digits;
+    char     int_n_cs_precedes;
+    char     int_n_sep_by_space;
+    char     int_n_sign_posn;
+    char     int_p_cs_precedes;
+    char     int_p_sep_by_space;
+    char     int_p_sign_posn;
+    char*    mon_decimal_point;
+    char*    mon_grouping;
+    char*    mon_thousands_sep;
+    char*    negative_sign;
+    char     n_cs_precedes;
+    char     n_sep_by_space;
+    char     n_sign_posn;
+    char*    positive_sign;
+    char     p_cs_precedes;
+    char     p_sep_by_space;
+    char     p_sign_posn;
+    char*    thousands_sep;
+}
+
+/// Duplicate existing locale
+locale_t duplocale(locale_t locale);
+/// Free an allocated locale
+void     freelocale(locale_t locale);
+/// Natural language formatting for C
+lconv*   localeconv();
+/// Create a new locale
+locale_t newlocale(int mask, const char* locale, locale_t base);
+/// Set the C library's notion of natural language formatting style
+char*    setlocale(int category, const char* locale);
+/// Set the per-thread locale
+locale_t uselocale (locale_t locale);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 version (DarwinBSDLocale)
 {
     ///
+<<<<<<< HEAD
     struct lconv
     {
         char*   decimal_point;
@@ -73,6 +118,8 @@ version (DarwinBSDLocale)
     }
 
     ///
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     enum
     {
         LC_ALL      = 0,
@@ -110,6 +157,7 @@ version (DarwinBSDLocale)
 
     ///
     enum LC_GLOBAL_LOCALE = (cast(locale_t)-1);
+<<<<<<< HEAD
 
     /// Duplicate existing locale
     locale_t duplocale(locale_t locale);
@@ -155,6 +203,12 @@ else version (GNULinuxLocale)
         char    int_n_sign_posn;
     }
 
+=======
+}
+
+version (linux)
+{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     ///
     enum
     {
@@ -207,6 +261,7 @@ else version (GNULinuxLocale)
 
     ///
     enum LC_GLOBAL_LOCALE = (cast(locale_t)-1);
+<<<<<<< HEAD
 
     /// Duplicate existing locale
     locale_t duplocale(locale_t locale);
@@ -450,3 +505,6 @@ else version (Solaris)
 }
 else
     static assert(false, "unimplemented platform");
+=======
+}
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

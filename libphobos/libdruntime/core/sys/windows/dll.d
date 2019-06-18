@@ -414,7 +414,11 @@ int dll_getRefCount( HINSTANCE hInstance ) nothrow @nogc
     {
         version (GNU_InlineAsm)
         {
+<<<<<<< HEAD
             asm pure nothrow @nogc { "movq %%gs:0x60, %0;" : "=r" (peb); }
+=======
+            asm pure nothrow @nogc { "movq %%gs:0x60, %0;" : "=r" peb; }
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         }
         else
         {
@@ -425,13 +429,20 @@ int dll_getRefCount( HINSTANCE hInstance ) nothrow @nogc
                 mov peb, RAX;
             }
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
     else version (Win32)
     {
         version (GNU_InlineAsm)
         {
+<<<<<<< HEAD
             asm pure nothrow @nogc { "movl %%fs:0x30, %0;" : "=r" (peb); }
+=======
+            asm pure nothrow @nogc { "movl %%fs:0x30, %0;" : "=r" peb; }
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         }
         else
         {

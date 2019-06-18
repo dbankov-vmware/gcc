@@ -1,11 +1,15 @@
-// RUNNABLE_PHOBOS_TEST
-// REQUIRED_ARGS:
-// EXTRA_FILES: extra-files/test15.txt
+/*
+RUNNABLE_PHOBOS_TEST
+REQUIRED_ARGS:
+EXTRA_FILES: extra-files/test15.txt
+TEST_OUTPUT:
+---
+---
+*/
 
 import std.array;
-import core.stdc.math : cos, fabs, sin, sqrt;
+import core.math;
 import core.vararg;
-import std.math: rndtol, rint;
 import std.string;
 import std.stdio : File;
 
@@ -46,9 +50,9 @@ void test6()
 void test7()
 {
     string s = `hello"there'you`;
-    printf("s = '%.*s'\n", s.length, s.ptr);
+    printf("s = '%.*s'\n", cast(int)s.length, s.ptr);
     assert(s == "hello\"there'you");
-    ubyte[] b = cast(ubyte[])x"8B 7D f4 0d";
+    ubyte[] b = cast(ubyte[])"\x8B\x7D\xf4\x0d";
     for (int i = 0; i < b.length; i++)
         printf("b[%d] = x%02x\n", i, b[i]);
     assert(b.length == 4);
@@ -95,7 +99,7 @@ struct Pair
        return this;
    }
 
-   Pair opDiv(Pair other)
+   Pair opBinary(string op)(Pair other) if (op == "/")
    {
        Pair result;
 
@@ -206,8 +210,8 @@ class A15
         List2.rehash;
     }
   private:
-    int delegate(in int arg1) List1[char[]];
-    int  List2[char []];
+    int delegate(in int arg1)[char[]] List1;
+    int[char []]  List2;
 }
 
 void test15()
@@ -223,7 +227,7 @@ void test16()
     uint c = 200000;
     while (c--)
         a ~= 'x';
-    //printf("a = '%.*s'\n", a.length, a.ptr);
+    //printf("a = '%.*s'\n", cast(int)a.length, a.ptr);
 }
 
 
@@ -371,7 +375,7 @@ void test26()
 
     foreach(string instr; instructions)
     {
-        printf("%.*s\n", instr.length, instr.ptr);
+        printf("%.*s\n", cast(int)instr.length, instr.ptr);
     }
 }
 
@@ -402,7 +406,7 @@ void test27()
 
 void foo28(ClassInfo ci)
 {
-    printf("%.*s\n", ci.name.length, ci.name.ptr);
+    printf("%.*s\n", cast(int)ci.name.length, ci.name.ptr);
 
     static int i;
     switch (i++)
@@ -786,7 +790,7 @@ class C44
 void test44()
 {
   C44 c= new C44();
-  printf("%.*s\n", c.arrArr[0].length, c.arrArr[0].ptr);
+  printf("%.*s\n", cast(int)c.arrArr[0].length, c.arrArr[0].ptr);
   assert(c.arrArr[0] == "foo");
 }
 
@@ -815,11 +819,11 @@ union A46
 void test46()
 {
     A46 a;
-    printf("%d\n", cast(byte*)&a.c - cast(byte*)&a);
-    printf("%d\n", cast(byte*)&a.s - cast(byte*)&a);
-    printf("%d\n", cast(byte*)&a.l - cast(byte*)&a);
-    printf("%d\n", cast(byte*)&a.a - cast(byte*)&a);
-    printf("%d\n", cast(byte*)&a.f - cast(byte*)&a);
+    printf("%td\n", cast(byte*)&a.c - cast(byte*)&a);
+    printf("%td\n", cast(byte*)&a.s - cast(byte*)&a);
+    printf("%td\n", cast(byte*)&a.l - cast(byte*)&a);
+    printf("%td\n", cast(byte*)&a.a - cast(byte*)&a);
+    printf("%td\n", cast(byte*)&a.f - cast(byte*)&a);
 
     assert(cast(byte*)&a.c == cast(byte*)&a);
     assert(cast(byte*)&a.s == cast(byte*)&a);
@@ -1044,9 +1048,9 @@ void test56()
 
 /************************************/
 
-void det(float mat[][])
+void det(float[][] mat)
 {
-    float newmat[][];
+    float[][] newmat;
 
     size_t i = newmat[0 .. (mat.length - 1)].length;
 }
@@ -1099,7 +1103,6 @@ void test59()
 class Foo60
 {
    int x;
-static:
    this() { x = 3; }
    ~this() { }
 }
@@ -1125,7 +1128,7 @@ void test61()
     int i = 123;
     StdString g = new StdString();
     string s = g.toString("%s", i);
-    printf("%.*s\n", s.length, s.ptr);
+    printf("%.*s\n", cast(int)s.length, s.ptr);
     assert(s == "123");
 }
 
@@ -1366,6 +1369,38 @@ void test72()
     assert(foos.length == 1);
 }
 
+/************************************/
+// https://issues.dlang.org/show_bug.cgi?id=19758
+
+void test19758()
+{
+    byte[1] a = [1];
+    int b = 0;
+
+    // If delete this 4 lines, the result is correct.
+    if (a[b] == 0)
+    {
+        a[b] = 0;
+        if (1 << b) { }
+    }
+
+    if ((a[b] & 0xFF) == 0)
+    {
+        assert((a[b] & 0xFF) == 0);
+    }
+}
+
+/************************************/
+// https://issues.dlang.org/show_bug.cgi?id=19968
+
+@safe void test19968()
+{
+    int[2] array = [16, 678];
+    union U { int i; bool b; }
+    U u;
+    u.i = 0xDEADBEEF;
+    assert(array[u.b] == 678);
+}
 
 /************************************/
 
@@ -1436,6 +1471,8 @@ int main()
     test70();
     test71();
     test72();
+    test19758();
+    test19968();
 
     printf("Success\n");
     return 0;

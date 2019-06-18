@@ -1,7 +1,11 @@
 // PERMUTE_ARGS:
-// REQUIRED_ARGS: -o- -X -Xf${RESULTS_DIR}/compilable/json.out
+// REQUIRED_ARGS: -d -preview=dip1000 -o- -X -Xf${RESULTS_DIR}/compilable/json.out
 // POST_SCRIPT: compilable/extra-files/json-postscript.sh
 // EXTRA_FILES: imports/jsonimport1.d imports/jsonimport2.d imports/jsonimport3.d imports/jsonimport4.d
+/* TEST_OUTPUT:
+---
+---
+*/
 
 module json;
 
@@ -12,17 +16,17 @@ static ~this() {}
 
 
 alias int myInt;
-myInt x; // bug 3404
+myInt x; // https://issues.dlang.org/show_bug.cgi?id=3404
 
 struct Foo(T) { T t; }
 class  Bar(int T) { int t = T; }
-interface Baz(T...) { T[0] t() const; } // bug 3466
+interface Baz(T...) { T[0] t() const; } // https://issues.dlang.org/show_bug.cgi?id=3466
 
 template P(alias T) {}
 
 class Bar2 : Bar!1, Baz!(int, 2, null) {
     this() {}
-    ~this() {} // bug 4178
+    ~this() {} // https://issues.dlang.org/show_bug.cgi?id=4178
 
     static foo() {}
     protected abstract Foo!int baz();
@@ -30,48 +34,65 @@ class Bar2 : Bar!1, Baz!(int, 2, null) {
 }
 
 class Bar3 : Bar2 {
-	private int val;
+    private int val;
     this(int i) { val = i; }
 
     protected override Foo!int baz() { return Foo!int(val); }
 }
 
 struct Foo2 {
-	Bar2 bar2;
-	union U {
-		struct {
-			short s;
-			int i;
-		}
-		Object o;
-	}
+    Bar2 bar2;
+    union U {
+        struct {
+            short s;
+            int i;
+        }
+        Object o;
+    }
+}
+
+struct Foo3(bool b) {
+    version(D_Ddoc) {
+        /// Doc 1
+        void method1();
+    }
+    static if (b) {
+        /// Doc 2
+        void method2();
+    } else {
+        /// Doc 3
+        void method3();
+    }
+
+    /// Doc 4
+    void method4();
 }
 
 /++
  + Documentation test
  +/
-@trusted myInt bar(ref uint blah, Bar2 foo = new Bar3(7)) // bug 4477
+@trusted myInt bar(ref uint blah, Bar2 foo = new Bar3(7)) // https://issues.dlang.org/show_bug.cgi?id=4477
 {
-	return -1;
+    return -1;
 }
 
 @property int outer() nothrow
 in {
-	assert(true);
+    assert(true);
 }
 out(result) {
-	assert(result == 18);
+    assert(result == 18);
 }
-body {
-	int x = 8;
-	int inner(void* v) nothrow
-	{
-		int y = 2;
-		assert(true);
-		return x + y;
-	}
-	int z = inner(null);
-	return x + z;
+do {
+    int x = 8;
+    int inner(void* v) nothrow
+    {
+        int y = 2;
+        assert(true);
+        return x + y;
+    }
+    int z = inner(null);
+    return x + z;
 }
 
 /** Issue 9484 - selective and renamed imports */
@@ -121,8 +142,61 @@ alias Seq(T...) = T;
 
 static foreach(int i, alias a; Seq!(a0, a1, a2))
 {
-       mixin("alias b" ~ i.stringof ~ " = a;");
+	mixin("alias b" ~ i.stringof ~ " = a;");
 }
+
+// return ref, return scope, return ref scope
+ref int foo(return ref int a) @safe
+{
+	return a;
+}
+
+int* foo(return scope int* a) @safe
+{
+	return a;
+}
+
+ref int* foo(scope return ref int* a) @safe
+{
+	return a;
+}
+
+struct SafeS
+{
+@safe:
+    ref SafeS foo() return
+    {
+        return this;
+    }
+
+    SafeS foo2() return scope
+    {
+        return this;
+    }
+
+    ref SafeS foo3() return scope
+    {
+        return this;
+    }
+
+	int* p;
+}
+
+extern int vlinkageDefault;
+extern(D) int vlinkageD;
+extern(C) int vlinakgeC;
+extern(C++) __gshared int vlinkageCpp;
+extern(Windows) int vlinkageWindows;
+extern(Pascal) int vlinkagePascal;
+extern(Objective-C) int vlinkageObjc;
+
+extern int flinkageDefault();
+extern(D) int flinkageD();
+extern(C) int linakgeC();
+extern(C++) int flinkageCpp();
+extern(Windows) int flinkageWindows();
+extern(Pascal) int flinkagePascal();
+extern(Objective-C) int flinkageObjc();
 
 mixin template test18211(int n)
 {
@@ -132,3 +206,5 @@ mixin template test18211(int n)
     }
     static if (true) {}
 }
+
+alias F = size_t function (size_t a);

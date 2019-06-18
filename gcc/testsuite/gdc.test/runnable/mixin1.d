@@ -1,7 +1,63 @@
-// RUNNABLE_PHOBOS_TEST
+/*
+TEST_OUTPUT:
+---
+runnable/mixin1.d(959): Deprecation: The `delete` keyword has been deprecated.  Use `object.destroy()` (and `core.memory.GC.free()` if applicable) instead.
+---
+
+RUN_OUTPUT:
+---
+Foo3.func()
+Code3.func()
+Foo4.func()
+Foo5.func()
+b.x = 5
+x = 5
+duff_for(1, 11)
+fid = 1, 2
+foo12
+foo12
+foo13 j = 1
+foo13 j = 1
+x14 = 6
+x15 = 6
+bar15() = 5
+x16 = 6
+bar() = 5
+x17 = 5
+b.x17 = 5
+x17 = 3
+x17 = 5
+x17 = 4
+x17 = 3
+x17 = 5
+in C20.f()
+B22.foo()
+5
+5
+a = 0
+int
+int
+int
+int
+foo 1
+foo 2
+opCall 1
+opCall 2
+0 0
+two
+one
+one
+Class39 dtor
+Mixed-in dtor
+Mixed-in dtor
+Base39 dtor
+Success
+---
+*/
+
 module mixin1;
 
-import std.stdio;
+import core.stdc.stdio;
 
 alias TypeTuple(T...) = T;
 
@@ -680,7 +736,11 @@ class A30
     {
         this(Type[] arr)
         {
-            foreach(Type v; arr) writeln(typeid(typeof(v)));
+            foreach(Type v; arr)
+            {
+                const str = typeid(typeof(v)).toString();
+                printf("%.*s\n", cast(int)str.length, str.ptr);
+            }
         }
     }
 
@@ -825,7 +885,6 @@ struct Foo36
 void test36()
 {
    Foo36 f;
-   printf("f.sizeof = %d\n", f.sizeof);
    assert(f.sizeof == 12);
 
    f.a = 1;
@@ -932,7 +991,7 @@ class Class39 : Base39
 
 void test39()
 {
-    auto test = new Class39;
+    scope test = new Class39;
 }
 
 
@@ -974,7 +1033,7 @@ void test41()
 }
 
 /*******************************************/
-// 2245
+// https://issues.dlang.org/show_bug.cgi?id=2245
 
 template TCALL2245a(ARGS...)
 {
@@ -1044,7 +1103,7 @@ void test2245()
 }
 
 /*******************************************/
-// 2481
+// https://issues.dlang.org/show_bug.cgi?id=2481
 
 template M2481() { int i; }
 class Z2481a { struct { mixin M2481!(); } }
@@ -1058,7 +1117,7 @@ void test2481()
 }
 
 /*******************************************/
-// 2740
+// https://issues.dlang.org/show_bug.cgi?id=2740
 
 interface IFooable2740
 {
@@ -1144,7 +1203,7 @@ void test42()
 }
 
 /*******************************************/
-// 7744
+// https://issues.dlang.org/show_bug.cgi?id=7744
 
 class ZeroOrMore7744(Expr)
 {
@@ -1165,7 +1224,7 @@ mixin(q{
 });
 
 /*******************************************/
-// 8032
+// https://issues.dlang.org/show_bug.cgi?id=8032
 
 mixin template T8032()
 {
@@ -1193,7 +1252,7 @@ class B8032b : A8032b
 }
 
 /*********************************************/
-// 9417
+// https://issues.dlang.org/show_bug.cgi?id=9417
 
 mixin template Foo9417()
 {
@@ -1209,7 +1268,7 @@ void test9417()
 }
 
 /*******************************************/
-// 11487
+// https://issues.dlang.org/show_bug.cgi?id=11487
 
 template X11487()
 {
@@ -1236,7 +1295,7 @@ class C11487
 }
 
 /*******************************************/
-// 11767
+// https://issues.dlang.org/show_bug.cgi?id=11767
 
 mixin template M11767()
 {
@@ -1262,7 +1321,7 @@ void test11767()
 }
 
 /*******************************************/
-// 12023
+// https://issues.dlang.org/show_bug.cgi?id=12023
 
 void Delete12023(Object obj) {}
 
@@ -1303,7 +1362,7 @@ void test12023()
 }
 
 /*******************************************/
-// 14243
+// https://issues.dlang.org/show_bug.cgi?id=14243
 
 mixin template Mix14243a(int n)
 {
@@ -1397,7 +1456,7 @@ int test14243()
 static assert(test14243()); // changed to be workable
 
 /*******************************************/
-// 10492
+// https://issues.dlang.org/show_bug.cgi?id=10492
 
 class TestClass10492 {}
 

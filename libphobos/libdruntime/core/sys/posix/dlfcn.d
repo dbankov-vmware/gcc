@@ -139,7 +139,11 @@ else version (Darwin)
     char* dlerror();
     void* dlopen(const scope char*, int);
     void* dlsym(void*, const scope char*);
+<<<<<<< HEAD
     int   dladdr(scope const void* addr, Dl_info* info);
+=======
+    int   dladdr(void* addr, Dl_info* info);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
     struct Dl_info
     {
@@ -294,6 +298,7 @@ else version (CRuntime_Musl)
     const(char)* dlerror();
     void*        dlopen(const scope char*, int);
     void*        dlsym(void*, const scope char*);
+<<<<<<< HEAD
 
     int dladdr(scope const void *addr, Dl_info *info);
     struct Dl_info
@@ -303,6 +308,8 @@ else version (CRuntime_Musl)
         const(char)* dli_sname;
         void*        dli_saddr;
     }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (CRuntime_UClibc)
 {

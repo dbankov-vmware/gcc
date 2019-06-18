@@ -161,6 +161,7 @@ enum
 }
 
 int kqueue();
+<<<<<<< HEAD
 
 version (GNU)
 {
@@ -181,3 +182,9 @@ else
                    kevent_t *eventlist, int nevents,
                    const timespec *timeout);
 }
+=======
+pragma(mangle, "kevent@FBSD_1.0")
+int kevent(int kq, const kevent_t *changelist, int nchanges,
+           kevent_t *eventlist, int nevents,
+           const timespec *timeout);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

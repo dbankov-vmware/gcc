@@ -159,6 +159,110 @@ else version (OpenBSD)
 }
 else version (FreeBSD)
 {
+<<<<<<< HEAD
+=======
+    import core.sys.freebsd.sys.mount;
+
+    // @@@DEPRECATED_2.091@@@
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias MFSNAMELEN = core.sys.freebsd.sys.mount.MFSNAMELEN;
+
+    // @@@DEPRECATED_2.091@@@
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias MNAMELEN = core.sys.freebsd.sys.mount.MNAMELEN;
+
+    // @@@DEPRECATED_2.091@@@
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias fsid_t = core.sys.freebsd.sys.mount.fsid_t;
+
+    // @@@DEPRECATED_2.091@@@
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias statfs_t = core.sys.freebsd.sys.mount.statfs_t;
+
+    // @@@DEPRECATED_2.091@@@
+    deprecated("Values moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    enum FFlag
+    {
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_RDONLY = 1,          /* read only filesystem */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_SYNCHRONOUS = 2,     /* fs written synchronously */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOEXEC = 4,          /* can't exec from filesystem */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOSUID  = 8,         /* don't honor setuid fs bits */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NFS4ACLS = 16,       /* enable NFS version 4 ACLs */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_UNION = 32,          /* union with underlying fs */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_ASYNC = 64,          /* fs written asynchronously */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_SUIDDIR = 128,       /* special SUID dir handling */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_SOFTDEP = 256,       /* using soft updates */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOSYMFOLLOW = 512,   /* do not follow symlinks */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_GJOURNAL = 1024,     /* GEOM journal support enabled */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_MULTILABEL = 2048,   /* MAC support for objects */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_ACLS = 4096,         /* ACL support enabled */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOATIME = 8192,      /* dont update file access time */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOCLUSTERR = 16384,  /* disable cluster read */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_NOCLUSTERW = 32768,  /* disable cluster write */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_SUJ = 65536,         /* using journaled soft updates */
+
+        // @@@DEPRECATED_2.091@@@
+        deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+        MNT_AUTOMOUNTED = 131072 /* mounted by automountd(8) */
+    }
+
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias statfs = core.sys.freebsd.sys.mount.statfs;
+
+    deprecated("Moved to core.sys.freebsd.sys.mount to correspond to C header file sys/mount.h")
+    alias fstatfs = core.sys.freebsd.sys.mount.fstatfs;
+
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     struct statvfs_t
     {
         fsblkcnt_t f_bavail;
@@ -177,6 +281,7 @@ else version (FreeBSD)
     enum uint ST_RDONLY = 0x1;
     enum uint ST_NOSUID = 0x2;
 
+<<<<<<< HEAD
     version (GNU)
     {
         int fstatvfs(int, statvfs_t*);
@@ -187,6 +292,10 @@ else version (FreeBSD)
         pragma(mangle, "fstatvfs@FBSD_1.0") int fstatvfs(int, statvfs_t*);
         pragma(mangle, "statvfs@FBSD_1.0")  int statvfs(const char*, statvfs_t*);
     }
+=======
+    pragma(mangle, "fstatvfs@FBSD_1.0") int fstatvfs(int, statvfs_t*);
+    pragma(mangle, "statvfs@FBSD_1.0")  int statvfs(const char*, statvfs_t*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else
 {

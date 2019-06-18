@@ -141,8 +141,7 @@ get_internal_fn (tree ident, const Prot &prot)
 
   FuncDeclaration *fd = FuncDeclaration::genCfunc (NULL, Type::tvoid,
 						   Identifier::idPool (name));
-  fd->generated = true;
-  fd->loc = Loc (mod->srcfile->toChars (), 1, 0);
+  fd->loc = Loc (mod->srcfile.toChars (), 1, 0);
   fd->parent = mod;
   fd->protection = prot;
   fd->semanticRun = PASSsemantic3done;
@@ -740,7 +739,8 @@ build_module_tree (Module *decl)
       /* Associate the module info symbol with a mock module.  */
       const char *name = concat (GDC_PREFIX ("modtest__"),
 				 decl->ident->toChars (), NULL);
-      Module *tm = Module::create (decl->arg, Identifier::idPool (name), 0, 0);
+      Module *tm = Module::create (decl->arg.ptr, Identifier::idPool (name),
+				   0, 0);
       Dsymbols members;
 
       /* Setting parent puts module in the same package as the current, to
@@ -780,9 +780,7 @@ build_module_tree (Module *decl)
 
   /* Default behavior is to always generate module info because of templates.
      Can be switched off for not compiling against runtime library.  */
-  if (global.params.useModuleInfo
-      && Module::moduleinfo != NULL
-      && decl->ident != Identifier::idPool ("__entrypoint"))
+  if (global.params.useModuleInfo && Module::moduleinfo != NULL)
     {
       if (mi.ctors || mi.ctorgates)
 	decl->sctor = build_funcs_gates_fn (get_identifier ("*__modctor"),

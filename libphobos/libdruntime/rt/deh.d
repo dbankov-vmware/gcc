@@ -6,7 +6,7 @@
  *      $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost Software License 1.0).
  *    (See accompanying file LICENSE)
  * Authors:   Walter Bright
- * Source: $(DRUNTIMESRC src/rt/deh.d)
+ * Source: $(DRUNTIMESRC rt/deh.d)
  */
 
 /* NOTE: This file has been patched from the original DMD distribution to
@@ -17,10 +17,8 @@ module rt.deh;
 extern (C)
 {
     Throwable.TraceInfo _d_traceContext(void* ptr = null);
-    void _d_createTrace(Object o, void* context)
+    void _d_createTrace(Throwable t, void* context)
     {
-        auto t = cast(Throwable) o;
-
         if (t !is null && t.info is null &&
             cast(byte*) t !is typeid(t).initializer.ptr)
         {
@@ -39,4 +37,3 @@ else version (Posix)
     public import rt.deh_win64_posix;
 else
     static assert (0, "Unsupported architecture");
-

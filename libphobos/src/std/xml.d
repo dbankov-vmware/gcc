@@ -2,8 +2,8 @@
 
 /**
 $(RED Warning: This module is considered out-dated and not up to Phobos'
-      current standards. It will remain until we have a suitable replacement,
-      but be aware that it will not remain long term.)
+      current standards. It will be removed from Phobos in 2.101.0.
+      If you still need it, go to $(LINK https://github.com/DigitalMars/undeaD))
 
 Classes and functions for creating and parsing XML
 
@@ -115,7 +115,7 @@ void main()
 Copyright: Copyright Janice Caron 2008 - 2009.
 License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
 Authors:   Janice Caron
-Source:    $(PHOBOSSRC std/_xml.d)
+Source:    $(PHOBOSSRC std/xml.d)
 */
 /*
          Copyright Janice Caron 2008 - 2009.
@@ -123,6 +123,7 @@ Distributed under the Boost Software License, Version 1.0.
    (See accompanying file LICENSE_1_0.txt or copy at
          http://www.boost.org/LICENSE_1_0.txt)
 */
+deprecated("Will be removed from Phobos in 2.101.0. If you still need it, go to https://github.com/DigitalMars/undeaD")
 module std.xml;
 
 enum cdata = "<![CDATA[";
@@ -556,7 +557,7 @@ class Document : Element
     {
         assert(s.length != 0);
     }
-    body
+    do
     {
         auto xml = new DocumentParser(s);
         string tagString = xml.tag.tagString;
@@ -693,7 +694,7 @@ class Element : Item
     this(string name, string interior=null) @safe pure
     {
         this(new Tag(name));
-        if (interior.length != 0) opCatAssign(new Text(interior));
+        if (interior.length != 0) opOpAssign!("~")(new Text(interior));
     }
 
     /**
@@ -722,7 +723,8 @@ class Element : Item
      * element ~= new Text("hello");
      * --------------
      */
-    void opCatAssign(Text item) @safe pure
+    void opOpAssign(string op)(Text item) @safe pure
+        if (op == "~")
     {
         texts ~= item;
         appendItem(item);
@@ -740,7 +742,8 @@ class Element : Item
      * element ~= new CData("hello");
      * --------------
      */
-    void opCatAssign(CData item) @safe pure
+    void opOpAssign(string op)(CData item) @safe pure
+        if (op == "~")
     {
         cdatas ~= item;
         appendItem(item);
@@ -758,7 +761,8 @@ class Element : Item
      * element ~= new Comment("hello");
      * --------------
      */
-    void opCatAssign(Comment item) @safe pure
+    void opOpAssign(string op)(Comment item) @safe pure
+        if (op == "~")
     {
         comments ~= item;
         appendItem(item);
@@ -776,7 +780,8 @@ class Element : Item
      * element ~= new ProcessingInstruction("hello");
      * --------------
      */
-    void opCatAssign(ProcessingInstruction item) @safe pure
+    void opOpAssign(string op)(ProcessingInstruction item) @safe pure
+        if (op == "~")
     {
         pis ~= item;
         appendItem(item);
@@ -796,7 +801,8 @@ class Element : Item
      *    // appends element representing <br />
      * --------------
      */
-    void opCatAssign(Element item) @safe pure
+    void opOpAssign(string op)(Element item) @safe pure
+        if (op == "~")
     {
         elements ~= item;
         appendItem(item);
@@ -811,16 +817,16 @@ class Element : Item
 
     private void parse(ElementParser xml)
     {
-        xml.onText = (string s) { opCatAssign(new Text(s)); };
-        xml.onCData = (string s) { opCatAssign(new CData(s)); };
-        xml.onComment = (string s) { opCatAssign(new Comment(s)); };
-        xml.onPI = (string s) { opCatAssign(new ProcessingInstruction(s)); };
+        xml.onText = (string s) { opOpAssign!("~")(new Text(s)); };
+        xml.onCData = (string s) { opOpAssign!("~")(new CData(s)); };
+        xml.onComment = (string s) { opOpAssign!("~")(new Comment(s)); };
+        xml.onPI = (string s) { opOpAssign!("~")(new ProcessingInstruction(s)); };
 
         xml.onStartTag[null] = (ElementParser xml)
         {
             auto e = new Element(xml.tag);
             e.parse(xml);
-            opCatAssign(e);
+            opOpAssign!("~")(e);
         };
 
         xml.parse();
@@ -1017,7 +1023,7 @@ class Tag
             s = k;
             try { checkName(s,t); }
             catch (Err e)
-                { assert(false,"Invalid atrribute name:" ~ e.toString()); }
+                { assert(false,"Invalid attribute name:" ~ e.toString()); }
         }
     }
 
@@ -1161,7 +1167,7 @@ class Tag
          */
         override size_t toHash()
         {
-            return typeid(name).getHash(&name);
+            return .hashOf(name);
         }
 
         /**
@@ -1313,7 +1319,8 @@ class Comment : Item
     override @property @safe @nogc pure nothrow scope bool isEmptyXML() const { return false; } /// Returns false always
 }
 
-@safe unittest // issue 16241
+// https://issues.dlang.org/show_bug.cgi?id=16241
+@safe unittest
 {
     import std.exception : assertThrown;
     auto c = new Comment("==");
@@ -1718,7 +1725,7 @@ class DocumentParser : ElementParser
             assert(false, "\n" ~ e.toString());
         }
     }
-    body
+    do
     {
         xmlText = xmlText_;
         s = &xmlText;
@@ -2091,8 +2098,8 @@ class ElementParser
                 {
                     Tag startTag = new Tag(tag_.name);
 
-                    // FIX by hed010gy, for bug 2979
-                    // http://d.puremagic.com/issues/show_bug.cgi?id=2979
+                    // FIX by hed010gy
+                    // https://issues.dlang.org/show_bug.cgi?id=2979
                     if (tag_.attr.length > 0)
                           foreach (tn,tv; tag_.attr) startTag.attr[tn]=tv;
                     // END FIX
@@ -2993,10 +3000,7 @@ private
         return ch;
     }
 
-    size_t hash(string s,size_t h=0) @trusted nothrow
-    {
-        return typeid(s).getHash(&s) + h;
-    }
+    alias hash = .hashOf;
 
     // Definitions from the XML specification
     immutable CharTable=[0x9,0x9,0xA,0xA,0xD,0xD,0x20,0xD7FF,0xE000,0xFFFD,

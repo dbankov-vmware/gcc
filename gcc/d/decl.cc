@@ -116,6 +116,59 @@ gcc_attribute_p (Dsymbol *decl)
   return false;
 }
 
+/* Subroutine of pragma declaration visitor for marking the function in the
+   defined in SYM as a global constructor or destructor.  If ISCTOR is true,
+   then we're applying pragma(crt_constructor).  */
+
+static int
+apply_pragma_crt (Dsymbol *sym, bool isctor)
+{
+  AttribDeclaration *ad = sym->isAttribDeclaration ();
+  if (ad != NULL)
+    {
+      int nested = 0;
+
+      /* Walk all declarations of the attribute scope.  */
+      Dsymbols *ds = ad->include (NULL);
+      if (ds)
+	{
+	  for (size_t i = 0; i < ds->length; i++)
+	    nested += apply_pragma_crt ((*ds)[i], isctor);
+	}
+
+      return nested;
+    }
+
+  FuncDeclaration *fd = sym->isFuncDeclaration ();
+  if (fd != NULL)
+    {
+      tree decl = get_decl_tree (fd);
+
+      /* Apply flags to the function.  */
+      if (isctor)
+	{
+	  DECL_STATIC_CONSTRUCTOR (decl) = 1;
+	  decl_init_priority_insert (decl, DEFAULT_INIT_PRIORITY);
+	}
+      else
+	{
+	  DECL_STATIC_DESTRUCTOR (decl) = 1;
+	  decl_fini_priority_insert (decl, DEFAULT_INIT_PRIORITY);
+	}
+
+      if (fd->linkage != LINKc)
+	{
+	  error_at (make_location_t (fd->loc),
+		    "must be %<extern(C)%> for %<pragma(%s)%>",
+		    isctor ? "crt_constructor" : "crt_destructor");
+	}
+
+      return 1;
+    }
+
+  return 0;
+}
+
 /* Implements the visitor interface to lower all Declaration AST classes
    emitted from the D Front-end to GCC trees.
    All visit methods accept one parameter D, which holds the frontend AST
@@ -246,18 +299,30 @@ public:
   }
 
   /* Pragmas are a way to pass special information to the compiler and to add
-     vendor specific extensions to D.  We don't do anything here, yet.  */
+     vendor specific extensions to D.  */
 
   void visit (PragmaDeclaration *d)
   {
-    if (!global.params.ignoreUnsupportedPragmas)
+    if (d->ident == Identifier::idPool ("lib")
+	|| d->ident == Identifier::idPool ("startaddress"))
       {
-	if (d->ident == Identifier::idPool ("lib")
-	    || d->ident == Identifier::idPool ("startaddress"))
+	if (!global.params.ignoreUnsupportedPragmas)
 	  {
 	    warning_at (make_location_t (d->loc), OPT_Wunknown_pragmas,
 			"pragma(%s) not implemented", d->ident->toChars ());
 	  }
+      }
+    else if (d->ident == Identifier::idPool ("crt_constructor")
+	     || d->ident == Identifier::idPool ("crt_destructor"))
+      {
+	/* Handle pragma(crt_constructor) and pragma(crt_destructor).  Apply
+	   flag to indicate that the functions enclosed should run automatically
+	   at the beginning or end of execution.  */
+	bool isctor = (d->ident == Identifier::idPool ("crt_constructor"));
+
+	if (apply_pragma_crt (d, isctor) > 1)
+	  error_at (make_location_t (d->loc),
+		    "can only apply to a single declaration");
       }
 
     visit ((AttribDeclaration *) d);
@@ -495,7 +560,8 @@ public:
 
     /* Generate C symbols.  */
     d->csym = get_classinfo_decl (d);
-    d->vtblsym = get_vtable_decl (d);
+    Dsymbol *vtblsym = d->vtblSymbol ();
+    vtblsym->csym = get_vtable_decl (d);
     d->sinit = aggregate_initializer_decl (d);
 
     /* Generate static initializer.  */
@@ -527,9 +593,9 @@ public:
 	  }
       }
 
-    DECL_INITIAL (d->vtblsym)
-      = build_constructor (TREE_TYPE (d->vtblsym), elms);
-    d_finish_decl (d->vtblsym);
+    DECL_INITIAL (vtblsym->csym)
+      = build_constructor (TREE_TYPE (vtblsym->csym), elms);
+    d_finish_decl (vtblsym->csym);
 
     /* Add this decl to the current binding level.  */
     tree ctype = TREE_TYPE (build_ctype (d->type));
@@ -647,6 +713,8 @@ public:
 	/* Do not store variables we cannot take the address of,
 	   but keep the values for purposes of debugging.  */
 	if (!d->type->isscalar ())
+	  DECL_INITIAL (decl) = build_expr (ie, false, true);
+	else
 	  {
 	    tree decl = get_symbol_decl (d);
 	    d_pushdecl (decl);
@@ -1183,6 +1251,17 @@ get_symbol_decl (Declaration *decl)
     }
   else if (TREE_CODE (decl->csym) == FUNCTION_DECL)
     {
+      /* Dual-context functions require the code generation to build an array
+	 for the context pointer of the function, making the delicate task of
+	 tracking which context to follow when encountering a non-local symbol,
+	 and so are a not planned to be supported.  */
+      if (fd->needThis () && !fd->isMember2 ())
+	{
+	  fatal_error (make_location_t (fd->loc),
+		       "function requires a dual-context, which is not yet "
+		       "supported by GDC");
+	}
+
       /* The real function type may differ from its declaration.  */
       tree fntype = TREE_TYPE (decl->csym);
       tree newfntype = NULL_TREE;
@@ -1540,6 +1619,7 @@ d_finish_decl (tree decl)
     set_decl_tls_model (decl, decl_default_tls_model (decl));
 
   relayout_decl (decl);
+  set_linkage_for_decl (decl);
 
   if (flag_checking && DECL_INITIAL (decl))
     {
@@ -1781,9 +1861,12 @@ make_thunk (FuncDeclaration *decl, int offset)
   DECL_ARTIFICIAL (thunk) = 1;
   DECL_DECLARED_INLINE_P (thunk) = 0;
 
-  DECL_VISIBILITY (thunk) = DECL_VISIBILITY (function);
-  DECL_COMDAT (thunk) = DECL_COMDAT (function);
-  DECL_WEAK (thunk) = DECL_WEAK (function);
+  if (TREE_PUBLIC (thunk))
+    {
+      DECL_VISIBILITY (thunk) = DECL_VISIBILITY (function);
+      DECL_COMDAT (thunk) = DECL_COMDAT (function);
+      DECL_WEAK (thunk) = DECL_WEAK (function);
+    }
 
   /* When the thunk is for an extern C++ function, let C++ do the thunk
      generation and just reference the symbol as extern, instead of
@@ -1985,26 +2068,27 @@ d_mark_needed (tree decl)
 tree
 get_vtable_decl (ClassDeclaration *decl)
 {
-  if (decl->vtblsym)
-    return decl->vtblsym;
+  if (decl->vtblsym && decl->vtblsym->csym)
+    return decl->vtblsym->csym;
 
   tree ident = mangle_internal_decl (decl, "__vtbl", "Z");
   /* Note: Using a static array type for the VAR_DECL, the DECL_INITIAL value
      will have a different type.  However the back-end seems to accept this.  */
   tree type = build_ctype (Type::tvoidptr->sarrayOf (decl->vtbl.length));
 
-  decl->vtblsym = declare_extern_var (ident, type);
-  DECL_LANG_SPECIFIC (decl->vtblsym) = build_lang_decl (NULL);
+  Dsymbol *vtblsym = decl->vtblSymbol ();
+  vtblsym->csym = declare_extern_var (ident, type);
+  DECL_LANG_SPECIFIC (vtblsym->csym) = build_lang_decl (NULL);
 
   /* Class is a reference, want the record type.  */
-  DECL_CONTEXT (decl->vtblsym) = TREE_TYPE (build_ctype (decl->type));
-  TREE_READONLY (decl->vtblsym) = 1;
-  DECL_VIRTUAL_P (decl->vtblsym) = 1;
+  DECL_CONTEXT (vtblsym->csym) = TREE_TYPE (build_ctype (decl->type));
+  TREE_READONLY (vtblsym->csym) = 1;
+  DECL_VIRTUAL_P (vtblsym->csym) = 1;
 
-  SET_DECL_ALIGN (decl->vtblsym, TARGET_VTABLE_ENTRY_ALIGN);
-  DECL_USER_ALIGN (decl->vtblsym) = true;
+  SET_DECL_ALIGN (vtblsym->csym, TARGET_VTABLE_ENTRY_ALIGN);
+  DECL_USER_ALIGN (vtblsym->csym) = true;
 
-  return decl->vtblsym;
+  return vtblsym->csym;
 }
 
 /* Helper function of build_class_instance.  Find the field inside aggregate
@@ -2214,13 +2298,10 @@ enum_initializer_decl (EnumDeclaration *decl)
   if (decl->sinit)
     return decl->sinit;
 
-  tree type = build_ctype (decl->type);
+  gcc_assert (decl->ident);
 
-  Identifier *ident_save = decl->ident;
-  if (!decl->ident)
-    decl->ident = Identifier::generateId ("__enum");
+  tree type = build_ctype (decl->type);
   tree ident = mangle_internal_decl (decl, "__init", "Z");
-  decl->ident = ident_save;
 
   decl->sinit = declare_extern_var (ident, type);
   DECL_LANG_SPECIFIC (decl->sinit) = build_lang_decl (NULL);
@@ -2303,6 +2384,17 @@ create_field_decl (tree type, const char *name, int artificial, int ignored)
 			  name ? get_identifier (name) : NULL_TREE, type);
   DECL_ARTIFICIAL (decl) = artificial;
   DECL_IGNORED_P (decl) = ignored;
+
+  return decl;
+}
+
+/* Returns the module NAMESPACE_DECL context of DECL or NULL.  */
+
+static tree
+get_module_context (tree decl)
+{
+  while (decl && TREE_CODE (decl) != NAMESPACE_DECL)
+    decl = get_containing_scope (decl);
 
   return decl;
 }

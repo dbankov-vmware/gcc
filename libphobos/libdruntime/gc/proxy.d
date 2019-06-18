@@ -2,7 +2,7 @@
  * Contains the external GC interface.
  *
  * Copyright: Copyright Digital Mars 2005 - 2016.
- * License:   $(WEB www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+ * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  * Authors:   Walter Bright, Sean Kelly
  */
 
@@ -13,10 +13,10 @@
  */
 module gc.proxy;
 
-import gc.impl.conservative.gc;
-import gc.impl.manual.gc;
-import gc.config;
-import gc.gcinterface;
+import gc.impl.proto.gc;
+import core.gc.config;
+import core.gc.gcinterface;
+import core.gc.registry : createGCInstance;
 
 static import core.memory;
 
@@ -25,56 +25,107 @@ private
     static import core.memory;
     alias BlkInfo = core.memory.GC.BlkInfo;
 
-    extern (C) void thread_init();
-    extern (C) void thread_term();
+    import core.internal.spinlock;
+    static SpinLock instanceLock;
 
-    __gshared GC instance;
+    __gshared bool isInstanceInit = false;
+    __gshared GC _instance = new ProtoGC();
     __gshared GC proxiedGC; // used to iterate roots of Windows DLLs
 
+    pragma (inline, true) @trusted @nogc nothrow
+    GC instance() { return _instance; }
 }
-
 
 extern (C)
 {
+    // do not import GC modules, they might add a dependency to this whole module
+    void _d_register_conservative_gc();
+    void _d_register_manual_gc();
+
+    // if you don't want to include the default GCs, replace during link by another implementation
+    void* register_default_gcs()
+    {
+        pragma(inline, false);
+        // do not call, they register implicitly through pragma(crt_constructor)
+        // avoid being optimized away
+        auto reg1 = &_d_register_conservative_gc;
+        auto reg2 = &_d_register_manual_gc;
+        return reg1 < reg2 ? reg1 : reg2;
+    }
 
     void gc_init()
     {
-        config.initialize();
-        ManualGC.initialize(instance);
-        ConservativeGC.initialize(instance);
-        if (instance is null)
+        instanceLock.lock();
+        if (!isInstanceInit)
         {
-            import core.stdc.stdio : fprintf, stderr;
-            import core.stdc.stdlib : exit;
+            register_default_gcs();
+            config.initialize();
+            auto protoInstance = instance;
+            auto newInstance = createGCInstance(config.gc);
+            if (newInstance is null)
+            {
+                import core.stdc.stdio : fprintf, stderr;
+                import core.stdc.stdlib : exit;
 
-            fprintf(stderr, "No GC was initialized, please recheck the name of the selected GC ('%.*s').\n", cast(int)config.gc.length, config.gc.ptr);
-            exit(1);
+                fprintf(stderr, "No GC was initialized, please recheck the name of the selected GC ('%.*s').\n", cast(int)config.gc.length, config.gc.ptr);
+                instanceLock.unlock();
+                exit(1);
+
+                // Shouldn't get here.
+                assert(0);
+            }
+            _instance = newInstance;
+            // Transfer all ranges and roots to the real GC.
+            (cast(ProtoGC) protoInstance).term();
+            isInstanceInit = true;
         }
+        instanceLock.unlock();
+    }
 
-        // NOTE: The GC must initialize the thread library
-        //       before its first collection.
-        thread_init();
+    void gc_init_nothrow() nothrow
+    {
+        scope(failure)
+        {
+            import core.internal.abort;
+            abort("Cannot initialize the garbage collector.\n");
+            assert(0);
+        }
+        gc_init();
     }
 
     void gc_term()
     {
-        // NOTE: There may be daemons threads still running when this routine is
-        //       called.  If so, cleaning memory out from under then is a good
-        //       way to make them crash horribly.  This probably doesn't matter
-        //       much since the app is supposed to be shutting down anyway, but
-        //       I'm disabling cleanup for now until I can think about it some
-        //       more.
-        //
-        // NOTE: Due to popular demand, this has been re-enabled.  It still has
-        //       the problems mentioned above though, so I guess we'll see.
+        if (isInstanceInit)
+        {
+            switch (config.cleanup)
+            {
+                default:
+                    import core.stdc.stdio : fprintf, stderr;
+                    fprintf(stderr, "Unknown GC cleanup method, please recheck ('%.*s').\n",
+                            cast(int)config.cleanup.length, config.cleanup.ptr);
+                    break;
+                case "none":
+                    break;
+                case "collect":
+                    // NOTE: There may be daemons threads still running when this routine is
+                    //       called.  If so, cleaning memory out from under then is a good
+                    //       way to make them crash horribly.  This probably doesn't matter
+                    //       much since the app is supposed to be shutting down anyway, but
+                    //       I'm disabling cleanup for now until I can think about it some
+                    //       more.
+                    //
+                    // NOTE: Due to popular demand, this has been re-enabled.  It still has
+                    //       the problems mentioned above though, so I guess we'll see.
 
-        instance.collectNoStack(); // not really a 'collect all' -- still scans
-                                    // static data area, roots, and ranges.
-
-        thread_term();
-
-        ManualGC.finalize(instance);
-        ConservativeGC.finalize(instance);
+                    instance.collectNoStack();  // not really a 'collect all' -- still scans
+                                                // static data area, roots, and ranges.
+                    break;
+                case "finalize":
+                    instance.runFinalizers((cast(ubyte*)null)[0 .. size_t.max]);
+                    break;
+            }
+            destroy(instance);
+        }
     }
 
     void gc_enable()
@@ -142,17 +193,17 @@ extern (C)
         return instance.reserve( sz );
     }
 
-    void gc_free( void* p ) nothrow
+    void gc_free( void* p ) nothrow @nogc
     {
         return instance.free( p );
     }
 
-    void* gc_addrOf( void* p ) nothrow
+    void* gc_addrOf( void* p ) nothrow @nogc
     {
         return instance.addrOf( p );
     }
 
-    size_t gc_sizeOf( void* p ) nothrow
+    size_t gc_sizeOf( void* p ) nothrow @nogc
     {
         return instance.sizeOf( p );
     }
@@ -167,12 +218,17 @@ extern (C)
         return instance.stats();
     }
 
-    void gc_addRoot( void* p ) nothrow
+    core.memory.GC.ProfileStats gc_profileStats() nothrow @safe
+    {
+        return instance.profileStats();
+    }
+
+    void gc_addRoot( void* p ) nothrow @nogc
     {
         return instance.addRoot( p );
     }
 
-    void gc_addRange( void* p, size_t sz, const TypeInfo ti = null ) nothrow
+    void gc_addRange( void* p, size_t sz, const TypeInfo ti = null ) nothrow @nogc
     {
         return instance.addRange( p, sz, ti );
     }
@@ -187,12 +243,12 @@ extern (C)
         return instance.removeRange( p );
     }
 
-    void gc_runFinalizers( in void[] segment ) nothrow
+    void gc_runFinalizers(const scope void[] segment ) nothrow
     {
         return instance.runFinalizers( segment );
     }
 
-    bool gc_inFinalizer() nothrow
+    bool gc_inFinalizer() nothrow @nogc @safe
     {
         return instance.inFinalizer();
     }
@@ -217,7 +273,7 @@ extern (C)
             }
 
             proxiedGC = instance; // remember initial GC to later remove roots
-            instance = proxy;
+            _instance = proxy;
         }
 
         void gc_clrProxy()
@@ -232,7 +288,7 @@ extern (C)
                 instance.removeRange(range);
             }
 
-            instance = proxiedGC;
+            _instance = proxiedGC;
             proxiedGC = null;
         }
     }

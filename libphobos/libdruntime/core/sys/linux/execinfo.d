@@ -11,7 +11,10 @@ version (linux):
 extern (C):
 nothrow:
 @system:
+<<<<<<< HEAD
 @nogc:
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 int backtrace(void** buffer, int size);
 char** backtrace_symbols(const(void*)* buffer, int size);

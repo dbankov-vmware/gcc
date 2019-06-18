@@ -1,10 +1,19 @@
 /*
+<<<<<<< HEAD
 REQUIRED_ARGS:
 TEST_OUTPUT:
 ---
 fail_compilation/dip22a.d(16): Error: no property `bar` for type `imports.dip22a.Klass`, did you mean `imports.dip22a.Klass.bar`?
 fail_compilation/dip22a.d(17): Error: no property `bar` for type `Struct`, did you mean `imports.dip22a.Struct.bar`?
 fail_compilation/dip22a.d(18): Error: undefined identifier `bar` in module `imports.dip22a`, did you mean function `bar`?
+=======
+EXTRA_FILES: imports/dip22a.d
+TEST_OUTPUT:
+---
+fail_compilation/dip22a.d(16): Error: no property `bar` for type `imports.dip22a.Klass`
+fail_compilation/dip22a.d(17): Error: no property `bar` for type `imports.dip22a.Struct`
+fail_compilation/dip22a.d(18): Error: undefined identifier `bar` in module `imports.dip22a`
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 fail_compilation/dip22a.d(19): Error: no property `bar` for type `void`
 fail_compilation/dip22a.d(20): Error: no property `bar` for type `int`
 ---

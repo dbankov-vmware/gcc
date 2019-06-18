@@ -1,4 +1,13 @@
+<<<<<<< HEAD
 // REQUIRED_ARGS: -de
+=======
+/*
+REQUIRED_ARGS: -de
+TEST_OUTPUT:
+---
+---
+*/
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 deprecated("A deprecated class") {
 class DepClass
 {

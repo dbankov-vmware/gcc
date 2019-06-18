@@ -147,12 +147,18 @@ unittest {
  * Returns: |x|
  * References: equivalent to `std.math.fabs`
  */
+<<<<<<< HEAD
 @safe pure nothrow @nogc
 {
     float  fabs(float  x);
     double fabs(double x); /// ditto
     real   fabs(real   x); /// ditto
 }
+=======
+float fabs(float x);    /* intrinsic */
+double fabs(double x);  /* intrinsic */ /// ditto
+real fabs(real x);      /* intrinsic */ /// ditto
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 /**********************************
  * Rounds x to the nearest integer value, using the current rounding

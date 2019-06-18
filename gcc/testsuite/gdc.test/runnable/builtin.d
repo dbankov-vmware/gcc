@@ -55,7 +55,7 @@ void test2()
     assert(i == 2);
 }
 
-/**** Bug 5703 *****************************/
+/**** https://issues.dlang.org/show_bug.cgi?id=5703 ****/
 
 static assert({
     int a = 0x80;

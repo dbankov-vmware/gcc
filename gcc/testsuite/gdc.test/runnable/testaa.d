@@ -11,7 +11,7 @@ import std.random;   // for uniform random numbers
 
 /************************************************/
 
-int nametable[char[]];
+int[char[]] nametable;
 
 void insert(string name, int value)
 {
@@ -272,9 +272,9 @@ struct S12
 void test12()
 {
     S12[] x;
-    printf("size %d\n",S12.sizeof);
-    printf("align %d\n",S12.alignof);
-    printf("offset %d\n",S12.description.offsetof);
+    printf("size %zd\n",S12.sizeof);
+    printf("align %zd\n",S12.alignof);
+    printf("offset %zd\n",S12.description.offsetof);
 
     for (int i=0;i<3;i++) {
         S12 s;
@@ -294,8 +294,8 @@ void test12()
     x ~= s;
 */
     GC.collect();
-    printf("%.*s\n",x[0].font_face.length,x[0].font_face.ptr);
-    printf("%.*s\n",x[1].font_face.length,x[1].font_face.ptr);
+    printf("%.*s\n", cast(int)x[0].font_face.length, x[0].font_face.ptr);
+    printf("%.*s\n", cast(int)x[1].font_face.length, x[1].font_face.ptr);
 }
 
 
@@ -316,7 +316,7 @@ void test13()
     string[] key = array.keys;
     assert(key.length==3);
 
-    bool have[3];
+    bool[3] have;
 
     assert(!have[0]);
     assert(!have[1]);
@@ -494,7 +494,7 @@ void dummy17()
 {
 }
 
-int bb17[string];
+int[string] bb17;
 
 int foo17()
 {
@@ -558,14 +558,14 @@ void test19()
     printf("%d\n", keys[1]);
 
     auto vs = aa.values;
-    printf("%.*s\n", vs[0].length, vs[0].ptr);
-    printf("%.*s\n", vs[1].length, vs[1].ptr);
+    printf("%.*s\n", cast(int)vs[0].length, vs[0].ptr);
+    printf("%.*s\n", cast(int)vs[1].length, vs[1].ptr);
 
     string aavalue_typeid = typeid(typeof(aa.values)).toString();
-    printf("%.*s\n", aavalue_typeid.length, aavalue_typeid.ptr);
+    printf("%.*s\n", cast(int)aavalue_typeid.length, aavalue_typeid.ptr);
 
-    printf("%.*s\n", aa[3].length, aa[3].ptr);
-    printf("%.*s\n", aa[4].length, aa[4].ptr);
+    printf("%.*s\n", cast(int)aa[3].length, aa[3].ptr);
+    printf("%.*s\n", cast(int)aa[4].length, aa[4].ptr);
 }
 
 /************************************************/
@@ -582,14 +582,14 @@ void test20()
     printf("%d\n", keys[1]);
 
     auto values = aa.values;
-    printf("%.*s\n", values[0].length, values[0].ptr);
-    printf("%.*s\n", values[1].length, values[1].ptr);
+    printf("%.*s\n", cast(int)values[0].length, values[0].ptr);
+    printf("%.*s\n", cast(int)values[1].length, values[1].ptr);
 
     string aavalue_typeid = typeid(typeof(aa.values)).toString();
-    printf("%.*s\n", aavalue_typeid.length, aavalue_typeid.ptr);
+    printf("%.*s\n", cast(int)aavalue_typeid.length, aavalue_typeid.ptr);
 
-    printf("%.*s\n", aa[3].length, aa[3].ptr);
-    printf("%.*s\n", aa[4].length, aa[4].ptr);
+    printf("%.*s\n", cast(int)aa[3].length, aa[3].ptr);
+    printf("%.*s\n", cast(int)aa[4].length, aa[4].ptr);
 }
 
 /************************************************/
@@ -783,7 +783,7 @@ void test4826c()
 }
 
 /************************************************/
-// 5131
+// https://issues.dlang.org/show_bug.cgi?id=5131
 
 struct ICE5131
 {
@@ -799,7 +799,7 @@ void test5131()
 }
 
 /************************************************/
-// 6178
+// https://issues.dlang.org/show_bug.cgi?id=6178
 
 bool test6178a()
 {
@@ -1036,7 +1036,7 @@ void test6178x()
 }
 
 /************************************************/
-// 10595
+// https://issues.dlang.org/show_bug.cgi?id=10595
 
 struct S10595
 {
@@ -1073,14 +1073,13 @@ void test10595()
         Wrap10595[int] wrap;
 
         wrap[0] = Wrap10595();
-        wrap[0] = 0;  // note: using 'alias this' to assign
 
         assert(wrap[0].s.test());  // failure
     }
 }
 
 /************************************************/
-// 10970
+// https://issues.dlang.org/show_bug.cgi?id=10970
 
 struct RefCounted10970(T) //if (!is(T == class))
 {
@@ -1119,7 +1118,7 @@ void test10970()
 }
 
 /************************************************/
-// 6433
+// https://issues.dlang.org/show_bug.cgi?id=6433
 
 void test6433()
 {
@@ -1138,7 +1137,7 @@ void test6433()
 }
 
 /************************************************/
-// 6612
+// https://issues.dlang.org/show_bug.cgi?id=6612
 
 void test6612()
 {
@@ -1150,7 +1149,7 @@ void test6612()
 }
 
 /************************************************/
-// 7365
+// https://issues.dlang.org/show_bug.cgi?id=7365
 
 struct TickDuration
 {
@@ -1197,7 +1196,7 @@ void test6799()
 }
 
 /************************************************/
-// 11359
+// https://issues.dlang.org/show_bug.cgi?id=11359
 
 void test11359()
 {
@@ -1213,7 +1212,7 @@ void test11359()
 }
 
 /************************************************/
-// 11730
+// https://issues.dlang.org/show_bug.cgi?id=11730
 
 struct SysTime11730
 {
@@ -1246,7 +1245,7 @@ void test11730()
 }
 
 /************************************************/
-// 14089
+// https://issues.dlang.org/show_bug.cgi?id=14089
 
 struct S14089
 {
@@ -1263,7 +1262,7 @@ void test14089()
 }
 
 /************************************************/
-// 14144
+// https://issues.dlang.org/show_bug.cgi?id=14144
 
 struct JSON14144
 {
@@ -1291,7 +1290,7 @@ void test14144()
 }
 
 /************************************************/
-// 14321
+// https://issues.dlang.org/show_bug.cgi?id=14321
 
 void test14321()
 {
@@ -1327,6 +1326,20 @@ void test14321()
     assert(Bar.op == "");
     bars["test"] = Bar(42);     // assignment
     assert(Bar.op == "d");
+}
+
+/************************************************/
+// https://issues.dlang.org/show_bug.cgi?id=19112
+
+void test19112()
+{
+    int[int[1]] aa;
+    aa[[2]] = 1;
+    assert([2] in aa);
+
+    int[int[]] aa2 = [[1, 2, 3]: 4];
+    int[3] k = [1, 2, 3];
+    assert(*(k in aa2) == 4);
 }
 
 /************************************************/
@@ -1380,6 +1393,7 @@ int main()
     test11730();
     test14089();
     test14321();
+    test19112();
 
     printf("Success\n");
     return 0;

@@ -2256,6 +2256,7 @@ else version (Darwin)
     // inode functions by appending $INODE64 to newer 64-bit inode functions.
     version (OSX)
     {
+<<<<<<< HEAD
         version (AArch64)
         {
             int fstat(int, stat_t*);
@@ -2268,6 +2269,11 @@ else version (Darwin)
             pragma(mangle, "lstat$INODE64") int lstat(const scope char*, stat_t*);
             pragma(mangle, "stat$INODE64")  int stat(const scope char*, stat_t*);
         }
+=======
+        pragma(mangle, "fstat$INODE64") int fstat(int, stat_t*);
+        pragma(mangle, "lstat$INODE64") int lstat(const scope char*, stat_t*);
+        pragma(mangle, "stat$INODE64")  int stat(const scope char*, stat_t*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
     else
     {
@@ -2278,6 +2284,7 @@ else version (Darwin)
 }
 else version (FreeBSD)
 {
+<<<<<<< HEAD
     version (GNU)
     {
         int   fstat(int, stat_t*);
@@ -2299,6 +2306,11 @@ else version (FreeBSD)
             pragma(mangle, "stat@FBSD_1.0")  int   stat(const scope char*, stat_t*);
         }
     }
+=======
+    pragma(mangle, "fstat@FBSD_1.0") int   fstat(int, stat_t*);
+    pragma(mangle, "lstat@FBSD_1.0") int   lstat(const scope char*, stat_t*);
+    pragma(mangle, "stat@FBSD_1.0")  int   stat(const scope char*, stat_t*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (NetBSD)
 {
@@ -2418,6 +2430,7 @@ else version (FreeBSD)
     enum S_IFLNK    = 0xA000; // octal 0120000
     enum S_IFSOCK   = 0xC000; // octal 0140000
 
+<<<<<<< HEAD
     version (GNU)
     {
         int mknod(const scope char*, mode_t, dev_t);
@@ -2429,6 +2442,9 @@ else version (FreeBSD)
         else
             pragma(mangle, "mknod@FBSD_1.0") int mknod(const scope char*, mode_t, dev_t);
     }
+=======
+    pragma(mangle, "mknod@FBSD_1.0") int mknod(const scope char*, mode_t, dev_t);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (NetBSD)
 {

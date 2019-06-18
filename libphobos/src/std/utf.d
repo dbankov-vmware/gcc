@@ -7,6 +7,7 @@
     $(D '\u0000' &lt;= character &lt;= '\U0010FFFF').
 
 $(SCRIPT inhibitQuickIndex = 1;)
+$(DIVC quickindex,
 $(BOOKTABLE,
 $(TR $(TH Category) $(TH Functions))
 $(TR $(TD Decode) $(TD
@@ -47,29 +48,32 @@ $(TR $(TD Miscellaneous) $(TD
     $(LREF UseReplacementDchar)
     $(LREF UTFException)
 ))
-)
+))
     See_Also:
         $(LINK2 http://en.wikipedia.org/wiki/Unicode, Wikipedia)<br>
         $(LINK http://www.cl.cam.ac.uk/~mgk25/unicode.html#utf-8)<br>
         $(LINK http://anubis.dkuug.dk/JTC1/SC2/WG2/docs/n1335)
-    Copyright: Copyright Digital Mars 2000 - 2012.
+    Copyright: Copyright The D Language Foundation 2000 - 2012.
     License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
-    Authors:   $(HTTP digitalmars.com, Walter Bright) and Jonathan M Davis
-    Source:    $(PHOBOSSRC std/_utf.d)
+    Authors:   $(HTTP digitalmars.com, Walter Bright) and
+               $(HTTP jmdavisprog.com, Jonathan M Davis)
+    Source:    $(PHOBOSSRC std/utf.d)
    +/
 module std.utf;
 
-import std.exception;  // basicExceptionCtors
-import std.meta;       // AliasSeq
+import std.exception : basicExceptionCtors;
+import core.exception : UnicodeException;
+import std.meta : AliasSeq;
 import std.range.primitives;
-import std.traits;     // isSomeChar, isSomeString
-import std.typecons;   // Flag, Yes, No
+import std.traits : isAutodecodableString, isPointer, isSomeChar,
+    isSomeString, isStaticArray, Unqual;
+import std.typecons : Flag, Yes, No;
 
 
 /++
     Exception thrown on errors in std.utf functions.
   +/
-class UTFException : Exception
+class UTFException : UnicodeException
 {
     import core.internal.string : unsignedToTempString, UnsignedStringBuf;
 
@@ -87,23 +91,30 @@ class UTFException : Exception
         return this;
     }
 
-    // FIXME: Use std.exception.basicExceptionCtors here once bug #11500 is fixed
+    // FIXME: Use std.exception.basicExceptionCtors here once
+    // https://issues.dlang.org/show_bug.cgi?id=11500 is fixed
 
+    /**
+    Standard exception constructors.
+     */
     this(string msg, string file = __FILE__, size_t line = __LINE__,
          Throwable next = null) @nogc @safe pure nothrow
     {
-        super(msg, file, line, next);
+        super(msg, 0, file, line, next);
     }
-
+    /// ditto
     this(string msg, size_t index, string file = __FILE__,
          size_t line = __LINE__, Throwable next = null) @safe pure nothrow
     {
         UnsignedStringBuf buf = void;
         msg ~= " (at index " ~ unsignedToTempString(index, buf, 10) ~ ")";
-        super(msg, file, line, next);
+        super(msg, index, file, line, next);
     }
 
-
+    /**
+    Returns:
+        A `string` detailing the invalid UTF sequence.
+     */
     override string toString() const
     {
         if (len == 0)
@@ -137,6 +148,19 @@ class UTFException : Exception
 
         return result;
     }
+}
+
+///
+@safe unittest
+{
+    import std.exception : assertThrown;
+
+    char[4] buf;
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xD800));
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xDBFF));
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xDC00));
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xDFFF));
+    assertThrown!UTFException(encode(buf, cast(dchar) 0x110000));
 }
 
 /*
@@ -240,16 +264,25 @@ if (isSomeChar!Char)
         c = code point to check
 
     Returns:
-        $(D true) iff $(D c) is a valid Unicode code point
+        `true` if and only if `c` is a valid Unicode code point
 
     Note:
-    $(D '\uFFFE') and $(D '\uFFFF') are considered valid by $(D isValidDchar),
+    `'\uFFFE'` and `'\uFFFF'` are considered valid by `isValidDchar`,
     as they are permitted for internal use by an application, but they are
     not allowed for interchange by the Unicode standard.
   +/
 bool isValidDchar(dchar c) pure nothrow @safe @nogc
 {
     return c < 0xD800 || (c > 0xDFFF && c <= 0x10FFFF);
+}
+
+///
+@safe @nogc pure nothrow unittest
+{
+    assert( isValidDchar(cast(dchar) 0x41));
+    assert( isValidDchar(cast(dchar) 0x00));
+    assert(!isValidDchar(cast(dchar) 0xD800));
+    assert(!isValidDchar(cast(dchar) 0x11FFFF));
 }
 
 pure nothrow @safe @nogc unittest
@@ -275,13 +308,13 @@ pure nothrow @safe @nogc unittest
 
 
 /++
-    Calculate the length of the UTF sequence starting at $(D index)
-    in $(D str).
+    Calculate the length of the UTF sequence starting at `index`
+    in `str`.
 
     Params:
-        str = input range of UTF code units. Must be random access if
-        $(D index) is passed
-        index = starting index of UTF sequence (default: $(D 0))
+        str = $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+        of UTF code units. Must be random access if `index` is passed
+        index = starting index of UTF sequence (default: `0`)
 
     Returns:
         The number of code units in the UTF sequence. For UTF-8, this is a
@@ -289,11 +322,11 @@ pure nothrow @safe @nogc unittest
         For UTF-16, it is either 1 or 2. For UTF-32, it is always 1.
 
     Throws:
-        May throw a $(D UTFException) if $(D str[index]) is not the start of a
+        May throw a `UTFException` if `str[index]` is not the start of a
         valid UTF sequence.
 
     Note:
-        $(D stride) will only analyze the first $(D str[index]) element. It
+        `stride` will only analyze the first `str[index]` element. It
         will not fully verify the validity of the UTF sequence, nor even verify
         the presence of the sequence: it will not actually guarantee that
         $(D index + stride(str, index) <= str.length).
@@ -328,23 +361,13 @@ if (is(S : const char[]) ||
         return strideImpl(c, 0);
 }
 
-private uint strideImpl(char c, size_t index) @trusted pure
-in { assert(c & 0x80); }
-body
-{
-    import core.bitop : bsr;
-    immutable msbs = 7 - bsr((~uint(c)) & 0xFF);
-    if (c == 0xFF || msbs < 2 || msbs > 4)
-        throw new UTFException("Invalid UTF-8 sequence", index);
-    return msbs;
-}
-
 @system unittest
 {
     import core.exception : AssertError;
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(string s, dchar c, size_t i = 0, size_t line = __LINE__)
     {
         enforce(stride(s, i) == codeLength!char(c),
@@ -453,6 +476,7 @@ if (isInputRange!S && is(Unqual!(ElementType!S) == wchar))
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(wstring s, dchar c, size_t i = 0, size_t line = __LINE__)
     {
         enforce(stride(s, i) == codeLength!wchar(c),
@@ -526,12 +550,23 @@ if (is(S : const dchar[]) ||
     return 1;
 }
 
+///
+@safe unittest
+{
+    assert("a".stride == 1);
+    assert("λ".stride == 2);
+    assert("aλ".stride == 1);
+    assert("aλ".stride(1) == 2);
+    assert("𐐷".stride == 4);
+}
+
 @system unittest
 {
     import core.exception : AssertError;
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(dstring s, dchar c, size_t i = 0, size_t line = __LINE__)
     {
         enforce(stride(s, i) == codeLength!dchar(c),
@@ -593,14 +628,25 @@ if (is(S : const dchar[]) ||
     });
 }
 
+private uint strideImpl(char c, size_t index) @trusted pure
+in { assert(c & 0x80); }
+do
+{
+    import core.bitop : bsr;
+    immutable msbs = 7 - bsr((~uint(c)) & 0xFF);
+    if (c == 0xFF || msbs < 2 || msbs > 4)
+        throw new UTFException("Invalid UTF-8 sequence", index);
+    return msbs;
+}
+
 /++
     Calculate the length of the UTF sequence ending one code unit before
-    $(D index) in $(D str).
+    `index` in `str`.
 
     Params:
         str = bidirectional range of UTF code units. Must be random access if
-        $(D index) is passed
-        index = index one past end of UTF sequence (default: $(D str.length))
+        `index` is passed
+        index = index one past end of UTF sequence (default: `str.length`)
 
     Returns:
         The number of code units in the UTF sequence. For UTF-8, this is a
@@ -608,11 +654,11 @@ if (is(S : const dchar[]) ||
         For UTF-16, it is either 1 or 2. For UTF-32, it is always 1.
 
     Throws:
-        May throw a $(D UTFException) if $(D str[index]) is not one past the
+        May throw a `UTFException` if `str[index]` is not one past the
         end of a valid UTF sequence.
 
     Note:
-        $(D strideBack) will only analyze the element at $(D str[index - 1])
+        `strideBack` will only analyze the element at $(D str[index - 1])
         element. It will not fully verify the validity of the UTF sequence, nor
         even verify the presence of the sequence: it will not actually
         guarantee that $(D strideBack(str, index) <= index).
@@ -630,7 +676,7 @@ if (is(S : const char[]) ||
 
     if (index >= 4) //single verification for most common case
     {
-        foreach (i; AliasSeq!(2, 3, 4))
+        static foreach (i; 2 .. 5)
         {
             if ((str[index-i] & 0b1100_0000) != 0b1000_0000)
                 return i;
@@ -638,7 +684,7 @@ if (is(S : const char[]) ||
     }
     else
     {
-        foreach (i; AliasSeq!(2, 3))
+        static foreach (i; 2 .. 4)
         {
             if (index >= i && (str[index-i] & 0b1100_0000) != 0b1000_0000)
                 return i;
@@ -678,6 +724,7 @@ if (isBidirectionalRange!S && is(Unqual!(ElementType!S) == char) && !isRandomAcc
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(string s, dchar c, size_t i = size_t.max, size_t line = __LINE__)
     {
         enforce(strideBack(s, i == size_t.max ? s.length : i) == codeLength!char(c),
@@ -775,6 +822,7 @@ if (is(S : const wchar[]) ||
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(wstring s, dchar c, size_t i = size_t.max, size_t line = __LINE__)
     {
         enforce(strideBack(s, i == size_t.max ? s.length : i) == codeLength!wchar(c),
@@ -854,12 +902,23 @@ if (isBidirectionalRange!S && is(Unqual!(ElementEncodingType!S) == dchar))
     return 1;
 }
 
+///
+@safe unittest
+{
+    assert("a".strideBack == 1);
+    assert("λ".strideBack == 2);
+    assert("aλ".strideBack == 2);
+    assert("aλ".strideBack(1) == 1);
+    assert("𐐷".strideBack == 4);
+}
+
 @system unittest
 {
     import core.exception : AssertError;
     import std.conv : to;
     import std.exception;
     import std.string : format;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     static void test(dstring s, dchar c, size_t i = size_t.max, size_t line = __LINE__)
     {
         enforce(strideBack(s, i == size_t.max ? s.length : i) == codeLength!dchar(c),
@@ -923,9 +982,9 @@ if (isBidirectionalRange!S && is(Unqual!(ElementEncodingType!S) == dchar))
 
 
 /++
-    Given $(D index) into $(D str) and assuming that $(D index) is at the start
-    of a UTF sequence, $(D toUCSindex) determines the number of UCS characters
-    up to $(D index). So, $(D index) is the index of a code unit at the
+    Given `index` into `str` and assuming that `index` is at the start
+    of a UTF sequence, `toUCSindex` determines the number of UCS characters
+    up to `index`. So, `index` is the index of a code unit at the
     beginning of a code point, and the return value is how many code points into
     the string that that code point is.
   +/
@@ -972,8 +1031,8 @@ if (isSomeChar!C)
 
 
 /++
-    Given a UCS index $(D n) into $(D str), returns the UTF index.
-    So, $(D n) is how many code points into the string the code point is, and
+    Given a UCS index `n` into `str`, returns the UTF index.
+    So, `n` is how many code points into the string the code point is, and
     the array index of the code unit is returned.
   +/
 size_t toUTFindex(C)(const(C)[] str, size_t n) @safe pure
@@ -1016,10 +1075,20 @@ if (isSomeChar!C)
 /// Whether or not to replace invalid UTF with $(LREF replacementDchar)
 alias UseReplacementDchar = Flag!"useReplacementDchar";
 
+// Reduce distinct instantiations of decodeImpl.
+private template TypeForDecode(T)
+{
+    import std.traits : isDynamicArray;
+    static if (isDynamicArray!T && is(T : E[], E) && __traits(isArithmetic, E) && !is(E == shared))
+        alias TypeForDecode = const(Unqual!E)[];
+    else
+        alias TypeForDecode = T;
+}
+
 /++
-    Decodes and returns the code point starting at $(D str[index]). $(D index)
+    Decodes and returns the code point starting at `str[index]`. `index`
     is advanced to one past the decoded code point. If the code point is not
-    well-formed, then a $(D UTFException) is thrown and $(D index) remains
+    well-formed, then a `UTFException` is thrown and `index` remains
     unchanged.
 
     decode will only work with strings and random access ranges of code units
@@ -1035,8 +1104,8 @@ alias UseReplacementDchar = Flag!"useReplacementDchar";
         decoded character
 
     Throws:
-        $(LREF UTFException) if $(D str[index]) is not the start of a valid UTF
-        sequence and useReplacementDchar is $(D No.useReplacementDchar)
+        $(LREF UTFException) if `str[index]` is not the start of a valid UTF
+        sequence and useReplacementDchar is `No.useReplacementDchar`
   +/
 dchar decode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar, S)(auto ref S str, ref size_t index)
 if (!isSomeString!S &&
@@ -1049,14 +1118,15 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     if (str[index] < codeUnitLimit!S)
         return str[index++];
     else
-        return decodeImpl!(true, useReplacementDchar)(str, index);
+        return decodeImpl!(true, useReplacementDchar)(cast(TypeForDecode!S) str, index);
 }
 
+/// ditto
 dchar decode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar, S)(
 auto ref S str, ref size_t index) @trusted pure
 if (isSomeString!S)
@@ -1068,20 +1138,44 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     if (str[index] < codeUnitLimit!S)
         return str[index++];
     else
-        return decodeImpl!(true, useReplacementDchar)(str, index);
+        return decodeImpl!(true, useReplacementDchar)(cast(TypeForDecode!S) str, index);
+}
+
+///
+@safe pure unittest
+{
+    size_t i;
+
+    assert("a".decode(i) == 'a' && i == 1);
+    i = 0;
+    assert("å".decode(i) == 'å' && i == 2);
+    i = 1;
+    assert("aå".decode(i) == 'å' && i == 3);
+    i = 0;
+    assert("å"w.decode(i) == 'å' && i == 1);
+
+    // ë as a multi-code point grapheme
+    i = 0;
+    assert("e\u0308".decode(i) == 'e' && i == 1);
+    // ë as a single code point grapheme
+    i = 0;
+    assert("ë".decode(i) == 'ë' && i == 2);
+    i = 0;
+    assert("ë"w.decode(i) == 'ë' && i == 1);
 }
 
 /++
-    $(D decodeFront) is a variant of $(LREF decode) which specifically decodes
-    the first code point. Unlike $(LREF decode), $(D decodeFront) accepts any
-    input range of code units (rather than just a string or random access
-    range). It also takes the range by $(D ref) and pops off the elements as it
-    decodes them. If $(D numCodeUnits) is passed in, it gets set to the number
+    `decodeFront` is a variant of $(LREF decode) which specifically decodes
+    the first code point. Unlike $(LREF decode), `decodeFront` accepts any
+    $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+    of code units (rather than just a string or random access
+    range). It also takes the range by `ref` and pops off the elements as it
+    decodes them. If `numCodeUnits` is passed in, it gets set to the number
     of code units which were in the code point which was decoded.
 
     Params:
@@ -1093,7 +1187,7 @@ body
         decoded character
 
     Throws:
-        $(LREF UTFException) if $(D str.front) is not the start of a valid UTF
+        $(LREF UTFException) if `str.front` is not the start of a valid UTF
         sequence. If an exception is thrown, then there is no guarantee as to
         the number of code units which were popped off, as it depends on the
         type of range being used and how many code units had to be popped off
@@ -1110,7 +1204,7 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     immutable fst = str.front;
 
@@ -1122,11 +1216,13 @@ body
     }
     else
     {
-        //@@@BUG@@@ 14447 forces canIndex to be done outside of decodeImpl, which
-        //is undesirable, since not all overloads of decodeImpl need it. So, it
-        //should be moved back into decodeImpl once bug# 8521 has been fixed.
+        // https://issues.dlang.org/show_bug.cgi?id=14447 forces canIndex to be
+        // done outside of decodeImpl, which is undesirable, since not all
+        // overloads of decodeImpl need it. So, it should be moved back into
+        // decodeImpl once https://issues.dlang.org/show_bug.cgi?id=8521
+        // has been fixed.
         enum canIndex = isRandomAccessRange!S && hasSlicing!S && hasLength!S;
-        immutable retval = decodeImpl!(canIndex, useReplacementDchar)(str, numCodeUnits);
+        immutable retval = decodeImpl!(canIndex, useReplacementDchar)(cast(TypeForDecode!S) str, numCodeUnits);
 
         // The other range types were already popped by decodeImpl.
         static if (isRandomAccessRange!S && hasSlicing!S && hasLength!S)
@@ -1136,6 +1232,7 @@ body
     }
 }
 
+/// ditto
 dchar decodeFront(UseReplacementDchar useReplacementDchar = No.useReplacementDchar, S)(
 ref S str, out size_t numCodeUnits) @trusted pure
 if (isSomeString!S)
@@ -1147,7 +1244,7 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     if (str[0] < codeUnitLimit!S)
     {
@@ -1158,7 +1255,7 @@ body
     }
     else
     {
-        immutable retval = decodeImpl!(true, useReplacementDchar)(str, numCodeUnits);
+        immutable retval = decodeImpl!(true, useReplacementDchar)(cast(TypeForDecode!S) str, numCodeUnits);
         str = str[numCodeUnits .. $];
         return retval;
     }
@@ -1172,12 +1269,26 @@ if (isInputRange!S && isSomeChar!(ElementType!S))
     return decodeFront!useReplacementDchar(str, numCodeUnits);
 }
 
+///
+@safe pure unittest
+{
+    import std.range.primitives;
+    string str = "Hello, World!";
+
+    assert(str.decodeFront == 'H' && str == "ello, World!");
+    str = "å";
+    assert(str.decodeFront == 'å' && str.empty);
+    str = "å";
+    size_t i;
+    assert(str.decodeFront(i) == 'å' && i == 2 && str.empty);
+}
+
 /++
-    $(D decodeBack) is a variant of $(LREF decode) which specifically decodes
-    the last code point. Unlike $(LREF decode), $(D decodeBack) accepts any
+    `decodeBack` is a variant of $(LREF decode) which specifically decodes
+    the last code point. Unlike $(LREF decode), `decodeBack` accepts any
     bidirectional range of code units (rather than just a string or random access
-    range). It also takes the range by $(D ref) and pops off the elements as it
-    decodes them. If $(D numCodeUnits) is passed in, it gets set to the number
+    range). It also takes the range by `ref` and pops off the elements as it
+    decodes them. If `numCodeUnits` is passed in, it gets set to the number
     of code units which were in the code point which was decoded.
 
     Params:
@@ -1189,9 +1300,9 @@ if (isInputRange!S && isSomeChar!(ElementType!S))
         A decoded UTF character.
 
     Throws:
-        $(LREF UTFException) if $(D str.back) is not the end of a valid UTF
-        sequence. If an exception is thrown, the $(D str) itself remains unchanged,
-        but there is no guarantee as to the value of $(D numCodeUnits) (when passed).
+        $(LREF UTFException) if `str.back` is not the end of a valid UTF
+        sequence. If an exception is thrown, the `str` itself remains unchanged,
+        but there is no guarantee as to the value of `numCodeUnits` (when passed).
   +/
 dchar decodeBack(UseReplacementDchar useReplacementDchar = No.useReplacementDchar, S)(
     ref S str, out size_t numCodeUnits)
@@ -1204,7 +1315,7 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     if (str[$ - 1] < codeUnitLimit!S)
     {
@@ -1218,7 +1329,7 @@ body
         numCodeUnits = strideBack(str);
         immutable newLength = str.length - numCodeUnits;
         size_t index = newLength;
-        immutable retval = decodeImpl!(true, useReplacementDchar)(str, index);
+        immutable retval = decodeImpl!(true, useReplacementDchar)(cast(TypeForDecode!S) str, index);
         str = str[0 .. newLength];
         return retval;
     }
@@ -1237,7 +1348,7 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     if (str.back < codeUnitLimit!S)
     {
@@ -1252,7 +1363,7 @@ body
         static if (isRandomAccessRange!S)
         {
             size_t index = str.length - numCodeUnits;
-            immutable retval = decodeImpl!(true, useReplacementDchar)(str, index);
+            immutable retval = decodeImpl!(true, useReplacementDchar)(cast(TypeForDecode!S) str, index);
             str.popBackExactly(numCodeUnits);
             return retval;
         }
@@ -1268,7 +1379,8 @@ body
             }
             const Char[] codePoint = codeUnits[0 .. numCodeUnits];
             size_t index = 0;
-            immutable retval = decodeImpl!(true, useReplacementDchar)(codePoint, index);
+            immutable retval = decodeImpl!(true, useReplacementDchar)(
+                cast(TypeForDecode!(typeof(codePoint))) codePoint, index);
             str = tmp;
             return retval;
         }
@@ -1288,10 +1400,24 @@ out (result)
 {
     assert(isValidDchar(result));
 }
-body
+do
 {
     size_t numCodeUnits;
     return decodeBack!useReplacementDchar(str, numCodeUnits);
+}
+
+///
+@system pure unittest
+{
+    import std.range.primitives;
+    string str = "Hello, World!";
+
+    assert(str.decodeBack == '!' && str == "Hello, World");
+    str = "å";
+    assert(str.decodeBack == 'å' && str.empty);
+    str = "å";
+    size_t i;
+    assert(str.decodeBack(i) == 'å' && i == 2 && str.empty);
 }
 
 // Gives the maximum value that a code unit for the given range type can hold.
@@ -1349,7 +1475,8 @@ if (
     else
         alias pstr = str;
 
-    //@@@BUG@@@ 14447 forces this to be done outside of decodeImpl
+    // https://issues.dlang.org/show_bug.cgi?id=14447 forces this to be done
+    // outside of decodeImpl
     //enum canIndex = is(S : const char[]) || (isRandomAccessRange!S && hasSlicing!S && hasLength!S);
 
     static if (canIndex)
@@ -1565,7 +1692,8 @@ if (is(S : const wchar[]) || (isInputRange!S && is(Unqual!(ElementEncodingType!S
     else
         alias pstr = str;
 
-    //@@@BUG@@@ 14447 forces this to be done outside of decodeImpl
+    // https://issues.dlang.org/show_bug.cgi?id=14447 forces this to be done
+    // outside of decodeImpl
     //enum canIndex = is(S : const wchar[]) || (isRandomAccessRange!S && hasSlicing!S && hasLength!S);
 
     static if (canIndex)
@@ -1736,13 +1864,14 @@ unittest
 }
 
 
-version (unittest) private void testDecode(R)(R range,
+version (StdUnittest) private void testDecode(R)(R range,
                                              size_t index,
                                              dchar expectedChar,
                                              size_t expectedIndex,
                                              size_t line = __LINE__)
 {
     import core.exception : AssertError;
+    import std.exception : enforce;
     import std.string : format;
 
     static if (hasLength!R)
@@ -1765,12 +1894,13 @@ version (unittest) private void testDecode(R)(R range,
     }
 }
 
-version (unittest) private void testDecodeFront(R)(ref R range,
+version (StdUnittest) private void testDecodeFront(R)(ref R range,
                                                   dchar expectedChar,
                                                   size_t expectedNumCodeUnits,
                                                   size_t line = __LINE__)
 {
     import core.exception : AssertError;
+    import std.exception : enforce;
     import std.string : format;
 
     static if (hasLength!R)
@@ -1790,7 +1920,7 @@ version (unittest) private void testDecodeFront(R)(ref R range,
     }
 }
 
-version (unittest) private void testDecodeBack(R)(ref R range,
+version (StdUnittest) private void testDecodeBack(R)(ref R range,
                                                  dchar expectedChar,
                                                  size_t expectedNumCodeUnits,
                                                  size_t line = __LINE__)
@@ -1801,6 +1931,7 @@ version (unittest) private void testDecodeBack(R)(ref R range,
     else
     {
         import core.exception : AssertError;
+        import std.exception : enforce;
         import std.string : format;
 
         static if (hasLength!R)
@@ -1821,7 +1952,7 @@ version (unittest) private void testDecodeBack(R)(ref R range,
     }
 }
 
-version (unittest) private void testAllDecode(R)(R range,
+version (StdUnittest) private void testAllDecode(R)(R range,
                                                 dchar expectedChar,
                                                 size_t expectedIndex,
                                                 size_t line = __LINE__)
@@ -1835,9 +1966,10 @@ version (unittest) private void testAllDecode(R)(R range,
     testDecodeFront(range, expectedChar, expectedIndex, line);
 }
 
-version (unittest) private void testBadDecode(R)(R range, size_t index, size_t line = __LINE__)
+version (StdUnittest) private void testBadDecode(R)(R range, size_t index, size_t line = __LINE__)
 {
     import core.exception : AssertError;
+    import std.exception : assertThrown, enforce;
     import std.string : format;
 
     immutable initialIndex = index;
@@ -1861,7 +1993,7 @@ version (unittest) private void testBadDecode(R)(R range, size_t index, size_t l
         assertThrown!UTFException(decodeFront(range, index), null, __FILE__, line);
 }
 
-version (unittest) private void testBadDecodeBack(R)(R range, size_t line = __LINE__)
+version (StdUnittest) private void testBadDecodeBack(R)(R range, size_t line = __LINE__)
 {
     // This condition is to allow unit testing all `decode` functions together
     static if (!isBidirectionalRange!R)
@@ -1869,6 +2001,7 @@ version (unittest) private void testBadDecodeBack(R)(R range, size_t line = __LI
     else
     {
         import core.exception : AssertError;
+        import std.exception : assertThrown, enforce;
         import std.string : format;
 
         static if (hasLength!R)
@@ -2085,6 +2218,7 @@ version (unittest) private void testBadDecodeBack(R)(R range, size_t line = __LI
 @safe unittest
 {
     import std.exception;
+    import std.traits : FunctionAttribute, functionAttributes, isSafe;
     assertCTFEable!(
     {
     foreach (S; AliasSeq!( char[], const( char)[],  string,
@@ -2129,13 +2263,13 @@ private dchar _utfException(UseReplacementDchar useReplacementDchar)(string msg,
 }
 
 /++
-    Encodes $(D c) into the static array, $(D buf), and returns the actual
-    length of the encoded character (a number between $(D 1) and $(D 4) for
-    $(D char[4]) buffers and a number between $(D 1) and $(D 2) for
-    $(D wchar[2]) buffers).
+    Encodes `c` into the static array, `buf`, and returns the actual
+    length of the encoded character (a number between `1` and `4` for
+    `char[4]` buffers and a number between `1` and `2` for
+    `wchar[2]` buffers).
 
     Throws:
-        $(D UTFException) if $(D c) is not a valid UTF code point.
+        `UTFException` if `c` is not a valid UTF code point.
   +/
 size_t encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
     out char[4] buf, dchar c) @safe pure
@@ -2178,6 +2312,64 @@ size_t encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
     assert(!isValidDchar(c));
     c = _utfException!useReplacementDchar("Encoding an invalid code point in UTF-8", c);
     goto L3;
+}
+
+///
+@safe unittest
+{
+    import std.exception : assertThrown;
+    import std.typecons : Yes;
+
+    char[4] buf;
+
+    assert(encode(buf, '\u0000') == 1 && buf[0 .. 1] == "\u0000");
+    assert(encode(buf, '\u007F') == 1 && buf[0 .. 1] == "\u007F");
+    assert(encode(buf, '\u0080') == 2 && buf[0 .. 2] == "\u0080");
+    assert(encode(buf, '\uE000') == 3 && buf[0 .. 3] == "\uE000");
+    assert(encode(buf, 0xFFFE) == 3 && buf[0 .. 3] == "\xEF\xBF\xBE");
+    assertThrown!UTFException(encode(buf, cast(dchar) 0x110000));
+
+    encode!(Yes.useReplacementDchar)(buf, cast(dchar) 0x110000);
+    auto slice = buf[];
+    assert(slice.decodeFront == replacementDchar);
+}
+
+///
+@safe unittest
+{
+    import std.exception : assertThrown;
+    import std.typecons : Yes;
+
+    wchar[2] buf;
+
+    assert(encode(buf, '\u0000') == 1 && buf[0 .. 1] == "\u0000");
+    assert(encode(buf, '\uD7FF') == 1 && buf[0 .. 1] == "\uD7FF");
+    assert(encode(buf, '\uE000') == 1 && buf[0 .. 1] == "\uE000");
+    assert(encode(buf, '\U00010000') == 2 && buf[0 .. 2] == "\U00010000");
+    assert(encode(buf, '\U0010FFFF') == 2 && buf[0 .. 2] == "\U0010FFFF");
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xD800));
+
+    encode!(Yes.useReplacementDchar)(buf, cast(dchar) 0x110000);
+    auto slice = buf[];
+    assert(slice.decodeFront == replacementDchar);
+}
+
+///
+@safe unittest
+{
+    import std.exception : assertThrown;
+    import std.typecons : Yes;
+
+    dchar[1] buf;
+
+    assert(encode(buf, '\u0000') == 1 && buf[0] == '\u0000');
+    assert(encode(buf, '\uD7FF') == 1 && buf[0] == '\uD7FF');
+    assert(encode(buf, '\uE000') == 1 && buf[0] == '\uE000');
+    assert(encode(buf, '\U0010FFFF') == 1 && buf[0] == '\U0010FFFF');
+    assertThrown!UTFException(encode(buf, cast(dchar) 0xD800));
+
+    encode!(Yes.useReplacementDchar)(buf, cast(dchar) 0x110000);
+    assert(buf[0] == replacementDchar);
 }
 
 @safe unittest
@@ -2303,10 +2495,10 @@ size_t encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
 
 
 /++
-    Encodes $(D c) in $(D str)'s encoding and appends it to $(D str).
+    Encodes `c` in `str`'s encoding and appends it to `str`.
 
     Throws:
-        $(D UTFException) if $(D c) is not a valid UTF code point.
+        `UTFException` if `c` is not a valid UTF code point.
   +/
 void encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
     ref char[] str, dchar c) @safe pure
@@ -2360,6 +2552,21 @@ void encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
         r ~= buf[0 .. L];
     }
     str = r;
+}
+
+///
+@safe unittest
+{
+    char[] s = "abcd".dup;
+    dchar d1 = 'a';
+    dchar d2 = 'ø';
+
+    encode(s, d1);
+    assert(s.length == 5);
+    assert(s == "abcda");
+    encode(s, d2);
+    assert(s.length == 7);
+    assert(s == "abcdaø");
 }
 
 @safe unittest
@@ -2516,7 +2723,7 @@ void encode(UseReplacementDchar useReplacementDchar = No.useReplacementDchar)(
 
 /++
     Returns the number of code units that are required to encode the code point
-    $(D c) when $(D C) is the character type used to encode it.
+    `c` when `C` is the character type used to encode it.
   +/
 ubyte codeLength(C)(dchar c) @safe pure nothrow @nogc
 if (isSomeChar!C)
@@ -2554,14 +2761,15 @@ if (isSomeChar!C)
 
 
 /++
-    Returns the number of code units that are required to encode $(D str)
-    in a string whose character type is $(D C). This is particularly useful
+    Returns the number of code units that are required to encode `str`
+    in a string whose character type is `C`. This is particularly useful
     when slicing one string with the length of another and the two string
     types use different character types.
 
     Params:
         C = the character type to get the encoding length for
-        input = the input range to calculate the encoding length from
+        input = the $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+        to calculate the encoding length from
     Returns:
         The number of code units in `input` when encoded to `C`
   +/
@@ -2634,11 +2842,11 @@ if (isInputRange!InputRange && !isInfinite!InputRange && is(ElementType!InputRan
 /+
 Internal helper function:
 
-Returns true if it is safe to search for the Codepoint $(D c) inside
+Returns true if it is safe to search for the Codepoint `c` inside
 code units, without decoding.
 
 This is a runtime check that is used an optimization in various functions,
-particularly, in $(D std.string).
+particularly, in `std.string`.
   +/
 package bool canSearchInCodeUnits(C)(dchar c)
 if (isSomeChar!C)
@@ -2674,10 +2882,10 @@ if (isSomeChar!C)
 /* =================== Validation ======================= */
 
 /++
-    Checks to see if $(D str) is well-formed unicode or not.
+    Checks to see if `str` is well-formed unicode or not.
 
     Throws:
-        $(D UTFException) if $(D str) is not well-formed.
+        `UTFException` if `str` is not well-formed.
   +/
 void validate(S)(in S str) @safe pure
 if (isSomeString!S)
@@ -2689,8 +2897,16 @@ if (isSomeString!S)
     }
 }
 
+///
+@safe unittest
+{
+    import std.exception : assertThrown;
+    char[] a = [167, 133, 175];
+    assertThrown!UTFException(validate(a));
+}
 
-@safe unittest // bugzilla 12923
+// https://issues.dlang.org/show_bug.cgi?id=12923
+@safe unittest
 {
     import std.exception;
     assertThrown((){
@@ -2800,6 +3016,19 @@ if (isInputRange!S && !isInfinite!S && isSomeChar!(ElementEncodingType!S))
     return toUTFImpl!dstring(s);
 }
 
+///
+@safe pure unittest
+{
+    import std.algorithm.comparison : equal;
+
+    // these graphemes are two code units in UTF-16 and one in UTF-32
+    assert("𤭢"w.length == 2);
+    assert("𐐷"w.length == 2);
+
+    assert("𤭢"w.toUTF32.equal([0x00024B62]));
+    assert("𐐷"w.toUTF32.equal([0x00010437]));
+}
+
 private T toUTFImpl(T, S)(S s)
 {
     static if (is(S : T))
@@ -2824,36 +3053,36 @@ private T toUTFImpl(T, S)(S s)
 /* =================== toUTFz ======================= */
 
 /++
-    Returns a C-style zero-terminated string equivalent to $(D str). $(D str)
-    must not contain embedded $(D '\0')'s as any C function will treat the first
-    $(D '\0') that it sees as the end of the string. If $(D str.empty) is
-    $(D true), then a string containing only $(D '\0') is returned.
+    Returns a C-style zero-terminated string equivalent to `str`. `str`
+    must not contain embedded `'\0'`'s as any C function will treat the first
+    `'\0'` that it sees as the end of the string. If `str.empty` is
+    `true`, then a string containing only `'\0'` is returned.
 
-    $(D toUTFz) accepts any type of string and is templated on the type of
+    `toUTFz` accepts any type of string and is templated on the type of
     character pointer that you wish to convert to. It will avoid allocating a
     new string if it can, but there's a decent chance that it will end up having
     to allocate a new string - particularly when dealing with character types
-    other than $(D char).
+    other than `char`.
 
-    $(RED Warning 1:) If the result of $(D toUTFz) equals $(D str.ptr), then if
-    anything alters the character one past the end of $(D str) (which is the
-    $(D '\0') character terminating the string), then the string won't be
+    $(RED Warning 1:) If the result of `toUTFz` equals `str.ptr`, then if
+    anything alters the character one past the end of `str` (which is the
+    `'\0'` character terminating the string), then the string won't be
     zero-terminated anymore. The most likely scenarios for that are if you
-    append to $(D str) and no reallocation takes place or when $(D str) is a
+    append to `str` and no reallocation takes place or when `str` is a
     slice of a larger array, and you alter the character in the larger array
-    which is one character past the end of $(D str). Another case where it could
+    which is one character past the end of `str`. Another case where it could
     occur would be if you had a mutable character array immediately after
-    $(D str) in memory (for example, if they're member variables in a
+    `str` in memory (for example, if they're member variables in a
     user-defined type with one declared right after the other) and that
-    character array happened to start with $(D '\0'). Such scenarios will never
+    character array happened to start with `'\0'`. Such scenarios will never
     occur if you immediately use the zero-terminated string after calling
-    $(D toUTFz) and the C function using it doesn't keep a reference to it.
+    `toUTFz` and the C function using it doesn't keep a reference to it.
     Also, they are unlikely to occur even if you save the zero-terminated string
     (the cases above would be among the few examples of where it could happen).
     However, if you save the zero-terminate string and want to be absolutely
     certain that the string stays zero-terminated, then simply append a
-    $(D '\0') to the string and use its $(D ptr) property rather than calling
-    $(D toUTFz).
+    `'\0'` to the string and use its `ptr` property rather than calling
+    `toUTFz`.
 
     $(RED Warning 2:) When passing a character pointer to a C function, and the
     C function keeps it around for any reason, make sure that you keep a
@@ -3068,16 +3297,24 @@ if (isSomeString!S && isPointer!P && isSomeChar!(typeof(*P.init)) &&
 
 
 /++
-    $(D toUTF16z) is a convenience function for $(D toUTFz!(const(wchar)*)).
+    `toUTF16z` is a convenience function for `toUTFz!(const(wchar)*)`.
 
-    Encodes string $(D s) into UTF-16 and returns the encoded string.
-    $(D toUTF16z) is suitable for calling the 'W' functions in the Win32 API
-    that take an $(D LPWSTR) or $(D LPCWSTR) argument.
+    Encodes string `s` into UTF-16 and returns the encoded string.
+    `toUTF16z` is suitable for calling the 'W' functions in the Win32 API
+    that take an `LPCWSTR` argument.
   +/
 const(wchar)* toUTF16z(C)(const(C)[] str) @safe pure
 if (isSomeChar!C)
 {
     return toUTFz!(const(wchar)*)(str);
+}
+
+///
+@system unittest
+{
+    string str = "Hello, World!";
+    const(wchar)* p = str.toUTF16z;
+    assert(p[str.length] == '\0');
 }
 
 @safe pure unittest
@@ -3123,19 +3360,28 @@ if (isSomeChar!C)
 
 
 /++
-    Returns the total number of code points encoded in $(D str).
+    Returns the total number of code points encoded in `str`.
 
     Supercedes: This function supercedes $(LREF toUCSindex).
 
     Standards: Unicode 5.0, ASCII, ISO-8859-1, WINDOWS-1252
 
     Throws:
-        $(D UTFException) if $(D str) is not well-formed.
+        `UTFException` if `str` is not well-formed.
   +/
 size_t count(C)(const(C)[] str) @trusted pure nothrow @nogc
 if (isSomeChar!C)
 {
     return walkLength(str);
+}
+
+///
+@safe pure nothrow @nogc unittest
+{
+    assert(count("") == 0);
+    assert(count("a") == 1);
+    assert(count("abc") == 3);
+    assert(count("\u20AC100") == 4);
 }
 
 @safe pure nothrow @nogc unittest
@@ -3152,8 +3398,9 @@ if (isSomeChar!C)
 
 
 // Ranges of code units for testing.
-version (unittest)
+version (StdUnittest)
 {
+private:
     struct InputCU(C)
     {
         import std.conv : to;
@@ -3277,12 +3524,12 @@ enum dchar replacementDchar = '\uFFFD';
  * one while iterating over the resulting range will give nonsensical results.
  *
  * Params:
- *      r = an input range of characters (including strings) or a type that
- *          implicitly converts to a string type.
+ *      r = an $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+ *      of characters (including strings) or a type that implicitly converts to a string type.
  * Returns:
- *     If `r` is not an auto-decodable string (i.e. a narrow string or a
- *     user-defined type that implicits converts to a string type), then `r`
- *     is returned.
+ *      If `r` is not an auto-decodable string (i.e. a narrow string or a
+ *      user-defined type that implicits converts to a string type), then `r`
+ *      is returned.
  *
  *      Otherwise, `r` is converted to its corresponding string type (if it's
  *      not already a string) and wrapped in a random-access range where the
@@ -3293,6 +3540,11 @@ enum dchar replacementDchar = '\uFFFD';
  *      of characters on its own (i.e. it has the input range API as member
  *      functions), $(I and) it's implicitly convertible to a string type, then
  *      `r` is returned, and no implicit conversion takes place.
+ *
+ *      If `r` is wrapped in a new range, then that range has a `source`
+ *      property for returning the string that's currently contained within that
+ *      range.
+ *
  * See_Also:
  *      Refer to the $(MREF std, uni) docs for a reference on Unicode
  *      terminology.
@@ -3305,6 +3557,7 @@ if (isAutodecodableString!R ||
     isInputRange!R && isSomeChar!(ElementEncodingType!R) ||
     (is(R : const dchar[]) && !isStaticArray!R))
 {
+    import std.traits : isNarrowString, StringTypeOf;
     static if (isNarrowString!R ||
                // This would be cleaner if we had a way to check whether a type
                // was a range without any implicit conversions.
@@ -3315,23 +3568,22 @@ if (isAutodecodableString!R ||
         {
         @safe pure nothrow @nogc:
 
-            @property bool empty() const     { return str.length == 0; }
-            @property auto ref front() inout { return str[0]; }
-            void popFront()                  { str = str[1 .. $]; }
+            @property bool empty() const     { return source.length == 0; }
+            @property auto ref front() inout { return source[0]; }
+            void popFront()                  { source = source[1 .. $]; }
 
-            @property auto save() { return ByCodeUnitImpl(str.save); }
+            @property auto save() { return ByCodeUnitImpl(source.save); }
 
-            @property auto ref back() inout { return str[$ - 1]; }
-            void popBack()                  { str = str[0 .. $-1]; }
+            @property auto ref back() inout { return source[$ - 1]; }
+            void popBack()                  { source = source[0 .. $-1]; }
 
-            auto ref opIndex(size_t index) inout     { return str[index]; }
-            auto opSlice(size_t lower, size_t upper) { return ByCodeUnitImpl(str[lower .. upper]); }
+            auto ref opIndex(size_t index) inout     { return source[index]; }
+            auto opSlice(size_t lower, size_t upper) { return ByCodeUnitImpl(source[lower .. upper]); }
 
-            @property size_t length() const { return str.length; }
+            @property size_t length() const { return source.length; }
             alias opDollar = length;
 
-          private:
-            StringTypeOf!R str;
+            StringTypeOf!R source;
         }
 
         static assert(isRandomAccessRange!ByCodeUnitImpl);
@@ -3382,6 +3634,25 @@ if (isAutodecodableString!R ||
     // Because string is UTF-8, the code unit at index 2 is just
     // the first of a sequence that encodes 'ë'
     assert(noel2.byCodeUnit[2] != 'ë');
+}
+
+/// `byCodeUnit` exposes a `source` property when wrapping narrow strings.
+@safe unittest
+{
+    import std.algorithm.comparison : equal;
+    import std.range : popFrontN;
+    {
+        auto range = byCodeUnit("hello world");
+        range.popFrontN(3);
+        assert(equal(range.save, "lo world"));
+        string str = range.source;
+        assert(str == "lo world");
+    }
+    // source only exists if the range was wrapped
+    {
+        auto range = byCodeUnit("hello world"d);
+        static assert(!__traits(compiles, range.source));
+    }
 }
 
 @safe pure nothrow @nogc unittest
@@ -3674,7 +3945,8 @@ if (isAutodecodableString!R ||
 }
 
 /****************************
- * Iterate an input range of characters by char, wchar, or dchar.
+ * Iterate an $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+ * of characters by char, wchar, or dchar.
  * These aliases simply forward to $(LREF byUTF) with the
  * corresponding C argument.
  *
@@ -3883,8 +4155,8 @@ pure @safe nothrow @nogc unittest
     foreach (c; s[].byDchar()) { }
 }
 
-version (unittest)
-int impureVariable;
+version (StdUnittest)
+private int impureVariable;
 
 @system unittest
 {
@@ -3909,18 +4181,27 @@ int impureVariable;
 }
 
 /****************************
- * Iterate an input range of characters by char type `C` by
- * encoding the elements of the range.
+ * Iterate an $(REF_ALTTEXT input range, isInputRange, std,range,primitives)
+ * of characters by char type `C` by encoding the elements of the range.
  *
- * UTF sequences that cannot be converted to the specified encoding are
+ * UTF sequences that cannot be converted to the specified encoding are either
  * replaced by U+FFFD per "5.22 Best Practice for U+FFFD Substitution"
- * of the Unicode Standard 6.2. Hence byUTF is not symmetric.
+ * of the Unicode Standard 6.2 or result in a thrown UTFException.
+ *  Hence byUTF is not symmetric.
  * This algorithm is lazy, and does not allocate memory.
  * `@nogc`, `pure`-ity, `nothrow`, and `@safe`-ty are inferred from the
  * `r` parameter.
  *
  * Params:
  *      C = `char`, `wchar`, or `dchar`
+ *      useReplacementDchar = UseReplacementDchar.yes means replace invalid UTF with `replacementDchar`,
+ *                            UseReplacementDchar.no means throw `UTFException` for invalid UTF
+ *
+ * Throws:
+ *      `UTFException` if invalid UTF sequence and `useReplacementDchar` is set to `UseReplacementDchar.yes`
+ *
+ * GC:
+ *      Does not use GC if `useReplacementDchar` is set to `UseReplacementDchar.no`
  *
  * Returns:
  *      A forward range if `R` is a range and not auto-decodable, as defined by
@@ -3933,7 +4214,7 @@ int impureVariable;
  *
  *      Otherwise, an input range of characters.
  */
-template byUTF(C)
+template byUTF(C, UseReplacementDchar useReplacementDchar = Yes.useReplacementDchar)
 if (isSomeChar!C)
 {
     static if (!is(Unqual!C == C))
@@ -3955,10 +4236,92 @@ if (isSomeChar!C)
         {
             return r.byCodeUnit();
         }
+        else static if (is(C == dchar))
+        {
+            static struct Result
+            {
+                enum Empty = uint.max;  // range is empty or just constructed
+
+                this(return R r)
+                {
+                    this.r = r;
+                }
+
+                this(return R r, uint buff)
+                {
+                    this.r = r;
+                    this.buff = buff;
+                }
+
+
+                @property bool empty()
+                {
+                    return buff == Empty && r.empty;
+                }
+
+                @property dchar front() scope // 'scope' required by call to decodeFront() below
+                {
+                    if (buff == Empty)
+                    {
+                        auto c = r.front;
+
+                        static if (is(RC == wchar))
+                            enum firstMulti = 0xD800; // First high surrogate.
+                        else
+                            enum firstMulti = 0x80; // First non-ASCII.
+                        if (c < firstMulti)
+                        {
+                            r.popFront;
+                            buff = cast(dchar) c;
+                        }
+                        else
+                        {
+                            buff = () @trusted { return decodeFront!(useReplacementDchar)(r); }();
+                        }
+                    }
+                    return cast(dchar) buff;
+                }
+
+                void popFront()
+                {
+                    if (buff == Empty)
+                        front();
+                    buff = Empty;
+                }
+
+                static if (isForwardRange!R)
+                {
+                    @property auto save()
+                    {
+                        return Result(r.save, buff);
+                    }
+                }
+
+            private:
+
+                R r;
+                uint buff = Empty;      // one character lookahead buffer
+            }
+
+            return Result(r);
+        }
         else
         {
             static struct Result
             {
+                this(return R r)
+                {
+                    this.r = r;
+                }
+
+                this(return R r, ushort pos, ushort fill, C[4 / C.sizeof] buf)
+                {
+                    this.r = r;
+                    this.pos = pos;
+                    this.fill = fill;
+                    this.buf = buf;
+                }
+
                 @property bool empty()
                 {
                     return pos == fill && r.empty;
@@ -3971,7 +4334,11 @@ if (isSomeChar!C)
                         pos = 0;
                         auto c = r.front;
 
-                        if (c <= 0x7F)
+                        static if (C.sizeof >= 2 && RC.sizeof >= 2)
+                            enum firstMulti = 0xD800; // First high surrogate.
+                        else
+                            enum firstMulti = 0x80; // First non-ASCII.
+                        if (c < firstMulti)
                         {
                             fill = 1;
                             r.popFront;
@@ -3985,8 +4352,8 @@ if (isSomeChar!C)
                                 dchar dc = c;
                             }
                             else
-                                dchar dc = () @trusted { return decodeFront!(Yes.useReplacementDchar)(r); }();
-                            fill = cast(ushort) encode!(Yes.useReplacementDchar)(buf, dc);
+                                dchar dc = () @trusted { return decodeFront!(useReplacementDchar)(r); }();
+                            fill = cast(ushort) encode!(useReplacementDchar)(buf, dc);
                         }
                     }
                     return buf[pos];
@@ -4001,22 +4368,17 @@ if (isSomeChar!C)
 
                 static if (isForwardRange!R)
                 {
-                    @property auto save() return scope
-                    /* `return scope` cannot be inferred because compiler does not
-                     * track it backwards from assignment to local `ret`
-                     */
+                    @property auto save()
                     {
-                        auto ret = this;
-                        ret.r = r.save;
-                        return ret;
+                        return Result(r.save, pos, fill, buf);
                     }
                 }
 
             private:
 
                 R r;
-                C[4 / C.sizeof] buf = void;
                 ushort pos, fill;
+                C[4 / C.sizeof] buf = void;
             }
 
             return Result(r);
@@ -4030,13 +4392,23 @@ if (isSomeChar!C)
     import std.algorithm.comparison : equal;
 
     // hellö as a range of `char`s, which are UTF-8
-    "hell\u00F6".byUTF!char().equal(['h', 'e', 'l', 'l', 0xC3, 0xB6]);
+    assert("hell\u00F6".byUTF!char().equal(['h', 'e', 'l', 'l', 0xC3, 0xB6]));
 
     // `wchar`s are able to hold the ö in a single element (UTF-16 code unit)
-    "hell\u00F6".byUTF!wchar().equal(['h', 'e', 'l', 'l', 'ö']);
+    assert("hell\u00F6".byUTF!wchar().equal(['h', 'e', 'l', 'l', 'ö']));
 
     // 𐐷 is four code units in UTF-8, two in UTF-16, and one in UTF-32
-    "𐐷".byUTF!char().equal([0xF0, 0x90, 0x90, 0xB7]);
-    "𐐷".byUTF!wchar().equal([0xD801, 0xDC37]);
-    "𐐷".byUTF!dchar().equal([0x00010437]);
+    assert("𐐷".byUTF!char().equal([0xF0, 0x90, 0x90, 0xB7]));
+    assert("𐐷".byUTF!wchar().equal([0xD801, 0xDC37]));
+    assert("𐐷".byUTF!dchar().equal([0x00010437]));
+}
+
+///
+@safe unittest
+{
+    import std.algorithm.comparison : equal;
+    import std.exception : assertThrown;
+
+    assert("hello\xF0betty".byChar.byUTF!(dchar, UseReplacementDchar.yes).equal("hello\uFFFDetty"));
+    assertThrown!UTFException("hello\xF0betty".byChar.byUTF!(dchar, UseReplacementDchar.no).equal("hello betty"));
 }

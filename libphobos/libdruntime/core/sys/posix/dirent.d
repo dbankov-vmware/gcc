@@ -186,6 +186,7 @@ else version (FreeBSD)
 
     alias void* DIR;
 
+<<<<<<< HEAD
     version (GNU)
     {
         dirent* readdir(DIR*);
@@ -197,6 +198,9 @@ else version (FreeBSD)
         else
             pragma(mangle, "readdir@FBSD_1.0") dirent* readdir(DIR*);
     }
+=======
+    pragma(mangle, "readdir@FBSD_1.0") dirent* readdir(DIR*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (NetBSD)
 {
@@ -514,6 +518,7 @@ else version (Darwin)
 }
 else version (FreeBSD)
 {
+<<<<<<< HEAD
     version (GNU)
     {
         int readdir_r(DIR*, dirent*, dirent**);
@@ -525,6 +530,9 @@ else version (FreeBSD)
         else
             pragma(mangle, "readdir_r@FBSD_1.0") int readdir_r(DIR*, dirent*, dirent**);
     }
+=======
+    pragma(mangle, "readdir_r@FBSD_1.0") int readdir_r(DIR*, dirent*, dirent**);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (DragonFlyBSD)
 {
@@ -591,6 +599,7 @@ version (CRuntime_Glibc)
 }
 else version (FreeBSD)
 {
+<<<<<<< HEAD
     version (GNU)
     {
         void seekdir(DIR*, c_long);
@@ -601,6 +610,10 @@ else version (FreeBSD)
         pragma(mangle, "seekdir@@FBSD_1.0") void seekdir(DIR*, c_long);
         pragma(mangle, "telldir@@FBSD_1.0") c_long telldir(DIR*);
     }
+=======
+    pragma(mangle, "seekdir@@FBSD_1.0") void seekdir(DIR*, c_long);
+    pragma(mangle, "telldir@@FBSD_1.0") c_long telldir(DIR*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 else version (NetBSD)
 {

@@ -10,13 +10,10 @@
 
 #pragma once
 
+#include "root/port.h"
 #include "dsymbol.h"
 
 class Expression;
-class Statement;
-class LabelDsymbol;
-class Initializer;
-class Module;
 class Condition;
 class StaticForeach;
 
@@ -27,12 +24,7 @@ class AttribDeclaration : public Dsymbol
 public:
     Dsymbols *decl;     // array of Dsymbol's
 
-    AttribDeclaration(Dsymbols *decl);
     virtual Dsymbols *include(Scope *sc);
-    int apply(Dsymbol_apply_ft_t fp, void *param);
-    static Scope *createNewScope(Scope *sc,
-        StorageClass newstc, LINK linkage, CPPMANGLE cppmangle, Prot protection,
-        int explicitProtection, AlignDeclaration *aligndecl, PINLINE inlining);
     virtual Scope *newScope(Scope *sc);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     void setScope(Scope *sc);
@@ -55,7 +47,6 @@ class StorageClassDeclaration : public AttribDeclaration
 public:
     StorageClass stc;
 
-    StorageClassDeclaration(StorageClass stc, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
     bool oneMember(Dsymbol **ps, Identifier *ident);
@@ -71,11 +62,9 @@ public:
     Expression *msg;
     const char *msgstr;
 
-    DeprecatedDeclaration(Expression *msg, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
     void setScope(Scope *sc);
-    const char *getMessage();
     void accept(Visitor *v) { v->visit(this); }
 };
 
@@ -84,11 +73,10 @@ class LinkDeclaration : public AttribDeclaration
 public:
     LINK linkage;
 
-    LinkDeclaration(LINK p, Dsymbols *decl);
     static LinkDeclaration *create(LINK p, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
-    const char *toChars();
+    const char *toChars() const;
     void accept(Visitor *v) { v->visit(this); }
 };
 
@@ -97,10 +85,21 @@ class CPPMangleDeclaration : public AttribDeclaration
 public:
     CPPMANGLE cppmangle;
 
-    CPPMangleDeclaration(CPPMANGLE p, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
-    const char *toChars();
+    void setScope(Scope *sc);
+    const char *toChars() const;
+    void accept(Visitor *v) { v->visit(this); }
+};
+
+class CPPNamespaceDeclaration : public AttribDeclaration
+{
+public:
+    Expression *exp;
+
+    Dsymbol *syntaxCopy(Dsymbol *s);
+    Scope *newScope(Scope *sc);
+    const char *toChars() const;
     void accept(Visitor *v) { v->visit(this); }
 };
 
@@ -110,14 +109,12 @@ public:
     Prot protection;
     Identifiers* pkg_identifiers;
 
-    ProtDeclaration(Loc loc, Prot p, Dsymbols *decl);
-    ProtDeclaration(Loc loc, Identifiers* pkg_identifiers, Dsymbols *decl);
-
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     const char *kind() const;
     const char *toPrettyChars(bool unused);
+    ProtDeclaration *isProtDeclaration() { return this; }
     void accept(Visitor *v) { v->visit(this); }
 };
 
@@ -127,10 +124,9 @@ public:
     Expression *ealign;
     structalign_t salign;
 
-    AlignDeclaration(Loc loc, Expression *ealign, Dsymbols *decl);
+    AlignDeclaration(const Loc &loc, Expression *ealign, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
-    structalign_t getAlignment(Scope *sc);
     void accept(Visitor *v) { v->visit(this); }
 };
 
@@ -143,7 +139,6 @@ public:
     unsigned anonstructsize;    // size of anonymous struct
     unsigned anonalignsize;     // size of anonymous struct for alignment purposes
 
-    AnonDeclaration(Loc loc, bool isunion, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     void setScope(Scope *sc);
     void setFieldOffset(AggregateDeclaration *ad, unsigned *poffset, bool isunion);
@@ -157,7 +152,6 @@ class PragmaDeclaration : public AttribDeclaration
 public:
     Expressions *args;          // array of Expression's
 
-    PragmaDeclaration(Loc loc, Identifier *ident, Expressions *args, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
     const char *kind() const;
@@ -170,7 +164,6 @@ public:
     Condition *condition;
     Dsymbols *elsedecl; // array of Dsymbol's for else block
 
-    ConditionalDeclaration(Condition *condition, Dsymbols *decl, Dsymbols *elsedecl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     bool oneMember(Dsymbol **ps, Identifier *ident);
     Dsymbols *include(Scope *sc);
@@ -186,7 +179,6 @@ public:
     bool addisdone;
     bool onStack;
 
-    StaticIfDeclaration(Condition *condition, Dsymbols *decl, Dsymbols *elsedecl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Dsymbols *include(Scope *sc);
     void addMember(Scope *sc, ScopeDsymbol *sds);
@@ -205,7 +197,6 @@ public:
     bool cached;
     Dsymbols *cache;
 
-    StaticForeachDeclaration(StaticForeach *sfe, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     bool oneMember(Dsymbol **ps, Identifier *ident);
     Dsymbols *include(Scope *sc);
@@ -222,7 +213,6 @@ class ForwardingAttribDeclaration : public AttribDeclaration
 public:
     ForwardingScopeDsymbol *sym;
 
-    ForwardingAttribDeclaration(Dsymbols *decl);
     Scope *newScope(Scope *sc);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     ForwardingAttribDeclaration *isForwardingAttribDeclaration() { return this; }
@@ -239,7 +229,6 @@ public:
     ScopeDsymbol *scopesym;
     bool compiled;
 
-    CompileDeclaration(Loc loc, Expressions *exps);
     Dsymbol *syntaxCopy(Dsymbol *s);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     void setScope(Scope *sc);
@@ -256,11 +245,9 @@ class UserAttributeDeclaration : public AttribDeclaration
 public:
     Expressions *atts;
 
-    UserAttributeDeclaration(Expressions *atts, Dsymbols *decl);
     Dsymbol *syntaxCopy(Dsymbol *s);
     Scope *newScope(Scope *sc);
     void setScope(Scope *sc);
-    static Expressions *concat(Expressions *udas1, Expressions *udas2);
     Expressions *getAttributes();
     const char *kind() const;
     void accept(Visitor *v) { v->visit(this); }

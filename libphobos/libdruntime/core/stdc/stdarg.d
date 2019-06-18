@@ -48,11 +48,15 @@ version (MIPS64)  version = MIPS_Any;
 version (PPC)     version = PPC_Any;
 version (PPC64)   version = PPC_Any;
 
+<<<<<<< HEAD
 version (GNU)
 {
     // Uses gcc.builtins
 }
 else version (ARM_Any)
+=======
+version (ARM_Any)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 {
     // Darwin uses a simpler varargs implementation
     version (OSX) {}
@@ -163,8 +167,13 @@ else version (DigitalMars)
         void va_start(T)(out va_list ap, ref T parmn); // intrinsic; parmn should be __va_argsave for non-Windows x86_64 targets
     }
 }
+<<<<<<< HEAD
 
 
+=======
+
+
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 /**
  * Retrieve and return the next value that is of type T.
  */
@@ -200,6 +209,32 @@ T va_arg(T)(ref va_list ap)
             ap += size_t.sizeof;
             return *p;
         }
+<<<<<<< HEAD
+    }
+    else version (SysV_x64)
+    {
+        return core.internal.vararg.sysv_x64.va_arg!T(ap);
+    }
+    else version (AAPCS32)
+    {
+        // AAPCS32 section 6.5 B.5: type with alignment >= 8 is 8-byte aligned
+        // instead of normal 4-byte alignment (APCS doesn't do this).
+        if (T.alignof >= 8)
+            ap.__ap = ap.__ap.alignUp!8;
+        auto p = cast(T*) ap.__ap;
+        version (BigEndian)
+            static if (T.sizeof < size_t.sizeof)
+                p = adjustForBigEndian(p, T.sizeof);
+        ap.__ap += T.sizeof.alignUp;
+        return *p;
+    }
+    else version (AAPCS64)
+    {
+        return core.internal.vararg.aarch64.va_arg!T(ap);
+    }
+    else version (ARM_Any)
+    {
+=======
     }
     else version (SysV_x64)
     {
@@ -243,6 +278,7 @@ T va_arg(T)(ref va_list ap)
         // be aligned before accessing a value
         if (T.alignof >= 8)
             ap = ap.alignUp!8;
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         auto p = cast(T*) ap;
         version (BigEndian)
             static if (T.sizeof < size_t.sizeof)
@@ -250,6 +286,31 @@ T va_arg(T)(ref va_list ap)
         ap += T.sizeof.alignUp;
         return *p;
     }
+<<<<<<< HEAD
+    else version (PPC_Any)
+    {
+        /*
+         * The rules are described in the 64bit PowerPC ELF ABI Supplement 1.9,
+         * available here:
+         * http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.html#PARAM-PASS
+         */
+
+        // Chapter 3.1.4 and 3.2.3: alignment may require the va_list pointer to first
+        // be aligned before accessing a value
+        if (T.alignof >= 8)
+            ap = ap.alignUp!8;
+=======
+    else version (MIPS_Any)
+    {
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+        auto p = cast(T*) ap;
+        version (BigEndian)
+            static if (T.sizeof < size_t.sizeof)
+                p = adjustForBigEndian(p, T.sizeof);
+        ap += T.sizeof.alignUp;
+        return *p;
+    }
+<<<<<<< HEAD
     else version (MIPS_Any)
     {
         auto p = cast(T*) ap;
@@ -259,6 +320,8 @@ T va_arg(T)(ref va_list ap)
         ap += T.sizeof.alignUp;
         return *p;
     }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     else
         static assert(0, "Unsupported platform");
 }
@@ -267,9 +330,12 @@ T va_arg(T)(ref va_list ap)
 /**
  * Retrieve and store in parmn the next value that is of type T.
  */
+<<<<<<< HEAD
 version (GNU)
     void va_arg(T)(ref va_list ap, ref T parmn); // intrinsic
 else
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 void va_arg(T)(ref va_list ap, ref T parmn)
 {
     parmn = va_arg!T(ap);

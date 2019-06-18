@@ -526,23 +526,14 @@ public:
 	gcc_unreachable ();
       }
 
+    /* For static and dynamic arrays, the relational op is turned into a
+       library call.  It is not lowered during codegen.  */
     if ((tb1->ty == Tsarray || tb1->ty == Tarray)
 	&& (tb2->ty == Tsarray || tb2->ty == Tarray))
       {
-	/* For static and dynamic arrays, the result of the relational op is
-	   the result of the operator applied to the first non-equal element
-	   of the array.  If two arrays compare equal, but are of different
-	   lengths, the shorter array compares as less than the longer.  */
-	Type *telem = tb1->nextOf ()->toBasetype ();
-
-	tree call = build_libcall (LIBCALL_ADCMP2, Type::tint32, 3,
-				   d_array_convert (e->e1),
-				   d_array_convert (e->e2),
-				   build_typeinfo (e->loc, telem->arrayOf ()));
-	result = build_boolop (code, call, integer_zero_node);
-
-	this->result_ = d_convert (build_ctype (e->type), result);
-	return;
+	error ("cannot handle comparison of type %<%s == %s%>",
+	       tb1->toChars (), tb2->toChars ());
+	gcc_unreachable ();
       }
 
     /* Simple comparison.  */
@@ -925,23 +916,9 @@ public:
     /* Look for array.length = n;  */
     if (e->e1->op == TOKarraylength)
       {
-	/* Assignment to an array's length property; resize the array.  */
-	ArrayLengthExp *ale = e->e1->isArrayLengthExp ();
-	tree newlength = convert_expr (build_expr (e->e2), e->e2->type,
-				       Type::tsize_t);
-	tree ptr = build_address (build_expr (ale->e1));
-
-	/* Don't want the basetype for the element type.  */
-	Type *etype = ale->e1->type->toBasetype ()->nextOf ();
-	libcall_fn libcall = etype->isZeroInit ()
-	  ? LIBCALL_ARRAYSETLENGTHT : LIBCALL_ARRAYSETLENGTHIT;
-
-	tree result = build_libcall (libcall, ale->e1->type, 3,
-				     build_typeinfo (ale->loc, ale->e1->type),
-				     newlength, ptr);
-
-	this->result_ = d_array_length (result);
-	return;
+	/* This case should have been rewritten to `_d_arraysetlengthT` in the
+	   semantic phase.  */
+	gcc_unreachable ();
       }
 
     /* Look for array[] = n;  */
@@ -955,7 +932,7 @@ public:
 	bool postblit = needs_postblit (etype) && lvalue_p (e->e2);
 	bool destructor = needs_dtor (etype);
 
-	if (e->memset & blockAssign)
+	if (e->memset == MemorySet::blockAssign)
 	  {
 	    /* Set a range of elements to one value.  */
 	    tree t1 = d_save_expr (build_expr (e->e1));
@@ -1064,7 +1041,7 @@ public:
       }
 
     /* Look for reference initializations.  */
-    if (e->memset & referenceInit)
+    if (e->memset == MemorySet::referenceInit)
       {
 	gcc_assert (e->op == TOKconstruct || e->op == TOKblit);
 	gcc_assert (e->e1->op == TOKvar);
@@ -1163,9 +1140,9 @@ public:
 	bool destructor = needs_dtor (etype);
 	bool lvalue = lvalue_p (e->e2);
 
-	/* Even if the elements in rhs are all rvalues and don't have
-	   to call postblits, this assignment should call dtors on old
-	   assigned elements.  */
+	/* Optimize static array assignment with array literal.  Even if the
+	   elements in rhs are all rvalues and don't have to call postblits,
+	   this assignment should call dtors on old assigned elements.  */
 	if ((!postblit && !destructor)
 	    || (e->op == TOKconstruct && e->e2->op == TOKarrayliteral)
 	    || (e->op == TOKconstruct && !lvalue && postblit)
@@ -1487,11 +1464,26 @@ public:
     Type *tbtype = e->to->toBasetype ();
     tree result = build_expr (e->e1, this->constp_, this->literalp_);
 
-    /* Just evaluate e1 if it has any side effects.  */
     if (tbtype->ty == Tvoid)
-      this->result_ = build_nop (build_ctype (tbtype), result);
+      {
+	/* Just evaluate e1 if it has any side effects.  */
+	this->result_ = build_nop (build_ctype (tbtype), result);
+      }
     else
-      this->result_ = convert_expr (result, ebtype, tbtype);
+      {
+	result = convert_expr (result, ebtype, tbtype);
+
+	/* If casting from bool, the result is either 0 or 1, any other value
+	   violates @safe code, so enforce that it is never invalid.  */
+	if (ebtype->ty == Tbool)
+	  {
+	    tree restype = TREE_TYPE (result);
+	    result = fold_build2 (NE_EXPR, restype, result,
+				  d_convert (restype, integer_zero_node));
+	  }
+
+	this->result_ = result;
+      }
   }
 
   /* Build a delete expression.  */
@@ -1751,6 +1743,7 @@ public:
     tree callee = NULL_TREE;
     tree object = NULL_TREE;
     tree cleanup = NULL_TREE;
+    tree returnvalue = NULL_TREE;
     TypeFunction *tf = NULL;
 
     /* Calls to delegates can sometimes look like this.  */
@@ -1819,6 +1812,15 @@ public:
 		else
 		  fndecl = build_address (fndecl);
 
+		/* C++ constructors return void, even though front-end semantic
+		   treats them as implicitly returning `this'.  Set returnvalue
+		   to override the result of this expression.  */
+		if (fd->isCtorDeclaration () && fd->linkage == LINKcpp)
+		  {
+		    thisexp = d_save_expr (thisexp);
+		    returnvalue = thisexp;
+		  }
+
 		callee = build_method_call (fndecl, thisexp, fd->type);
 	      }
 	  }
@@ -1885,6 +1887,9 @@ public:
        build the call expression.  */
     tree exp = d_build_call (tf, callee, object, e->arguments);
 
+    if (returnvalue)
+      exp = compound_expr (exp, returnvalue);
+
     if (tf->isref)
       exp = build_deref (exp);
 
@@ -1923,7 +1928,7 @@ public:
     tree fndecl;
     tree object;
 
-    if (e->func->isNested ())
+    if (e->func->isNested () && !e->func->isThis())
       {
 	if (e->e1->op == TOKnull)
 	  object = build_expr (e->e1);
@@ -2019,7 +2024,8 @@ public:
     tree assert_fail;
 
     if (global.params.useAssert == CHECKENABLEon
-	&& global.params.checkAction == CHECKACTION_D)
+	&& (global.params.checkAction == CHECKACTION_D
+	    || global.params.checkAction == CHECKACTION_context))
       {
 	/* Generate: ((bool) e1  ? (void)0 : _d_assert (...))
 		 or: (e1 != null ? e1._invariant() : _d_assert (...))  */
@@ -2064,7 +2070,8 @@ public:
 	  }
       }
     else if (global.params.useAssert == CHECKENABLEon
-	     && global.params.checkAction == CHECKACTION_C)
+	     && (global.params.checkAction == CHECKACTION_C
+		 || global.params.checkAction == CHECKACTION_halt))
       {
 	/* Generate: __builtin_trap()  */
 	tree fn = builtin_decl_explicit (BUILT_IN_TRAP);
@@ -2072,15 +2079,9 @@ public:
       }
     else
       {
-	/* Assert contracts are turned off, if the contract condition has no
-	   side effects can still use it as a predicate for the optimizer.  */
-	if (TREE_SIDE_EFFECTS (arg))
-	  {
-	    this->result_ = void_node;
-	    return;
-	  }
-
-	assert_fail = build_predict_expr (PRED_NORETURN, NOT_TAKEN);
+	/* Assert contracts are turned off.  */
+	this->result_ = void_node;
+	return;
       }
 
     /* Build condition that we are asserting in this contract.  */
@@ -2371,7 +2372,9 @@ public:
 	  {
 	    /* Generate: _d_newclass()  */
 	    tree arg = build_address (get_classinfo_decl (cd));
-	    new_call = build_libcall (LIBCALL_NEWCLASS, tb, 1, arg);
+	    libcall_fn libcall = (global.params.ehnogc && e->thrownew)
+	      ? LIBCALL_NEWTHROW : LIBCALL_NEWCLASS;
+	    new_call = build_libcall (libcall, tb, 1, arg);
 	  }
 
 	/* Set the context pointer for nested classes.  */
@@ -2383,13 +2386,15 @@ public:
 	    if (e->thisexp)
 	      {
 		ClassDeclaration *tcd = e->thisexp->type->isClassHandle ();
-		Dsymbol *outer = cd->toParent2 ();
-		int offset = 0;
+		/* The class or function we're nested in.  */
+		Dsymbol *outer = cd->toParentLocal ();
 
 		value = build_expr (e->thisexp);
+
 		if (outer != tcd)
 		  {
 		    ClassDeclaration *ocd = outer->isClassDeclaration ();
+		    int offset = 0;
 		    gcc_assert (ocd->isBaseOf (tcd, &offset));
 		    /* Could just add offset...  */
 		    value = convert_expr (value, e->thisexp->type, ocd->type);

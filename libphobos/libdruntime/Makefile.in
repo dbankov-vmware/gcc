@@ -189,6 +189,7 @@ am__DEPENDENCIES_1 =
 am__dirstamp = $(am__leading_dot)dirstamp
 am__objects_1 = core/atomic.lo core/attribute.lo core/bitop.lo \
 	core/checkedint.lo core/cpuid.lo core/demangle.lo \
+<<<<<<< HEAD
 	core/exception.lo core/internal/abort.lo \
 	core/internal/arrayop.lo core/internal/attributes.lo \
 	core/internal/convert.lo core/internal/hash.lo \
@@ -216,17 +217,87 @@ am__objects_1 = core/atomic.lo core/attribute.lo core/bitop.lo \
 	gcc/gthread.lo gcc/sections/common.lo gcc/sections/elf.lo \
 	gcc/sections/macho.lo gcc/sections/package.lo \
 	gcc/sections/pecoff.lo gcc/unwind/arm.lo \
+=======
+	core/exception.lo core/gc/config.lo core/gc/gcinterface.lo \
+	core/gc/registry.lo core/internal/abort.lo \
+	core/internal/array/appending.lo \
+	core/internal/array/capacity.lo core/internal/array/casting.lo \
+	core/internal/array/comparison.lo \
+	core/internal/array/concatenation.lo \
+	core/internal/array/construction.lo \
+	core/internal/array/equality.lo \
+	core/internal/array/operations.lo core/internal/array/utils.lo \
+	core/internal/atomic.lo core/internal/attributes.lo \
+	core/internal/convert.lo core/internal/dassert.lo \
+	core/internal/destruction.lo core/internal/elf/dl.lo \
+	core/internal/elf/io.lo core/internal/entrypoint.lo \
+	core/internal/execinfo.lo core/internal/hash.lo \
+	core/internal/lifetime.lo core/internal/moving.lo \
+	core/internal/parseoptions.lo core/internal/postblit.lo \
+	core/internal/spinlock.lo core/internal/string.lo \
+	core/internal/switch_.lo core/internal/traits.lo \
+	core/internal/utf.lo core/internal/util/array.lo \
+	core/lifetime.lo core/math.lo core/memory.lo core/runtime.lo \
+	core/simd.lo core/stdc/assert_.lo core/stdc/complex.lo \
+	core/stdc/config.lo core/stdc/ctype.lo core/stdc/errno.lo \
+	core/stdc/fenv.lo core/stdc/float_.lo core/stdc/inttypes.lo \
+	core/stdc/limits.lo core/stdc/locale.lo core/stdc/math.lo \
+	core/stdc/signal.lo core/stdc/stdarg.lo core/stdc/stddef.lo \
+	core/stdc/stdint.lo core/stdc/stdio.lo core/stdc/stdlib.lo \
+	core/stdc/string.lo core/stdc/tgmath.lo core/stdc/time.lo \
+	core/stdc/wchar_.lo core/stdc/wctype.lo core/sync/barrier.lo \
+	core/sync/condition.lo core/sync/config.lo core/sync/event.lo \
+	core/sync/exception.lo core/sync/mutex.lo core/sync/rwmutex.lo \
+	core/sync/semaphore.lo core/thread/context.lo \
+	core/thread/fiber.lo core/thread/osthread.lo \
+	core/thread/package.lo core/thread/threadbase.lo \
+	core/thread/threadgroup.lo core/thread/types.lo core/time.lo \
+	core/vararg.lo core/volatile.lo gc/bits.lo \
+	gc/impl/conservative/gc.lo gc/impl/manual/gc.lo \
+	gc/impl/proto/gc.lo gc/os.lo gc/pooltable.lo gc/proxy.lo \
+	gcc/attribute.lo gcc/backtrace.lo gcc/builtins.lo gcc/deh.lo \
+	gcc/emutls.lo gcc/gthread.lo gcc/sections/android.lo \
+	gcc/sections/elf_shared.lo gcc/sections/osx.lo \
+	gcc/sections/package.lo gcc/sections/win32.lo \
+	gcc/sections/win64.lo gcc/unwind/arm.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	gcc/unwind/arm_common.lo gcc/unwind/c6x.lo \
 	gcc/unwind/generic.lo gcc/unwind/package.lo gcc/unwind/pe.lo \
 	object.lo rt/aApply.lo rt/aApplyR.lo rt/aaA.lo rt/adi.lo \
-	rt/arrayassign.lo rt/arraycast.lo rt/arraycat.lo rt/cast_.lo \
-	rt/config.lo rt/critical_.lo rt/deh.lo rt/dmain2.lo \
+	rt/arrayassign.lo rt/arraycat.lo rt/cast_.lo rt/config.lo \
+	rt/critical_.lo rt/deh.lo rt/dmain2.lo rt/ehalloc.lo \
 	rt/invariant.lo rt/lifetime.lo rt/memory.lo rt/minfo.lo \
+<<<<<<< HEAD
 	rt/monitor_.lo rt/obj.lo rt/qsort.lo rt/sections.lo \
 	rt/switch_.lo rt/tlsgc.lo rt/util/array.lo \
 	rt/util/container/array.lo rt/util/container/common.lo \
 	rt/util/container/hashtab.lo rt/util/container/treap.lo \
 	rt/util/random.lo rt/util/typeinfo.lo rt/util/utf.lo
+=======
+	rt/monitor_.lo rt/profilegc.lo rt/qsort.lo rt/sections.lo \
+	rt/tlsgc.lo rt/typeinfo/ti_Acdouble.lo \
+	rt/typeinfo/ti_Acfloat.lo rt/typeinfo/ti_Acreal.lo \
+	rt/typeinfo/ti_Adouble.lo rt/typeinfo/ti_Afloat.lo \
+	rt/typeinfo/ti_Ag.lo rt/typeinfo/ti_Aint.lo \
+	rt/typeinfo/ti_Along.lo rt/typeinfo/ti_Areal.lo \
+	rt/typeinfo/ti_Ashort.lo rt/typeinfo/ti_C.lo \
+	rt/typeinfo/ti_byte.lo rt/typeinfo/ti_cdouble.lo \
+	rt/typeinfo/ti_cent.lo rt/typeinfo/ti_cfloat.lo \
+	rt/typeinfo/ti_char.lo rt/typeinfo/ti_creal.lo \
+	rt/typeinfo/ti_dchar.lo rt/typeinfo/ti_delegate.lo \
+	rt/typeinfo/ti_double.lo rt/typeinfo/ti_float.lo \
+	rt/typeinfo/ti_idouble.lo rt/typeinfo/ti_ifloat.lo \
+	rt/typeinfo/ti_int.lo rt/typeinfo/ti_ireal.lo \
+	rt/typeinfo/ti_long.lo rt/typeinfo/ti_n.lo \
+	rt/typeinfo/ti_ptr.lo rt/typeinfo/ti_real.lo \
+	rt/typeinfo/ti_short.lo rt/typeinfo/ti_ubyte.lo \
+	rt/typeinfo/ti_ucent.lo rt/typeinfo/ti_uint.lo \
+	rt/typeinfo/ti_ulong.lo rt/typeinfo/ti_ushort.lo \
+	rt/typeinfo/ti_void.lo rt/typeinfo/ti_wchar.lo \
+	rt/util/container/array.lo rt/util/container/common.lo \
+	rt/util/container/hashtab.lo rt/util/container/treap.lo \
+	rt/util/random.lo rt/util/typeinfo.lo rt/util/utility.lo
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 am__objects_2 = core/stdc/libgdruntime_la-errno_.lo
 am__objects_3 = core/sys/posix/aio.lo core/sys/posix/arpa/inet.lo \
 	core/sys/posix/config.lo core/sys/posix/dirent.lo \
@@ -256,21 +327,34 @@ am__objects_3 = core/sys/posix/aio.lo core/sys/posix/arpa/inet.lo \
 	core/sys/posix/time.lo core/sys/posix/ucontext.lo \
 	core/sys/posix/unistd.lo core/sys/posix/utime.lo
 @DRUNTIME_OS_POSIX_TRUE@am__objects_4 = $(am__objects_3)
+<<<<<<< HEAD
 am__objects_5 = core/sys/darwin/config.lo \
 	core/sys/darwin/crt_externs.lo core/sys/darwin/dlfcn.lo \
 	core/sys/darwin/err.lo core/sys/darwin/execinfo.lo \
 	core/sys/darwin/fcntl.lo core/sys/darwin/ifaddrs.lo \
 	core/sys/darwin/mach/dyld.lo core/sys/darwin/mach/getsect.lo \
+=======
+am__objects_5 = core/sys/darwin/crt_externs.lo \
+	core/sys/darwin/dlfcn.lo core/sys/darwin/err.lo \
+	core/sys/darwin/execinfo.lo core/sys/darwin/mach/dyld.lo \
+	core/sys/darwin/mach/getsect.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/darwin/mach/kern_return.lo \
 	core/sys/darwin/mach/loader.lo core/sys/darwin/mach/nlist.lo \
 	core/sys/darwin/mach/port.lo core/sys/darwin/mach/semaphore.lo \
 	core/sys/darwin/mach/stab.lo \
 	core/sys/darwin/mach/thread_act.lo \
 	core/sys/darwin/netinet/in_.lo core/sys/darwin/pthread.lo \
+<<<<<<< HEAD
 	core/sys/darwin/stdlib.lo core/sys/darwin/string.lo \
 	core/sys/darwin/sys/attr.lo core/sys/darwin/sys/cdefs.lo \
 	core/sys/darwin/sys/event.lo core/sys/darwin/sys/mman.lo \
 	core/sys/darwin/sys/sysctl.lo
+=======
+	core/sys/darwin/string.lo core/sys/darwin/sys/attr.lo \
+	core/sys/darwin/sys/cdefs.lo core/sys/darwin/sys/event.lo \
+	core/sys/darwin/sys/mman.lo
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @DRUNTIME_OS_DARWIN_TRUE@am__objects_6 = $(am__objects_5)
 am__objects_7 = core/sys/dragonflybsd/dlfcn.lo \
 	core/sys/dragonflybsd/err.lo core/sys/dragonflybsd/execinfo.lo \
@@ -293,6 +377,7 @@ am__objects_7 = core/sys/dragonflybsd/dlfcn.lo \
 	core/sys/dragonflybsd/time.lo
 @DRUNTIME_OS_DRAGONFLYBSD_TRUE@am__objects_8 = $(am__objects_7)
 am__objects_9 = core/sys/bionic/err.lo core/sys/bionic/fcntl.lo \
+<<<<<<< HEAD
 	core/sys/bionic/stdlib.lo core/sys/bionic/string.lo \
 	core/sys/bionic/unistd.lo
 @DRUNTIME_OS_ANDROID_TRUE@am__objects_10 = $(am__objects_9)
@@ -300,6 +385,13 @@ am__objects_11 = core/sys/freebsd/config.lo core/sys/freebsd/dlfcn.lo \
 	core/sys/freebsd/err.lo core/sys/freebsd/execinfo.lo \
 	core/sys/freebsd/netinet/in_.lo core/sys/freebsd/pthread_np.lo \
 	core/sys/freebsd/stdlib.lo core/sys/freebsd/string.lo \
+=======
+	core/sys/bionic/string.lo core/sys/bionic/unistd.lo
+@DRUNTIME_OS_ANDROID_TRUE@am__objects_10 = $(am__objects_9)
+am__objects_11 = core/sys/freebsd/dlfcn.lo core/sys/freebsd/err.lo \
+	core/sys/freebsd/execinfo.lo core/sys/freebsd/netinet/in_.lo \
+	core/sys/freebsd/pthread_np.lo core/sys/freebsd/string.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/freebsd/sys/_bitset.lo \
 	core/sys/freebsd/sys/_cpuset.lo core/sys/freebsd/sys/cdefs.lo \
 	core/sys/freebsd/sys/elf.lo core/sys/freebsd/sys/elf32.lo \
@@ -311,18 +403,31 @@ am__objects_11 = core/sys/freebsd/config.lo core/sys/freebsd/dlfcn.lo \
 	core/sys/freebsd/unistd.lo
 @DRUNTIME_OS_FREEBSD_TRUE@am__objects_12 = $(am__objects_11)
 am__objects_13 = core/sys/netbsd/dlfcn.lo core/sys/netbsd/err.lo \
+<<<<<<< HEAD
 	core/sys/netbsd/execinfo.lo core/sys/netbsd/stdlib.lo \
 	core/sys/netbsd/string.lo core/sys/netbsd/sys/elf.lo \
 	core/sys/netbsd/sys/elf32.lo core/sys/netbsd/sys/elf64.lo \
 	core/sys/netbsd/sys/elf_common.lo core/sys/netbsd/sys/event.lo \
+=======
+	core/sys/netbsd/execinfo.lo core/sys/netbsd/string.lo \
+	core/sys/netbsd/sys/elf.lo core/sys/netbsd/sys/elf32.lo \
+	core/sys/netbsd/sys/elf64.lo core/sys/netbsd/sys/elf_common.lo \
+	core/sys/netbsd/sys/event.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/netbsd/sys/featuretest.lo \
 	core/sys/netbsd/sys/link_elf.lo core/sys/netbsd/sys/mman.lo \
 	core/sys/netbsd/sys/sysctl.lo core/sys/netbsd/time.lo
 @DRUNTIME_OS_NETBSD_TRUE@am__objects_14 = $(am__objects_13)
 am__objects_15 = core/sys/openbsd/dlfcn.lo core/sys/openbsd/err.lo \
+<<<<<<< HEAD
 	core/sys/openbsd/stdlib.lo core/sys/openbsd/string.lo \
 	core/sys/openbsd/sys/cdefs.lo core/sys/openbsd/sys/elf.lo \
 	core/sys/openbsd/sys/elf32.lo core/sys/openbsd/sys/elf64.lo \
+=======
+	core/sys/openbsd/string.lo core/sys/openbsd/sys/cdefs.lo \
+	core/sys/openbsd/sys/elf.lo core/sys/openbsd/sys/elf32.lo \
+	core/sys/openbsd/sys/elf64.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/openbsd/sys/elf_common.lo \
 	core/sys/openbsd/sys/link_elf.lo core/sys/openbsd/sys/mman.lo \
 	core/sys/openbsd/sys/sysctl.lo core/sys/openbsd/time.lo \
@@ -412,6 +517,7 @@ am__objects_19 = core/sys/windows/accctrl.lo \
 	core/sys/windows/sql.lo core/sys/windows/sqlext.lo \
 	core/sys/windows/sqltypes.lo core/sys/windows/sqlucode.lo \
 	core/sys/windows/sspi.lo core/sys/windows/stacktrace.lo \
+<<<<<<< HEAD
 	core/sys/windows/stat.lo core/sys/windows/stdc/malloc.lo \
 	core/sys/windows/stdc/time.lo core/sys/windows/subauth.lo \
 	core/sys/windows/threadaux.lo core/sys/windows/tlhelp32.lo \
@@ -437,6 +543,30 @@ am__objects_21 = core/sys/solaris/dlfcn.lo core/sys/solaris/elf.lo \
 	core/sys/solaris/libelf.lo core/sys/solaris/link.lo \
 	core/sys/solaris/stdlib.lo core/sys/solaris/sys/elf.lo \
 	core/sys/solaris/sys/elf_386.lo \
+=======
+	core/sys/windows/stat.lo core/sys/windows/stdc/time.lo \
+	core/sys/windows/subauth.lo core/sys/windows/threadaux.lo \
+	core/sys/windows/tlhelp32.lo core/sys/windows/tmschema.lo \
+	core/sys/windows/unknwn.lo core/sys/windows/uuid.lo \
+	core/sys/windows/vfw.lo core/sys/windows/w32api.lo \
+	core/sys/windows/winbase.lo core/sys/windows/winber.lo \
+	core/sys/windows/wincon.lo core/sys/windows/wincrypt.lo \
+	core/sys/windows/windef.lo core/sys/windows/windows.lo \
+	core/sys/windows/winerror.lo core/sys/windows/wingdi.lo \
+	core/sys/windows/winhttp.lo core/sys/windows/wininet.lo \
+	core/sys/windows/winioctl.lo core/sys/windows/winldap.lo \
+	core/sys/windows/winnetwk.lo core/sys/windows/winnls.lo \
+	core/sys/windows/winnt.lo core/sys/windows/winperf.lo \
+	core/sys/windows/winreg.lo core/sys/windows/winsock2.lo \
+	core/sys/windows/winspool.lo core/sys/windows/winsvc.lo \
+	core/sys/windows/winuser.lo core/sys/windows/winver.lo \
+	core/sys/windows/wtsapi32.lo core/sys/windows/wtypes.lo
+@DRUNTIME_OS_MINGW_TRUE@am__objects_20 = $(am__objects_19)
+am__objects_21 = core/sys/solaris/dlfcn.lo core/sys/solaris/elf.lo \
+	core/sys/solaris/err.lo core/sys/solaris/execinfo.lo \
+	core/sys/solaris/libelf.lo core/sys/solaris/link.lo \
+	core/sys/solaris/sys/elf.lo core/sys/solaris/sys/elf_386.lo \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/solaris/sys/elf_SPARC.lo \
 	core/sys/solaris/sys/elf_amd64.lo \
 	core/sys/solaris/sys/elf_notes.lo \
@@ -728,7 +858,7 @@ LTDCOMPILE = $(LIBTOOL) --tag=D $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 # Include D build rules
 
 # Make sure GDC can find libdruntime include files
-D_EXTRA_DFLAGS = -nostdinc -I $(srcdir) -I .
+D_EXTRA_DFLAGS = -fpreview=dip1000 -nostdinc -I $(srcdir) -I .
 
 # D flags for compilation
 AM_DFLAGS = \
@@ -804,11 +934,31 @@ libgdruntime_convenience_la_LINK = $(libgdruntime_la_LINK)
 DRUNTIME_CSOURCES = core/stdc/errno_.c
 DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 	core/checkedint.d core/cpuid.d core/demangle.d core/exception.d \
+<<<<<<< HEAD
 	core/internal/abort.d core/internal/arrayop.d \
 	core/internal/attributes.d core/internal/convert.d \
 	core/internal/hash.d core/internal/spinlock.d core/internal/string.d \
 	core/internal/traits.d core/math.d core/memory.d core/runtime.d \
 	core/simd.d core/stdc/assert_.d core/stdc/complex.d core/stdc/config.d \
+=======
+	core/gc/config.d core/gc/gcinterface.d core/gc/registry.d \
+	core/internal/abort.d core/internal/array/appending.d \
+	core/internal/array/capacity.d core/internal/array/casting.d \
+	core/internal/array/comparison.d core/internal/array/concatenation.d \
+	core/internal/array/construction.d core/internal/array/equality.d \
+	core/internal/array/operations.d core/internal/array/utils.d \
+	core/internal/atomic.d core/internal/attributes.d \
+	core/internal/convert.d core/internal/dassert.d \
+	core/internal/destruction.d core/internal/elf/dl.d \
+	core/internal/elf/io.d core/internal/entrypoint.d \
+	core/internal/execinfo.d core/internal/hash.d core/internal/lifetime.d \
+	core/internal/moving.d core/internal/parseoptions.d \
+	core/internal/postblit.d core/internal/spinlock.d \
+	core/internal/string.d core/internal/switch_.d core/internal/traits.d \
+	core/internal/utf.d core/internal/util/array.d core/lifetime.d \
+	core/math.d core/memory.d core/runtime.d core/simd.d \
+	core/stdc/assert_.d core/stdc/complex.d core/stdc/config.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/stdc/ctype.d core/stdc/errno.d core/stdc/fenv.d \
 	core/stdc/float_.d core/stdc/inttypes.d core/stdc/limits.d \
 	core/stdc/locale.d core/stdc/math.d core/stdc/signal.d \
@@ -816,6 +966,7 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 	core/stdc/stdio.d core/stdc/stdlib.d core/stdc/string.d \
 	core/stdc/tgmath.d core/stdc/time.d core/stdc/wchar_.d \
 	core/stdc/wctype.d core/sync/barrier.d core/sync/condition.d \
+<<<<<<< HEAD
 	core/sync/config.d core/sync/exception.d core/sync/mutex.d \
 	core/sync/rwmutex.d core/sync/semaphore.d core/thread/context.d \
 	core/thread/fiber.d core/thread/osthread.d core/thread/package.d \
@@ -826,20 +977,56 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 	gcc/backtrace.d gcc/builtins.d gcc/deh.d gcc/emutls.d gcc/gthread.d \
 	gcc/sections/common.d gcc/sections/elf.d gcc/sections/macho.d \
 	gcc/sections/package.d gcc/sections/pecoff.d gcc/unwind/arm.d \
+=======
+	core/sync/config.d core/sync/event.d core/sync/exception.d \
+	core/sync/mutex.d core/sync/rwmutex.d core/sync/semaphore.d \
+	core/thread/context.d core/thread/fiber.d core/thread/osthread.d \
+	core/thread/package.d core/thread/threadbase.d \
+	core/thread/threadgroup.d core/thread/types.d core/time.d \
+	core/vararg.d core/volatile.d gc/bits.d gc/impl/conservative/gc.d \
+	gc/impl/manual/gc.d gc/impl/proto/gc.d gc/os.d gc/pooltable.d \
+	gc/proxy.d gcc/attribute.d gcc/backtrace.d gcc/builtins.d gcc/deh.d \
+	gcc/emutls.d gcc/gthread.d gcc/sections/android.d \
+	gcc/sections/elf_shared.d gcc/sections/osx.d gcc/sections/package.d \
+	gcc/sections/win32.d gcc/sections/win64.d gcc/unwind/arm.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	gcc/unwind/arm_common.d gcc/unwind/c6x.d gcc/unwind/generic.d \
 	gcc/unwind/package.d gcc/unwind/pe.d object.d rt/aApply.d rt/aApplyR.d \
-	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycast.d rt/arraycat.d \
-	rt/cast_.d rt/config.d rt/critical_.d rt/deh.d rt/dmain2.d \
+	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/cast_.d \
+	rt/config.d rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d \
 	rt/invariant.d rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d \
+<<<<<<< HEAD
 	rt/obj.d rt/qsort.d rt/sections.d rt/switch_.d rt/tlsgc.d \
 	rt/util/array.d rt/util/container/array.d rt/util/container/common.d \
+=======
+	rt/profilegc.d rt/qsort.d rt/sections.d rt/tlsgc.d \
+	rt/typeinfo/ti_Acdouble.d rt/typeinfo/ti_Acfloat.d \
+	rt/typeinfo/ti_Acreal.d rt/typeinfo/ti_Adouble.d \
+	rt/typeinfo/ti_Afloat.d rt/typeinfo/ti_Ag.d rt/typeinfo/ti_Aint.d \
+	rt/typeinfo/ti_Along.d rt/typeinfo/ti_Areal.d rt/typeinfo/ti_Ashort.d \
+	rt/typeinfo/ti_C.d rt/typeinfo/ti_byte.d rt/typeinfo/ti_cdouble.d \
+	rt/typeinfo/ti_cent.d rt/typeinfo/ti_cfloat.d rt/typeinfo/ti_char.d \
+	rt/typeinfo/ti_creal.d rt/typeinfo/ti_dchar.d \
+	rt/typeinfo/ti_delegate.d rt/typeinfo/ti_double.d \
+	rt/typeinfo/ti_float.d rt/typeinfo/ti_idouble.d \
+	rt/typeinfo/ti_ifloat.d rt/typeinfo/ti_int.d rt/typeinfo/ti_ireal.d \
+	rt/typeinfo/ti_long.d rt/typeinfo/ti_n.d rt/typeinfo/ti_ptr.d \
+	rt/typeinfo/ti_real.d rt/typeinfo/ti_short.d rt/typeinfo/ti_ubyte.d \
+	rt/typeinfo/ti_ucent.d rt/typeinfo/ti_uint.d rt/typeinfo/ti_ulong.d \
+	rt/typeinfo/ti_ushort.d rt/typeinfo/ti_void.d rt/typeinfo/ti_wchar.d \
+	rt/util/container/array.d rt/util/container/common.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	rt/util/container/hashtab.d rt/util/container/treap.d rt/util/random.d \
-	rt/util/typeinfo.d rt/util/utf.d
+	rt/util/typeinfo.d rt/util/utility.d
 
-DRUNTIME_DSOURCES_STDCXX = core/stdcpp/exception.d \
-	core/stdcpp/typeinfo.d
+DRUNTIME_DSOURCES_STDCXX = core/stdcpp/allocator.d core/stdcpp/array.d \
+	core/stdcpp/exception.d core/stdcpp/memory.d core/stdcpp/new_.d \
+	core/stdcpp/string.d core/stdcpp/string_view.d \
+	core/stdcpp/type_traits.d core/stdcpp/typeinfo.d core/stdcpp/utility.d \
+	core/stdcpp/vector.d core/stdcpp/xutility.d
 
 DRUNTIME_DSOURCES_BIONIC = core/sys/bionic/err.d \
+<<<<<<< HEAD
 	core/sys/bionic/fcntl.d core/sys/bionic/stdlib.d \
 	core/sys/bionic/string.d core/sys/bionic/unistd.d
 
@@ -853,6 +1040,19 @@ DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/config.d \
 	core/sys/darwin/mach/semaphore.d core/sys/darwin/mach/stab.d \
 	core/sys/darwin/mach/thread_act.d core/sys/darwin/netinet/in_.d \
 	core/sys/darwin/pthread.d core/sys/darwin/stdlib.d \
+=======
+	core/sys/bionic/fcntl.d core/sys/bionic/string.d \
+	core/sys/bionic/unistd.d
+
+DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/crt_externs.d \
+	core/sys/darwin/dlfcn.d core/sys/darwin/err.d \
+	core/sys/darwin/execinfo.d core/sys/darwin/mach/dyld.d \
+	core/sys/darwin/mach/getsect.d core/sys/darwin/mach/kern_return.d \
+	core/sys/darwin/mach/loader.d core/sys/darwin/mach/nlist.d \
+	core/sys/darwin/mach/port.d core/sys/darwin/mach/semaphore.d \
+	core/sys/darwin/mach/stab.d core/sys/darwin/mach/thread_act.d \
+	core/sys/darwin/netinet/in_.d core/sys/darwin/pthread.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/darwin/string.d core/sys/darwin/sys/attr.d \
 	core/sys/darwin/sys/cdefs.d core/sys/darwin/sys/event.d \
 	core/sys/darwin/sys/mman.d core/sys/darwin/sys/sysctl.d
@@ -860,8 +1060,12 @@ DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/config.d \
 DRUNTIME_DSOURCES_DRAGONFLYBSD = core/sys/dragonflybsd/dlfcn.d \
 	core/sys/dragonflybsd/err.d core/sys/dragonflybsd/execinfo.d \
 	core/sys/dragonflybsd/netinet/in_.d core/sys/dragonflybsd/pthread_np.d \
+<<<<<<< HEAD
 	core/sys/dragonflybsd/stdlib.d core/sys/dragonflybsd/string.d \
 	core/sys/dragonflybsd/sys/_bitset.d \
+=======
+	core/sys/dragonflybsd/string.d core/sys/dragonflybsd/sys/_bitset.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/dragonflybsd/sys/_cpuset.d core/sys/dragonflybsd/sys/cdefs.d \
 	core/sys/dragonflybsd/sys/elf.d core/sys/dragonflybsd/sys/elf32.d \
 	core/sys/dragonflybsd/sys/elf64.d \
@@ -870,18 +1074,28 @@ DRUNTIME_DSOURCES_DRAGONFLYBSD = core/sys/dragonflybsd/dlfcn.d \
 	core/sys/dragonflybsd/sys/mman.d core/sys/dragonflybsd/sys/socket.d \
 	core/sys/dragonflybsd/sys/sysctl.d core/sys/dragonflybsd/time.d
 
+<<<<<<< HEAD
 DRUNTIME_DSOURCES_FREEBSD = core/sys/freebsd/config.d \
 	core/sys/freebsd/dlfcn.d core/sys/freebsd/err.d \
 	core/sys/freebsd/execinfo.d core/sys/freebsd/netinet/in_.d \
 	core/sys/freebsd/pthread_np.d core/sys/freebsd/stdlib.d \
+=======
+DRUNTIME_DSOURCES_FREEBSD = core/sys/freebsd/dlfcn.d \
+	core/sys/freebsd/err.d core/sys/freebsd/execinfo.d \
+	core/sys/freebsd/netinet/in_.d core/sys/freebsd/pthread_np.d \
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/freebsd/string.d core/sys/freebsd/sys/_bitset.d \
 	core/sys/freebsd/sys/_cpuset.d core/sys/freebsd/sys/cdefs.d \
 	core/sys/freebsd/sys/elf.d core/sys/freebsd/sys/elf32.d \
 	core/sys/freebsd/sys/elf64.d core/sys/freebsd/sys/elf_common.d \
 	core/sys/freebsd/sys/event.d core/sys/freebsd/sys/link_elf.d \
 	core/sys/freebsd/sys/mman.d core/sys/freebsd/sys/mount.d \
+<<<<<<< HEAD
 	core/sys/freebsd/sys/sysctl.d core/sys/freebsd/time.d \
 	core/sys/freebsd/unistd.d
+=======
+	core/sys/freebsd/time.d core/sys/freebsd/unistd.d
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_LINUX = core/sys/linux/config.d \
 	core/sys/linux/dlfcn.d core/sys/linux/elf.d core/sys/linux/epoll.d \
@@ -900,6 +1114,7 @@ DRUNTIME_DSOURCES_LINUX = core/sys/linux/config.d \
 
 DRUNTIME_DSOURCES_NETBSD = core/sys/netbsd/dlfcn.d \
 	core/sys/netbsd/err.d core/sys/netbsd/execinfo.d \
+<<<<<<< HEAD
 	core/sys/netbsd/stdlib.d core/sys/netbsd/string.d \
 	core/sys/netbsd/sys/elf.d core/sys/netbsd/sys/elf32.d \
 	core/sys/netbsd/sys/elf64.d core/sys/netbsd/sys/elf_common.d \
@@ -915,6 +1130,20 @@ DRUNTIME_DSOURCES_OPENBSD = core/sys/openbsd/dlfcn.d \
 	core/sys/openbsd/sys/link_elf.d core/sys/openbsd/sys/mman.d \
 	core/sys/openbsd/sys/sysctl.d core/sys/openbsd/time.d \
 	core/sys/openbsd/unistd.d
+=======
+	core/sys/netbsd/string.d core/sys/netbsd/sys/elf.d \
+	core/sys/netbsd/sys/elf32.d core/sys/netbsd/sys/elf64.d \
+	core/sys/netbsd/sys/elf_common.d core/sys/netbsd/sys/event.d \
+	core/sys/netbsd/sys/featuretest.d core/sys/netbsd/sys/link_elf.d \
+	core/sys/netbsd/sys/mman.d core/sys/netbsd/time.d
+
+DRUNTIME_DSOURCES_OPENBSD = core/sys/openbsd/dlfcn.d \
+	core/sys/openbsd/err.d core/sys/openbsd/string.d \
+	core/sys/openbsd/sys/cdefs.d core/sys/openbsd/sys/elf.d \
+	core/sys/openbsd/sys/elf32.d core/sys/openbsd/sys/elf64.d \
+	core/sys/openbsd/sys/elf_common.d core/sys/openbsd/sys/link_elf.d \
+	core/sys/openbsd/sys/mman.d core/sys/openbsd/time.d
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_POSIX = core/sys/posix/aio.d \
 	core/sys/posix/arpa/inet.d core/sys/posix/config.d \
@@ -946,6 +1175,7 @@ DRUNTIME_DSOURCES_POSIX = core/sys/posix/aio.d \
 DRUNTIME_DSOURCES_SOLARIS = core/sys/solaris/dlfcn.d \
 	core/sys/solaris/elf.d core/sys/solaris/err.d \
 	core/sys/solaris/execinfo.d core/sys/solaris/libelf.d \
+<<<<<<< HEAD
 	core/sys/solaris/link.d core/sys/solaris/stdlib.d \
 	core/sys/solaris/sys/elf.d core/sys/solaris/sys/elf_386.d \
 	core/sys/solaris/sys/elf_SPARC.d core/sys/solaris/sys/elf_amd64.d \
@@ -953,6 +1183,14 @@ DRUNTIME_DSOURCES_SOLARIS = core/sys/solaris/dlfcn.d \
 	core/sys/solaris/sys/link.d core/sys/solaris/sys/priocntl.d \
 	core/sys/solaris/sys/procset.d core/sys/solaris/sys/types.d \
 	core/sys/solaris/time.d
+=======
+	core/sys/solaris/link.d core/sys/solaris/sys/elf.d \
+	core/sys/solaris/sys/elf_386.d core/sys/solaris/sys/elf_SPARC.d \
+	core/sys/solaris/sys/elf_amd64.d core/sys/solaris/sys/elf_notes.d \
+	core/sys/solaris/sys/elftypes.d core/sys/solaris/sys/link.d \
+	core/sys/solaris/sys/priocntl.d core/sys/solaris/sys/procset.d \
+	core/sys/solaris/sys/types.d core/sys/solaris/time.d
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/aclapi.d core/sys/windows/aclui.d \
@@ -1021,6 +1259,7 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/sqlext.d core/sys/windows/sqltypes.d \
 	core/sys/windows/sqlucode.d core/sys/windows/sspi.d \
 	core/sys/windows/stacktrace.d core/sys/windows/stat.d \
+<<<<<<< HEAD
 	core/sys/windows/stdc/malloc.d core/sys/windows/stdc/time.d \
 	core/sys/windows/subauth.d core/sys/windows/threadaux.d \
 	core/sys/windows/tlhelp32.d core/sys/windows/tmschema.d \
@@ -1038,6 +1277,25 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/winspool.d core/sys/windows/winsvc.d \
 	core/sys/windows/winuser.d core/sys/windows/winver.d \
 	core/sys/windows/wtsapi32.d core/sys/windows/wtypes.d
+=======
+	core/sys/windows/stdc/time.d core/sys/windows/subauth.d \
+	core/sys/windows/threadaux.d core/sys/windows/tlhelp32.d \
+	core/sys/windows/tmschema.d core/sys/windows/unknwn.d \
+	core/sys/windows/uuid.d core/sys/windows/vfw.d \
+	core/sys/windows/w32api.d core/sys/windows/winbase.d \
+	core/sys/windows/winber.d core/sys/windows/wincon.d \
+	core/sys/windows/wincrypt.d core/sys/windows/windef.d \
+	core/sys/windows/windows.d core/sys/windows/winerror.d \
+	core/sys/windows/wingdi.d core/sys/windows/winhttp.d \
+	core/sys/windows/wininet.d core/sys/windows/winioctl.d \
+	core/sys/windows/winldap.d core/sys/windows/winnetwk.d \
+	core/sys/windows/winnls.d core/sys/windows/winnt.d \
+	core/sys/windows/winperf.d core/sys/windows/winreg.d \
+	core/sys/windows/winsock2.d core/sys/windows/winspool.d \
+	core/sys/windows/winsvc.d core/sys/windows/winuser.d \
+	core/sys/windows/winver.d core/sys/windows/wtsapi32.d \
+	core/sys/windows/wtypes.d
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DISOURCES = __entrypoint.di __main.di
 all: all-am
@@ -1130,17 +1388,63 @@ core/checkedint.lo: core/$(am__dirstamp)
 core/cpuid.lo: core/$(am__dirstamp)
 core/demangle.lo: core/$(am__dirstamp)
 core/exception.lo: core/$(am__dirstamp)
+core/gc/$(am__dirstamp):
+	@$(MKDIR_P) core/gc
+	@: > core/gc/$(am__dirstamp)
+core/gc/config.lo: core/gc/$(am__dirstamp)
+core/gc/gcinterface.lo: core/gc/$(am__dirstamp)
+core/gc/registry.lo: core/gc/$(am__dirstamp)
 core/internal/$(am__dirstamp):
 	@$(MKDIR_P) core/internal
 	@: > core/internal/$(am__dirstamp)
 core/internal/abort.lo: core/internal/$(am__dirstamp)
+<<<<<<< HEAD
 core/internal/arrayop.lo: core/internal/$(am__dirstamp)
+=======
+core/internal/array/$(am__dirstamp):
+	@$(MKDIR_P) core/internal/array
+	@: > core/internal/array/$(am__dirstamp)
+core/internal/array/appending.lo: core/internal/array/$(am__dirstamp)
+core/internal/array/capacity.lo: core/internal/array/$(am__dirstamp)
+core/internal/array/casting.lo: core/internal/array/$(am__dirstamp)
+core/internal/array/comparison.lo:  \
+	core/internal/array/$(am__dirstamp)
+core/internal/array/concatenation.lo:  \
+	core/internal/array/$(am__dirstamp)
+core/internal/array/construction.lo:  \
+	core/internal/array/$(am__dirstamp)
+core/internal/array/equality.lo: core/internal/array/$(am__dirstamp)
+core/internal/array/operations.lo:  \
+	core/internal/array/$(am__dirstamp)
+core/internal/array/utils.lo: core/internal/array/$(am__dirstamp)
+core/internal/atomic.lo: core/internal/$(am__dirstamp)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 core/internal/attributes.lo: core/internal/$(am__dirstamp)
 core/internal/convert.lo: core/internal/$(am__dirstamp)
+core/internal/dassert.lo: core/internal/$(am__dirstamp)
+core/internal/destruction.lo: core/internal/$(am__dirstamp)
+core/internal/elf/$(am__dirstamp):
+	@$(MKDIR_P) core/internal/elf
+	@: > core/internal/elf/$(am__dirstamp)
+core/internal/elf/dl.lo: core/internal/elf/$(am__dirstamp)
+core/internal/elf/io.lo: core/internal/elf/$(am__dirstamp)
+core/internal/entrypoint.lo: core/internal/$(am__dirstamp)
+core/internal/execinfo.lo: core/internal/$(am__dirstamp)
 core/internal/hash.lo: core/internal/$(am__dirstamp)
+core/internal/lifetime.lo: core/internal/$(am__dirstamp)
+core/internal/moving.lo: core/internal/$(am__dirstamp)
+core/internal/parseoptions.lo: core/internal/$(am__dirstamp)
+core/internal/postblit.lo: core/internal/$(am__dirstamp)
 core/internal/spinlock.lo: core/internal/$(am__dirstamp)
 core/internal/string.lo: core/internal/$(am__dirstamp)
+core/internal/switch_.lo: core/internal/$(am__dirstamp)
 core/internal/traits.lo: core/internal/$(am__dirstamp)
+core/internal/utf.lo: core/internal/$(am__dirstamp)
+core/internal/util/$(am__dirstamp):
+	@$(MKDIR_P) core/internal/util
+	@: > core/internal/util/$(am__dirstamp)
+core/internal/util/array.lo: core/internal/util/$(am__dirstamp)
+core/lifetime.lo: core/$(am__dirstamp)
 core/math.lo: core/$(am__dirstamp)
 core/memory.lo: core/$(am__dirstamp)
 core/runtime.lo: core/$(am__dirstamp)
@@ -1176,6 +1480,7 @@ core/sync/$(am__dirstamp):
 core/sync/barrier.lo: core/sync/$(am__dirstamp)
 core/sync/condition.lo: core/sync/$(am__dirstamp)
 core/sync/config.lo: core/sync/$(am__dirstamp)
+core/sync/event.lo: core/sync/$(am__dirstamp)
 core/sync/exception.lo: core/sync/$(am__dirstamp)
 core/sync/mutex.lo: core/sync/$(am__dirstamp)
 core/sync/rwmutex.lo: core/sync/$(am__dirstamp)
@@ -1197,8 +1502,6 @@ gc/$(am__dirstamp):
 	@$(MKDIR_P) gc
 	@: > gc/$(am__dirstamp)
 gc/bits.lo: gc/$(am__dirstamp)
-gc/config.lo: gc/$(am__dirstamp)
-gc/gcinterface.lo: gc/$(am__dirstamp)
 gc/impl/conservative/$(am__dirstamp):
 	@$(MKDIR_P) gc/impl/conservative
 	@: > gc/impl/conservative/$(am__dirstamp)
@@ -1207,6 +1510,10 @@ gc/impl/manual/$(am__dirstamp):
 	@$(MKDIR_P) gc/impl/manual
 	@: > gc/impl/manual/$(am__dirstamp)
 gc/impl/manual/gc.lo: gc/impl/manual/$(am__dirstamp)
+gc/impl/proto/$(am__dirstamp):
+	@$(MKDIR_P) gc/impl/proto
+	@: > gc/impl/proto/$(am__dirstamp)
+gc/impl/proto/gc.lo: gc/impl/proto/$(am__dirstamp)
 gc/os.lo: gc/$(am__dirstamp)
 gc/pooltable.lo: gc/$(am__dirstamp)
 gc/proxy.lo: gc/$(am__dirstamp)
@@ -1245,27 +1552,69 @@ rt/aApplyR.lo: rt/$(am__dirstamp)
 rt/aaA.lo: rt/$(am__dirstamp)
 rt/adi.lo: rt/$(am__dirstamp)
 rt/arrayassign.lo: rt/$(am__dirstamp)
-rt/arraycast.lo: rt/$(am__dirstamp)
 rt/arraycat.lo: rt/$(am__dirstamp)
 rt/cast_.lo: rt/$(am__dirstamp)
 rt/config.lo: rt/$(am__dirstamp)
 rt/critical_.lo: rt/$(am__dirstamp)
 rt/deh.lo: rt/$(am__dirstamp)
 rt/dmain2.lo: rt/$(am__dirstamp)
+rt/ehalloc.lo: rt/$(am__dirstamp)
 rt/invariant.lo: rt/$(am__dirstamp)
 rt/lifetime.lo: rt/$(am__dirstamp)
 rt/memory.lo: rt/$(am__dirstamp)
 rt/minfo.lo: rt/$(am__dirstamp)
 rt/monitor_.lo: rt/$(am__dirstamp)
-rt/obj.lo: rt/$(am__dirstamp)
+rt/profilegc.lo: rt/$(am__dirstamp)
 rt/qsort.lo: rt/$(am__dirstamp)
 rt/sections.lo: rt/$(am__dirstamp)
-rt/switch_.lo: rt/$(am__dirstamp)
 rt/tlsgc.lo: rt/$(am__dirstamp)
+<<<<<<< HEAD
 rt/util/$(am__dirstamp):
 	@$(MKDIR_P) rt/util
 	@: > rt/util/$(am__dirstamp)
 rt/util/array.lo: rt/util/$(am__dirstamp)
+=======
+rt/typeinfo/$(am__dirstamp):
+	@$(MKDIR_P) rt/typeinfo
+	@: > rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Acdouble.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Acfloat.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Acreal.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Adouble.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Afloat.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Ag.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Aint.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Along.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Areal.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_Ashort.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_C.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_byte.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_cdouble.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_cent.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_cfloat.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_char.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_creal.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_dchar.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_delegate.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_double.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_float.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_idouble.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ifloat.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_int.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ireal.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_long.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_n.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ptr.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_real.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_short.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ubyte.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ucent.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_uint.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ulong.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_ushort.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_void.lo: rt/typeinfo/$(am__dirstamp)
+rt/typeinfo/ti_wchar.lo: rt/typeinfo/$(am__dirstamp)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 rt/util/container/$(am__dirstamp):
 	@$(MKDIR_P) rt/util/container
 	@: > rt/util/container/$(am__dirstamp)
@@ -1273,9 +1622,12 @@ rt/util/container/array.lo: rt/util/container/$(am__dirstamp)
 rt/util/container/common.lo: rt/util/container/$(am__dirstamp)
 rt/util/container/hashtab.lo: rt/util/container/$(am__dirstamp)
 rt/util/container/treap.lo: rt/util/container/$(am__dirstamp)
+rt/util/$(am__dirstamp):
+	@$(MKDIR_P) rt/util
+	@: > rt/util/$(am__dirstamp)
 rt/util/random.lo: rt/util/$(am__dirstamp)
 rt/util/typeinfo.lo: rt/util/$(am__dirstamp)
-rt/util/utf.lo: rt/util/$(am__dirstamp)
+rt/util/utility.lo: rt/util/$(am__dirstamp)
 core/stdc/libgdruntime_la-errno_.lo: core/stdc/$(am__dirstamp)
 core/sys/posix/$(am__dirstamp):
 	@$(MKDIR_P) core/sys/posix
@@ -1506,7 +1858,10 @@ core/sys/openbsd/$(am__dirstamp):
 	@: > core/sys/openbsd/$(am__dirstamp)
 core/sys/openbsd/dlfcn.lo: core/sys/openbsd/$(am__dirstamp)
 core/sys/openbsd/err.lo: core/sys/openbsd/$(am__dirstamp)
+<<<<<<< HEAD
 core/sys/openbsd/stdlib.lo: core/sys/openbsd/$(am__dirstamp)
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 core/sys/openbsd/string.lo: core/sys/openbsd/$(am__dirstamp)
 core/sys/openbsd/sys/$(am__dirstamp):
 	@$(MKDIR_P) core/sys/openbsd/sys
@@ -1703,8 +2058,11 @@ core/sys/windows/stat.lo: core/sys/windows/$(am__dirstamp)
 core/sys/windows/stdc/$(am__dirstamp):
 	@$(MKDIR_P) core/sys/windows/stdc
 	@: > core/sys/windows/stdc/$(am__dirstamp)
+<<<<<<< HEAD
 core/sys/windows/stdc/malloc.lo:  \
 	core/sys/windows/stdc/$(am__dirstamp)
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 core/sys/windows/stdc/time.lo: core/sys/windows/stdc/$(am__dirstamp)
 core/sys/windows/subauth.lo: core/sys/windows/$(am__dirstamp)
 core/sys/windows/threadaux.lo: core/sys/windows/$(am__dirstamp)
@@ -1857,8 +2215,16 @@ mostlyclean-compile:
 	-rm -f config/x86/*.lo
 	-rm -f core/*.$(OBJEXT)
 	-rm -f core/*.lo
+	-rm -f core/gc/*.$(OBJEXT)
+	-rm -f core/gc/*.lo
 	-rm -f core/internal/*.$(OBJEXT)
 	-rm -f core/internal/*.lo
+	-rm -f core/internal/array/*.$(OBJEXT)
+	-rm -f core/internal/array/*.lo
+	-rm -f core/internal/elf/*.$(OBJEXT)
+	-rm -f core/internal/elf/*.lo
+	-rm -f core/internal/util/*.$(OBJEXT)
+	-rm -f core/internal/util/*.lo
 	-rm -f core/stdc/*.$(OBJEXT)
 	-rm -f core/stdc/*.lo
 	-rm -f core/sync/*.$(OBJEXT)
@@ -1927,6 +2293,8 @@ mostlyclean-compile:
 	-rm -f gc/impl/conservative/*.lo
 	-rm -f gc/impl/manual/*.$(OBJEXT)
 	-rm -f gc/impl/manual/*.lo
+	-rm -f gc/impl/proto/*.$(OBJEXT)
+	-rm -f gc/impl/proto/*.lo
 	-rm -f gcc/*.$(OBJEXT)
 	-rm -f gcc/*.lo
 	-rm -f gcc/sections/*.$(OBJEXT)
@@ -2035,7 +2403,11 @@ clean-libtool:
 	-rm -rf config/systemz/.libs config/systemz/_libs
 	-rm -rf config/x86/.libs config/x86/_libs
 	-rm -rf core/.libs core/_libs
+	-rm -rf core/gc/.libs core/gc/_libs
 	-rm -rf core/internal/.libs core/internal/_libs
+	-rm -rf core/internal/array/.libs core/internal/array/_libs
+	-rm -rf core/internal/elf/.libs core/internal/elf/_libs
+	-rm -rf core/internal/util/.libs core/internal/util/_libs
 	-rm -rf core/stdc/.libs core/stdc/_libs
 	-rm -rf core/sync/.libs core/sync/_libs
 	-rm -rf core/sys/bionic/.libs core/sys/bionic/_libs
@@ -2070,6 +2442,7 @@ clean-libtool:
 	-rm -rf gc/.libs gc/_libs
 	-rm -rf gc/impl/conservative/.libs gc/impl/conservative/_libs
 	-rm -rf gc/impl/manual/.libs gc/impl/manual/_libs
+	-rm -rf gc/impl/proto/.libs gc/impl/proto/_libs
 	-rm -rf gcc/.libs gcc/_libs
 	-rm -rf gcc/sections/.libs gcc/sections/_libs
 	-rm -rf gcc/unwind/.libs gcc/unwind/_libs
@@ -2191,7 +2564,11 @@ distclean-generic:
 	-rm -f config/systemz/$(am__dirstamp)
 	-rm -f config/x86/$(am__dirstamp)
 	-rm -f core/$(am__dirstamp)
+	-rm -f core/gc/$(am__dirstamp)
 	-rm -f core/internal/$(am__dirstamp)
+	-rm -f core/internal/array/$(am__dirstamp)
+	-rm -f core/internal/elf/$(am__dirstamp)
+	-rm -f core/internal/util/$(am__dirstamp)
 	-rm -f core/stdc/$(am__dirstamp)
 	-rm -f core/sync/$(am__dirstamp)
 	-rm -f core/sys/bionic/$(am__dirstamp)
@@ -2226,6 +2603,7 @@ distclean-generic:
 	-rm -f gc/$(am__dirstamp)
 	-rm -f gc/impl/conservative/$(am__dirstamp)
 	-rm -f gc/impl/manual/$(am__dirstamp)
+	-rm -f gc/impl/proto/$(am__dirstamp)
 	-rm -f gcc/$(am__dirstamp)
 	-rm -f gcc/sections/$(am__dirstamp)
 	-rm -f gcc/unwind/$(am__dirstamp)

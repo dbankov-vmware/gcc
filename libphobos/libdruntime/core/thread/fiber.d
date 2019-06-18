@@ -26,7 +26,10 @@ import core.thread.context;
 version (GNU)
 {
     import gcc.builtins;
+<<<<<<< HEAD
     import gcc.config;
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     version (GNU_StackGrowsDown)
         version = StackGrowsDown;
 }
@@ -78,12 +81,17 @@ private
         }
         else
         {
+<<<<<<< HEAD
             version = AsmExternal;
 
             version (MinGW)
                 version = GNU_AsmX86_Windows;
             else version (OSX)
                 version = AsmX86_Posix;
+=======
+            version (MinGW)
+                version = GNU_AsmX86_Windows;
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             else version (Posix)
                 version = AsmX86_Posix;
         }
@@ -107,14 +115,18 @@ private
 
             version (MinGW)
                 version = GNU_AsmX86_64_Windows;
+<<<<<<< HEAD
             else version (OSX)
                 version = AsmX86_64_Posix;
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             else version (Posix)
                 version = AsmX86_64_Posix;
         }
     }
     else version (PPC)
     {
+<<<<<<< HEAD
         version (OSX)
         {
             version = AsmPPC_Darwin;
@@ -122,6 +134,9 @@ private
             version = AlignFiberStackTo16Byte;
         }
         else version (Posix)
+=======
+        version (Posix)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         {
             version = AsmPPC_Posix;
             version = AsmExternal;
@@ -129,6 +144,7 @@ private
     }
     else version (PPC64)
     {
+<<<<<<< HEAD
         version (OSX)
         {
             version = AsmPPC_Darwin;
@@ -136,6 +152,9 @@ private
             version = AlignFiberStackTo16Byte;
         }
         else version (Posix)
+=======
+        version (Posix)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         {
             version = AlignFiberStackTo16Byte;
         }
@@ -899,7 +918,10 @@ class Fiber
      */
     static Fiber getThis() @safe nothrow @nogc
     {
+<<<<<<< HEAD
         version (GNU) pragma(inline, false);
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         return sm_this;
     }
 
@@ -1021,6 +1043,7 @@ private:
         {
             version (Posix) import core.sys.posix.sys.mman; // mmap, MAP_ANON
 
+<<<<<<< HEAD
             static if ( __traits( compiles, ucontext_t ) )
             {
                 // Stack size must be at least the minimum allowable by the OS.
@@ -1028,6 +1051,8 @@ private:
                     sz = MINSIGSTKSZ;
             }
 
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             static if ( __traits( compiles, mmap ) )
             {
                 // Allocate more for the memory guard
@@ -1363,6 +1388,7 @@ private:
 
             assert( (cast(size_t) pstack & 0x0f) == 0 );
         }
+<<<<<<< HEAD
         else version (AsmPPC_Darwin)
         {
             version (StackGrowsDown) {}
@@ -1385,6 +1411,8 @@ private:
               *cast(size_t*)(pstack + wsize) = cast(size_t) Thread.getThis().m_addr;
             assert( (cast(size_t) pstack & 0x0f) == 0 );
         }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         else version (AsmMIPS_O32_Posix)
         {
             version (StackGrowsDown) {}
@@ -1548,6 +1576,7 @@ private:
         ucontext_t              m_utxt  = void;
         ucontext_t*             m_ucur  = null;
     }
+<<<<<<< HEAD
     else static if (GNU_Enable_CET)
     {
         // When libphobos was built with --enable-cet, these fields need to
@@ -1557,6 +1586,8 @@ private:
         ucontext_t              m_utxt  = void;
         ucontext_t*             m_ucur  = null;
     }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 
 private:
@@ -1700,7 +1731,11 @@ unittest {
     assert( composed.state == Fiber.State.TERM );
 }
 
+<<<<<<< HEAD
 version (unittest)
+=======
+version (CoreUnittest)
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 {
     class TestFiber : Fiber
     {
@@ -1770,11 +1805,14 @@ unittest
 // Multiple threads running shared fibers
 version (PPC)   version = UnsafeFiberMigration;
 version (PPC64) version = UnsafeFiberMigration;
+<<<<<<< HEAD
 version (OSX)
 {
     version (X86)    version = UnsafeFiberMigration;
     version (X86_64) version = UnsafeFiberMigration;
 }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 version (UnsafeFiberMigration)
 {

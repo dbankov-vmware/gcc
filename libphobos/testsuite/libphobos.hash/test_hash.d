@@ -1,3 +1,4 @@
+// { dg-prune-output "Warning: struct HasNonConstToHash has method toHash" }
 void main()
 {
     issue19562();
@@ -8,8 +9,11 @@ void main()
     issue19005();
     issue19204();
     issue19262();
+    issue19282();
+    issue19332(); // Support might be removed in the future!
     issue19568();
     issue19582();
+    issue20034();
     testTypeInfoArrayGetHash1();
     testTypeInfoArrayGetHash2();
     pr2243();
@@ -130,6 +134,30 @@ void issue19262() nothrow
     h = hashOf(aa, h);
 }
 
+extern(C++) class Issue19282CppClass {}
+
+/// test that hashOf doesn't crash for non-null C++ objects.
+void issue19282()
+{
+    Issue19282CppClass c = new Issue19282CppClass();
+    size_t h = hashOf(c);
+    h = hashOf(c, h);
+}
+
+/// Ensure hashOf works for const struct that has non-const toHash & has all
+/// fields bitwise-hashable. (Support might be removed in the future!)
+void issue19332()
+{
+    static struct HasNonConstToHash
+    {
+        int a;
+        size_t toHash() { return a; }
+    }
+    const HasNonConstToHash val;
+    size_t h = hashOf(val);
+    h = hashOf!(const HasNonConstToHash)(val); // Ensure doesn't match more than one overload.
+}
+
 /// hashOf should not unnecessarily call a struct's fields' postblits & dtors in CTFE
 void issue19568()
 {
@@ -192,6 +220,17 @@ void issue19582()
             S[10] a;
             return ((const S[] a) @nogc nothrow pure @safe => toUbyte(a))(a);
         }();
+}
+
+/// Check core.internal.hash.hashOf works with enums of non-scalar values
+void issue20034()
+{
+    enum E
+    {
+        a = "foo"
+    }
+    // should compile
+    assert(hashOf(E.a, 1));
 }
 
 /// Tests ensure TypeInfo_Array.getHash uses element hash functions instead

@@ -469,7 +469,7 @@ layout_aggregate_type (AggregateDeclaration *decl, tree type,
 	      insert_aggregate_field (type, field, 0);
 	    }
 
-	  if (!id && !cd->isCPPclass ())
+	  if (!id && cd->hasMonitor ())
 	    {
 	      tree field = create_field_decl (ptr_type_node, "__monitor", 1,
 					      inherited_p);
@@ -1012,8 +1012,8 @@ public:
     TYPE_CONTEXT (t->ctype) = d_decl_context (t->sym);
     build_type_decl (t->ctype, t->sym);
 
-    /* For structs with a user defined postblit or a destructor,
-       also set TREE_ADDRESSABLE on the type and all variants.
+    /* For structs with a user defined postblit, copy constructor, or a
+       destructor, also set TREE_ADDRESSABLE on the type and all variants.
        This will make the struct be passed around by reference.  */
     if (!t->sym->isPOD ())
       {

@@ -141,6 +141,20 @@ real test_toPrecl(double a) { return toPrec!real(a); }
 real test_toPrecl(real a) { return toPrec!real(a); }
 
 //////////////////////////////////////////////////////
+// core.volatile
+
+// { dg-final { scan-tree-dump-not " volatileLoad " "original" } }
+ubyte test_volatileLoad(ubyte *a) { return volatileLoad(a); }
+ushort test_volatileLoad(ushort *a) { return volatileLoad(a); }
+uint test_volatileLoad(uint *a) { return volatileLoad(a); }
+ulong test_volatileLoad(ulong *a) { return volatileLoad(a); }
+// { dg-final { scan-tree-dump-not " volatileStore " "original" } }
+void test_volatileStore(ubyte *a, ubyte b) { return volatileStore(a, b); }
+void test_volatileStore(ushort *a, ushort b) { return volatileStore(a, b); }
+void test_volatileStore(uint *a, uint b) { return volatileStore(a, b); }
+void test_volatileStore(ulong *a, ulong b) { return volatileStore(a, b); }
+
+//////////////////////////////////////////////////////
 // core.stdc.stdarg
 
 // { dg-final { scan-tree-dump-not " va_arg " "original" } }

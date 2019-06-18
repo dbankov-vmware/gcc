@@ -27,6 +27,8 @@ typedef Array<class Dsymbol *> Dsymbols;
 
 typedef Array<class RootObject *> Objects;
 
+typedef Array<class DtorDeclaration *> DtorDeclarations;
+
 typedef Array<class FuncDeclaration *> FuncDeclarations;
 
 typedef Array<class Parameter *> Parameters;
@@ -47,8 +49,6 @@ typedef Array<class SharedStaticDtorDeclaration *> SharedStaticDtorDeclarations;
 typedef Array<class AliasDeclaration *> AliasDeclarations;
 
 typedef Array<class Module *> Modules;
-
-typedef Array<struct File *> Files;
 
 typedef Array<class CaseStatement *> CaseStatements;
 

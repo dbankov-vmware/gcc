@@ -17,8 +17,6 @@
 
 if ENABLE_LIBPHOBOS
   SUBDIRS = libdruntime src testsuite
-else
-  SUBDIRS =
 endif
 
 ACLOCAL_AMFLAGS = -I . -I .. -I ../config

@@ -20,7 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 
 #include "dmd/compiler.h"
-#include "dmd/scope.h"
 #include "dmd/expression.h"
 #include "dmd/identifier.h"
 #include "dmd/module.h"
@@ -33,40 +32,6 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Implements the Compiler interface used by the frontend.  */
-
-/* Generate C main() in response to seeing D main().  This used to be in
-   libdruntime, but contained a reference to _Dmain which didn't work when
-   druntime was made into a shared library and was linked to a program, such
-   as a C++ program, that didn't have a _Dmain.  */
-
-void
-Compiler::genCmain (Scope *sc)
-{
-  static bool initialized = false;
-
-  if (initialized)
-    return;
-
-  /* The D code to be generated is provided by __entrypoint.di, try to load it,
-     but don't fail if unfound.  */
-  unsigned errors = global.startGagging ();
-  Module *m = Module::load (Loc (), NULL, Identifier::idPool ("__entrypoint"));
-
-  if (global.endGagging (errors))
-    m = NULL;
-
-  if (m != NULL)
-    {
-      m->importedFrom = m;
-      m->importAll (NULL);
-      dsymbolSemantic (m, NULL);
-      semantic2 (m, NULL);
-      semantic3 (m, NULL);
-      d_add_entrypoint_module (m, sc->_module);
-    }
-
-  initialized = true;
-}
 
 /* Perform a reinterpret cast of EXPR to type TYPE for use in CTFE.
    The front end should have already ensured that EXPR is a constant,

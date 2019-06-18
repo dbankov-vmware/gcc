@@ -10,15 +10,12 @@
 
 #pragma once
 
-#include "root/root.h"
 #include "dsymbol.h"
 #include "declaration.h"
-#include "tokens.h"
 
 class Identifier;
 class Type;
 class Expression;
-class VarDeclaration;
 
 class EnumDeclaration : public ScopeDsymbol
 {
@@ -43,7 +40,6 @@ public:
     bool added;
     int inuse;
 
-    EnumDeclaration(Loc loc, Identifier *id, Type *memtype);
     Dsymbol *syntaxCopy(Dsymbol *s);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     void setScope(Scope *sc);
@@ -51,12 +47,12 @@ public:
     Type *getType();
     const char *kind() const;
     Dsymbol *search(const Loc &loc, Identifier *ident, int flags = SearchLocalsOnly);
-    bool isDeprecated();                // is Dsymbol deprecated?
+    bool isDeprecated() const;                // is Dsymbol deprecated?
     Prot prot();
-    Expression *getMaxMinValue(Loc loc, Identifier *id);
+    Expression *getMaxMinValue(const Loc &loc, Identifier *id);
     bool isSpecial() const;
-    Expression *getDefaultValue(Loc loc);
-    Type *getMemtype(Loc loc);
+    Expression *getDefaultValue(const Loc &loc);
+    Type *getMemtype(const Loc &loc);
 
     EnumDeclaration *isEnumDeclaration() { return this; }
 
@@ -83,12 +79,9 @@ public:
 
     EnumDeclaration *ed;
 
-    EnumMember(Loc loc, Identifier *id, Expression *value, Type *origType);
-    EnumMember(Loc loc, Identifier *id, Expression *value, Type *memType,
-        StorageClass stc, UserAttributeDeclaration *uad, DeprecatedDeclaration *dd);
     Dsymbol *syntaxCopy(Dsymbol *s);
     const char *kind() const;
-    Expression *getVarExp(Loc loc, Scope *sc);
+    Expression *getVarExp(const Loc &loc, Scope *sc);
 
     EnumMember *isEnumMember() { return this; }
     void accept(Visitor *v) { v->visit(this); }

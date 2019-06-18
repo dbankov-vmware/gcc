@@ -9,7 +9,6 @@
 #pragma once
 
 #include "dsystem.h"
-#include "dcompat.h"
 #include "object.h"
 #include "rmem.h"
 
@@ -204,29 +203,6 @@ struct Array
     TYPE pop()
     {
         return data.ptr[--length];
-    }
-
-    void sort()
-    {
-        struct ArraySort
-        {
-            static int
-    #if _WIN32
-              __cdecl
-    #endif
-            Array_sort_compare(const void *x, const void *y)
-            {
-                RootObject *ox = *(RootObject **)const_cast<void *>(x);
-                RootObject *oy = *(RootObject **)const_cast<void *>(y);
-
-                return ox->compare(oy);
-            }
-        };
-
-        if (length)
-        {
-            qsort(data.ptr, length, sizeof(RootObject *), &ArraySort::Array_sort_compare);
-        }
     }
 };
 

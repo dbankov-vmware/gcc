@@ -298,6 +298,7 @@ enum uint VQ_FLAG2000 = 0x2000;
 enum uint VQ_FLAG4000 = 0x4000;
 enum uint VQ_FLAG8000 = 0x8000;
 
+<<<<<<< HEAD
 version (GNU)
 {
     int fhopen(const fhandle_t*, int);
@@ -342,3 +343,19 @@ else
     pragma(mangle, "unmount@@FBSD_1.0")       int unmount(const char*, int);
     //int getvfsbyname(const char*, xvfsconf*);
 }
+=======
+pragma(mangle, "fhopen@@FBSD_1.0")    int fhopen(const fhandle_t*, int);
+pragma(mangle, "fhstat@FBSD_1.0")     int fhstat(const fhandle_t*, stat_t*);
+pragma(mangle, "fhstatfs@FBSD_1.0")   int fhstatfs(const fhandle_t*, statfs_t*);
+pragma(mangle, "fstatfs@FBSD_1.0")    int fstatfs(int, statfs_t*);
+pragma(mangle, "getfh@@FBSD_1.0")     int getfh(const char*, fhandle_t*);
+pragma(mangle, "getfsstat@FBSD_1.0")  int getfsstat(statfs_t*, c_long, int);
+pragma(mangle, "getmntinfo@FBSD_1.0") int getmntinfo(statfs_t**, int);
+pragma(mangle, "lgetfh@@FBSD_1.0")    int lgetfh(const char*, fhandle_t*);
+pragma(mangle, "mount@@FBSD_1.0")     int mount(const char*, const char*, int, void*);
+//int nmount(iovec*, uint, int);
+pragma(mangle, "statfs@FBSD_1.0")     int statfs(const char*, statfs_t*);
+pragma(mangle, "unmount@@FBSD_1.0")   int unmount(const char*, int);
+
+//int getvfsbyname(const char*, xvfsconf*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

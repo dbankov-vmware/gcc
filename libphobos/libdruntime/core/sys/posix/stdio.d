@@ -250,6 +250,7 @@ else version (Solaris)
 /*
 L_ctermid
 
+<<<<<<< HEAD
 char*   ctermid(char*);
 FILE*   fdopen(int, const scope char*);
 int     fileno(FILE*);
@@ -260,6 +261,16 @@ ssize_t getline(char**, size_t*, FILE*);
 char*   gets(char*);
 int     pclose(FILE*);
 FILE*   popen(const scope char*, const scope char*);
+=======
+char*  ctermid(char*);
+FILE*  fdopen(int, const scope char*);
+int    fileno(FILE*);
+int    fseeko(FILE*, off_t, int);
+off_t  ftello(FILE*);
+char*  gets(char*);
+int    pclose(FILE*);
+FILE*  popen(const scope char*, const scope char*);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 */
 
 version (CRuntime_Glibc)

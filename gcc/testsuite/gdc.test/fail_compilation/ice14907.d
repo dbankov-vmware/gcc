@@ -1,6 +1,7 @@
 /*
 TEST_OUTPUT:
 ---
+<<<<<<< HEAD
 fail_compilation/ice14907.d(14): Error: struct ice14907.S(int v = S) recursive template expansion
 fail_compilation/ice14907.d(19):        while looking for match for `S!()`
 fail_compilation/ice14907.d(15): Error: template ice14907.f(int v = f)() recursive template expansion
@@ -8,6 +9,15 @@ fail_compilation/ice14907.d(20):        while looking for match for `f!()`
 fail_compilation/ice14907.d(15): Error: template ice14907.f(int v = f)() recursive template expansion
 fail_compilation/ice14907.d(21): Error: template `ice14907.f` cannot deduce function from argument types `!()()`, candidates are:
 fail_compilation/ice14907.d(15):        `ice14907.f(int v = f)()`
+=======
+fail_compilation/ice14907.d(14): Error: struct `ice14907.S(int v = S)` recursive template expansion
+fail_compilation/ice14907.d(19):        while looking for match for `S!()`
+fail_compilation/ice14907.d(15): Error: template `ice14907.f(int v = f)()` recursive template expansion
+fail_compilation/ice14907.d(20):        while looking for match for `f!()`
+fail_compilation/ice14907.d(15): Error: template `ice14907.f(int v = f)()` recursive template expansion
+fail_compilation/ice14907.d(21): Error: template `ice14907.f` cannot deduce function from argument types `!()()`, candidates are:
+fail_compilation/ice14907.d(15):        `f(int v = f)()`
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 ---
 */
 

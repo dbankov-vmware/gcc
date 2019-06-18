@@ -25,7 +25,7 @@ class Statement;
 class Type;
 class TypeFunction;
 class TypeTuple;
-struct OutBuffer;
+class TypeFunction;
 
 struct TargetC
 {
@@ -79,7 +79,6 @@ struct Target
         real_t max;
         real_t min_normal;
         real_t nan;
-        real_t snan;
         real_t infinity;
         real_t epsilon;
 
@@ -110,8 +109,8 @@ public:
     LINK systemLinkage();
     TypeTuple *toArgTypes(Type *t);
     bool isReturnOnStack(TypeFunction *tf, bool needsThis);
+    d_uns64 parameterSize(const Loc& loc, Type *t);
     Expression *getTargetInfo(const char* name, const Loc& loc);
-    bool libraryObjectMonitors(FuncDeclaration *fd, Statement *fbody);
 };
 
 extern Target target;

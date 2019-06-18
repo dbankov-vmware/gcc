@@ -14,7 +14,7 @@
  * GC.
  *
  * Copyright: Copyright Sean Kelly 2005 - 2016.
- * License:   $(WEB www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+ * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  * Authors:   Sean Kelly
  */
 
@@ -25,8 +25,7 @@
  */
 module gc.impl.manual.gc;
 
-import gc.config;
-import gc.gcinterface;
+import core.gc.gcinterface;
 
 import rt.util.container.array;
 
@@ -35,46 +34,43 @@ static import core.memory;
 
 extern (C) void onOutOfMemoryError(void* pretend_sideffect = null) @trusted pure nothrow @nogc; /* dmd @@@BUG11461@@@ */
 
+// register GC in C constructor (_STI_)
+extern(C) pragma(crt_constructor) void _d_register_manual_gc()
+{
+    import core.gc.registry;
+    registerGCFactory("manual", &initialize);
+}
+
+private GC initialize()
+{
+    import core.stdc.string: memcpy;
+
+    auto p = cstdlib.malloc(__traits(classInstanceSize, ManualGC));
+    if (!p)
+        onOutOfMemoryError();
+
+    auto init = typeid(ManualGC).initializer();
+    assert(init.length == __traits(classInstanceSize, ManualGC));
+    auto instance = cast(ManualGC) memcpy(p, init.ptr, init.length);
+    instance.__ctor();
+
+    return instance;
+}
+
 class ManualGC : GC
 {
-    __gshared Array!Root roots;
-    __gshared Array!Range ranges;
-
-    static void initialize(ref GC gc)
-    {
-        import core.stdc.string;
-
-        if (config.gc != "manual")
-            return;
-
-        auto p = cstdlib.malloc(__traits(classInstanceSize, ManualGC));
-        if (!p)
-            onOutOfMemoryError();
-
-        auto init = typeid(ManualGC).initializer();
-        assert(init.length == __traits(classInstanceSize, ManualGC));
-        auto instance = cast(ManualGC) memcpy(p, init.ptr, init.length);
-        instance.__ctor();
-
-        gc = instance;
-    }
-
-    static void finalize(ref GC gc)
-    {
-        if (config.gc != "manual")
-            return;
-
-        auto instance = cast(ManualGC) gc;
-        instance.Dtor();
-        cstdlib.free(cast(void*) instance);
-    }
+    Array!Root roots;
+    Array!Range ranges;
 
     this()
     {
     }
 
-    void Dtor()
+    ~this()
     {
+        // TODO: cannot free as memory is overwritten and
+        //  the monitor is still read in rt_finalize (called by destroy)
+        // cstdlib.free(cast(void*) this);
     }
 
     void enable()
@@ -158,7 +154,7 @@ class ManualGC : GC
         return 0;
     }
 
-    void free(void* p) nothrow
+    void free(void* p) nothrow @nogc
     {
         cstdlib.free(p);
     }
@@ -167,7 +163,7 @@ class ManualGC : GC
      * Determine the base address of the block containing p.  If p is not a gc
      * allocated pointer, return null.
      */
-    void* addrOf(void* p) nothrow
+    void* addrOf(void* p) nothrow @nogc
     {
         return null;
     }
@@ -176,7 +172,7 @@ class ManualGC : GC
      * Determine the allocated size of pointer p.  If p is an interior pointer
      * or not a gc allocated pointer, return 0.
      */
-    size_t sizeOf(void* p) nothrow
+    size_t sizeOf(void* p) nothrow @nogc
     {
         return 0;
     }
@@ -191,6 +187,11 @@ class ManualGC : GC
     }
 
     core.memory.GC.Stats stats() nothrow
+    {
+        return typeof(return).init;
+    }
+
+    core.memory.GC.ProfileStats profileStats() nothrow
     {
         return typeof(return).init;
     }
@@ -263,7 +264,7 @@ class ManualGC : GC
         return 0;
     }
 
-    void runFinalizers(in void[] segment) nothrow
+    void runFinalizers(const scope void[] segment) nothrow
     {
     }
 

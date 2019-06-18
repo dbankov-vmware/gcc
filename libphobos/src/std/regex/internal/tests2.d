@@ -7,7 +7,11 @@ package(std.regex):
 import std.conv, std.exception, std.meta, std.range,
     std.typecons, std.regex;
 
+<<<<<<< HEAD
 import std.regex.internal.ir : Escapables; // characters that need escaping
+=======
+import std.uni : Escapables; // characters that need escaping
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 @safe unittest
 {
@@ -60,11 +64,19 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
 {
     import std.algorithm.comparison : equal;
     auto rtr = regex("a|b|c");
+<<<<<<< HEAD
     enum ctr = regex("a|b|c");
     assert(equal(rtr.ir,ctr.ir));
     //CTFE parser BUG is triggered by group
     //in the middle of alternation (at least not first and not last)
     enum testCT = regex(`abc|(edf)|xyz`);
+=======
+    static ctr = regex("a|b|c");
+    assert(equal(rtr.ir,ctr.ir));
+    //CTFE parser BUG is triggered by group
+    //in the middle of alternation (at least not first and not last)
+    static testCT = regex(`abc|(edf)|xyz`);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     auto testRT = regex(`abc|(edf)|xyz`);
     assert(equal(testCT.ir,testRT.ir));
 }
@@ -149,7 +161,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     import std.algorithm.iteration : map;
     void test_body(alias matchFn)()
     {
+<<<<<<< HEAD
         //issue 5857
+=======
+        // https://issues.dlang.org/show_bug.cgi?id=5857
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         //matching goes out of control if ... in (...){x} has .*/.+
         auto c = matchFn("axxxzayyyyyzd",regex("(a.*z){2}d")).captures;
         assert(c[0] == "axxxzayyyyyzd");
@@ -157,7 +173,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
         auto c2 = matchFn("axxxayyyyyd",regex("(a.*){2}d")).captures;
         assert(c2[0] == "axxxayyyyyd");
         assert(c2[1] == "ayyyyy");
+<<<<<<< HEAD
         //issue 2108
+=======
+        // https://issues.dlang.org/show_bug.cgi?id=2108
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         //greedy vs non-greedy
         auto nogreed = regex("<packet.*?/packet>");
         assert(matchFn("<packet>text</packet><packet>text</packet>", nogreed).hit
@@ -165,7 +185,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
         auto greed =  regex("<packet.*/packet>");
         assert(matchFn("<packet>text</packet><packet>text</packet>", greed).hit
                == "<packet>text</packet><packet>text</packet>");
+<<<<<<< HEAD
         //issue 4574
+=======
+        // https://issues.dlang.org/show_bug.cgi?id=4574
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         //empty successful match still advances the input
         string[] pres, posts, hits;
         foreach (m; matchFn("abcabc", regex("","g")))
@@ -195,7 +219,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
         ];
         assert(pres == array(retro(heads)));
         assert(posts == tails);
+<<<<<<< HEAD
         //issue 6076
+=======
+        // https://issues.dlang.org/show_bug.cgi?id=6076
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         //regression on .*
         auto re = regex("c.*|d");
         auto m = matchFn("mm", re);
@@ -214,7 +242,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
             assert(!match(to!string(ch),regex(`[^\`~ch~`]`)));
             assert(match(to!string(ch),regex(`[\`~ch~`-\`~ch~`]`)));
         }
+<<<<<<< HEAD
         //bugzilla 7718
+=======
+        // https://issues.dlang.org/show_bug.cgi?id=7718
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         string strcmd = "./myApp.rb -os OSX -path \"/GIT/Ruby Apps/sec\" -conf 'notimer'";
         auto reStrCmd = regex (`(".*")|('.*')`, "g");
         assert(equal(map!"a[0]"(matchFn(strcmd, reStrCmd)),
@@ -231,8 +263,13 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     {
         import std.uni : toUpper;
 
+<<<<<<< HEAD
         foreach (i, v; AliasSeq!(string, wstring, dstring))
         {
+=======
+        static foreach (i, v; AliasSeq!(string, wstring, dstring))
+        {{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             auto baz(Cap)(Cap m)
             if (is(Cap == Captures!(Cap.String)))
             {
@@ -251,7 +288,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
             auto s = std.regex.replace!(baz!(Captures!(String)))(to!String("Strap a rocket engine on a chicken."),
                     regex(to!String("[ar]"), "g"));
             assert(s == "StRAp A Rocket engine on A chicken.");
+<<<<<<< HEAD
         }
+=======
+        }}
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         debug(std_regex_test) writeln("!!! Replace test done "~matchFn.stringof~"  !!!");
     }
     test!(bmatch)();
@@ -293,14 +334,21 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(equal(split(s1, regex(", *")), w1[]));
 }
 
+<<<<<<< HEAD
 @safe unittest
 { // bugzilla 7141
+=======
+// https://issues.dlang.org/show_bug.cgi?id=7141
+@safe unittest
+{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     string pattern = `[a\--b]`;
     assert(match("-", pattern));
     assert(match("b", pattern));
     string pattern2 = `[&-z]`;
     assert(match("b", pattern2));
 }
+<<<<<<< HEAD
 @safe unittest
 {//bugzilla 7111
     assert(match("", regex("^")));
@@ -311,6 +359,22 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
 }
 
 // bugzilla 7551
+=======
+
+// https://issues.dlang.org/show_bug.cgi?id=7111
+@safe unittest
+{
+    assert(match("", regex("^")));
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=7300
+@safe unittest
+{
+    assert(!match("a"d, "aa"d));
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=7551
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto r = regex("[]abc]*");
@@ -320,25 +384,50 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert("]ac".matchFirst(r2).hit == "]");
 }
 
+<<<<<<< HEAD
 @safe unittest
 {//bugzilla 7674
+=======
+// https://issues.dlang.org/show_bug.cgi?id=7674
+@safe unittest
+{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     assert("1234".replace(regex("^"), "$$") == "$1234");
     assert("hello?".replace(regex(r"\?", "g"), r"\?") == r"hello\?");
     assert("hello?".replace(regex(r"\?", "g"), r"\\?") != r"hello\?");
 }
+<<<<<<< HEAD
 @safe unittest
 {// bugzilla 7679
     import std.algorithm.comparison : equal;
     foreach (S; AliasSeq!(string, wstring, dstring))
     (){ // avoid slow optimizations for large functions @@@BUG@@@ 2396
+=======
+
+// https://issues.dlang.org/show_bug.cgi?id=7679
+@safe unittest
+{
+    import std.algorithm.comparison : equal;
+    static foreach (S; AliasSeq!(string, wstring, dstring))
+    {{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         enum re = ctRegex!(to!S(r"\."));
         auto str = to!S("a.b");
         assert(equal(std.regex.splitter(str, re), [to!S("a"), to!S("b")]));
         assert(split(str, re) == [to!S("a"), to!S("b")]);
+<<<<<<< HEAD
     }();
 }
 @safe unittest
 {//bugzilla 8203
+=======
+    }}
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=8203
+@safe unittest
+{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     string data = "
     NAME   = XPAW01_STA:STATION
     NAME   = XPAW01_STA
@@ -353,13 +442,24 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     auto r2 = regex(`([а-яА-Я\-_]+\s*)+(?<=[\s\.,\^])`);
     match("аллея Театральная", r2);
 }
+<<<<<<< HEAD
 @safe unittest
 {// bugzilla 8637 purity of enforce
+=======
+
+// https://issues.dlang.org/show_bug.cgi?id=8637 purity of enforce
+@safe unittest
+{
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     auto m = match("hello world", regex("world"));
     enforce(m);
 }
 
+<<<<<<< HEAD
 // bugzilla 8725
+=======
+// https://issues.dlang.org/show_bug.cgi?id=8725
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
   static italic = regex( r"\*
@@ -372,7 +472,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
       "this * is* interesting, <i>very</i> interesting");
 }
 
+<<<<<<< HEAD
 // bugzilla 8349
+=======
+// https://issues.dlang.org/show_bug.cgi?id=8349
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     enum peakRegexStr = r"\>(wgEncode.*Tfbs.*\.(?:narrow)|(?:broad)Peak.gz)</a>";
@@ -381,7 +485,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(match(r"\>wgEncode-blah-Tfbs.narrow</a>", peakRegex));
 }
 
+<<<<<<< HEAD
 // bugzilla 9211
+=======
+// https://issues.dlang.org/show_bug.cgi?id=9211
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.algorithm.comparison : equal;
@@ -393,7 +501,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(equal(m2.front, ["1234", "3", "4"]));
 }
 
+<<<<<<< HEAD
 // bugzilla 9280
+=======
+// https://issues.dlang.org/show_bug.cgi?id=9280
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     string tomatch = "a!b@c";
@@ -406,7 +518,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
 }
 
 
+<<<<<<< HEAD
 // bugzilla 9579
+=======
+// https://issues.dlang.org/show_bug.cgi?id=9579
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     char[] input = ['a', 'b', 'c'];
@@ -417,14 +533,22 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(r == "(a)bc");
 }
 
+<<<<<<< HEAD
 // bugzilla 9634
+=======
+// https://issues.dlang.org/show_bug.cgi?id=9634
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto re = ctRegex!"(?:a+)";
     assert(match("aaaa", re).hit == "aaaa");
 }
 
+<<<<<<< HEAD
 //bugzilla 10798
+=======
+// https://issues.dlang.org/show_bug.cgi?id=10798
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto cr = ctRegex!("[abcd--c]*");
@@ -433,7 +557,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(m.hit == "ab");
 }
 
+<<<<<<< HEAD
 // bugzilla 10913
+=======
+// https://issues.dlang.org/show_bug.cgi?id=10913
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @system unittest
 {
     @system static string foo(const(char)[] s)
@@ -452,7 +580,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     }();
 }
 
+<<<<<<< HEAD
 // bugzilla 11262
+=======
+// https://issues.dlang.org/show_bug.cgi?id=11262
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     enum reg = ctRegex!(r",", "g");
@@ -461,13 +593,21 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(str == "This-List");
 }
 
+<<<<<<< HEAD
 // bugzilla 11775
+=======
+// https://issues.dlang.org/show_bug.cgi?id=11775
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     assert(collectException(regex("a{1,0}")));
 }
 
+<<<<<<< HEAD
 // bugzilla 11839
+=======
+// https://issues.dlang.org/show_bug.cgi?id=11839
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.algorithm.comparison : equal;
@@ -478,7 +618,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(regex(`(?P<я>\w+)`).namedCaptures.equal(["я"]));
 }
 
+<<<<<<< HEAD
 // bugzilla 12076
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12076
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto RE = ctRegex!(r"(?<!x[a-z]+)\s([a-z]+)");
@@ -486,7 +630,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     auto m = match(s, RE);
 }
 
+<<<<<<< HEAD
 // bugzilla 12105
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12105
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto r = ctRegex!`.*?(?!a)`;
@@ -495,14 +643,22 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert("aaab".matchFirst(r2).hit == "aaab");
 }
 
+<<<<<<< HEAD
 //bugzilla 11784
+=======
+// https://issues.dlang.org/show_bug.cgi?id=11784
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     assert("abcdefghijklmnopqrstuvwxyz"
         .matchFirst("[a-z&&[^aeiuo]]").hit == "b");
 }
 
+<<<<<<< HEAD
 //bugzilla 12366
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12366
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
      auto re = ctRegex!(`^((?=(xx+?)\2+$)((?=\2+$)(?=(x+)(\4+$))\5){2})*x?$`);
@@ -510,27 +666,43 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
      assert(!"xxxx".match(re).empty);
 }
 
+<<<<<<< HEAD
 // bugzilla 12582
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12582
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto r = regex(`(?P<a>abc)`);
     assert(collectException("abc".matchFirst(r)["b"]));
 }
 
+<<<<<<< HEAD
 // bugzilla 12691
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12691
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     assert(bmatch("e@", "^([a-z]|)*$").empty);
     assert(bmatch("e@", ctRegex!`^([a-z]|)*$`).empty);
 }
 
+<<<<<<< HEAD
 //bugzilla  12713
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12713
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     assertThrown(regex("[[a-z]([a-z]|(([[a-z])))"));
 }
 
+<<<<<<< HEAD
 //bugzilla 12747
+=======
+// https://issues.dlang.org/show_bug.cgi?id=12747
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     assertThrown(regex(`^x(\1)`));
@@ -538,14 +710,52 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assertThrown(regex(`^((x)(?=\1))`));
 }
 
+<<<<<<< HEAD
 // bugzilla 14504
+=======
+// https://issues.dlang.org/show_bug.cgi?id=13532
+version (none) // TODO: revist once we have proper benchmark framework
+@safe unittest
+{
+    import std.datetime.stopwatch : StopWatch, AutoStart;
+    import std.math : abs;
+    import std.conv : to;
+    enum re1 = ctRegex!`[0-9][0-9]`;
+    immutable static re2 = ctRegex!`[0-9][0-9]`;
+    immutable iterations = 1_000_000;
+    size_t result1 = 0, result2 = 0;
+    auto sw = StopWatch(AutoStart.yes);
+    foreach (_; 0 .. iterations)
+    {
+        result1 += matchFirst("12345678", re1).length;
+    }
+    const staticTime = sw.peek();
+    sw.reset();
+    foreach (_; 0 .. iterations)
+    {
+        result2 += matchFirst("12345678", re2).length;
+    }
+    const enumTime = sw.peek();
+    assert(result1 == result2);
+    auto ratio = 1.0 * enumTime.total!"usecs" / staticTime.total!"usecs";
+    // enum is faster or the diff is less < 30%
+    assert(ratio < 1.0 || abs(ratio - 1.0) < 0.75,
+        "enum regex to static regex ratio "~to!string(ratio));
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=14504
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto p = ctRegex!("a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?a?" ~
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 }
 
+<<<<<<< HEAD
 // bugzilla 14529
+=======
+// https://issues.dlang.org/show_bug.cgi?id=14529
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto ctPat2 = regex(r"^[CDF]$", "i");
@@ -553,7 +763,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
         assert(matchAll(v, ctPat2).front.hit == v);
 }
 
+<<<<<<< HEAD
 // bugzilla 14615
+=======
+// https://issues.dlang.org/show_bug.cgi?id=14615
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.array : appender;
@@ -572,14 +786,22 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(sink.data == "Hello, world!Hello, world!");
 }
 
+<<<<<<< HEAD
 // bugzilla 15573
+=======
+// https://issues.dlang.org/show_bug.cgi?id=15573
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto rx = regex("[c d]", "x");
     assert("a b".matchFirst(rx));
 }
 
+<<<<<<< HEAD
 // bugzilla 15864
+=======
+// https://issues.dlang.org/show_bug.cgi?id=15864
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     regex(`(<a (?:(?:\w+=\"[^"]*\")?\s*)*href="\.\.?)"`);
@@ -592,7 +814,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assertThrown(regex("(?#..."));
 }
 
+<<<<<<< HEAD
 // bugzilla 17075
+=======
+// https://issues.dlang.org/show_bug.cgi?id=17075
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     enum titlePattern = `<title>(.+)</title>`;
@@ -601,14 +827,22 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(input.matchFirst(titleRegex).empty);
 }
 
+<<<<<<< HEAD
 // bugzilla 17212
+=======
+// https://issues.dlang.org/show_bug.cgi?id=17212
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     auto r = regex(" [a] ", "x");
     assert("a".matchFirst(r));
 }
 
+<<<<<<< HEAD
 // bugzilla 17157
+=======
+// https://issues.dlang.org/show_bug.cgi?id=17157
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.algorithm.comparison : equal;
@@ -625,7 +859,11 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(equal!equal(s.bmatch(r), outcomes));
 }
 
+<<<<<<< HEAD
 // bugzilla 17667
+=======
+// https://issues.dlang.org/show_bug.cgi?id=17667
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.algorithm.searching : canFind;
@@ -637,19 +875,34 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     willThrow([r".", r"[\(\{[\]\}\)]"], "no matching ']' found while parsing character class");
     willThrow([r"[\", r"123"], "no matching ']' found while parsing character class");
     willThrow([r"[a-", r"123"], "no matching ']' found while parsing character class");
+<<<<<<< HEAD
     willThrow([r"[a-\", r"123"], "invalid escape sequence");
     willThrow([r"\", r"123"], "invalid escape sequence");
 }
 
 // bugzilla 17668
+=======
+    willThrow([r"[a-\", r"123"], "no matching ']' found while parsing character class");
+    willThrow([r"\", r"123"], "invalid escape sequence");
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=17668
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     import std.algorithm.searching;
     auto e = collectException!RegexException(regex(q"<[^]>"));
+<<<<<<< HEAD
     assert(e.msg.canFind("no operand for '^'"));
 }
 
 // bugzilla 17673
+=======
+    assert(e.msg.canFind("no operand for '^'"), e.msg);
+}
+
+// https://issues.dlang.org/show_bug.cgi?id=17673
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 @safe unittest
 {
     string str = `<">`;
@@ -660,3 +913,15 @@ import std.regex.internal.ir : Escapables; // characters that need escaping
     assert(c.whichPattern == 2);
 }
 
+<<<<<<< HEAD
+=======
+// https://issues.dlang.org/show_bug.cgi?id=18692
+@safe unittest
+{
+    auto rx = regex("()()()");
+    auto ma = "".matchFirst(rx);
+    auto ma2 = ma;
+    ma = ma2;
+    assert(ma[1] == "");
+}
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

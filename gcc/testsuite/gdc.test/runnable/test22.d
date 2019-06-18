@@ -1,7 +1,5 @@
-// RUNNABLE_PHOBOS_TEST
 // REQUIRED_ARGS:
 
-import std.math: poly;
 import core.stdc.stdarg;
 
 extern(C)
@@ -219,7 +217,7 @@ void test10()
 {
     auto i = 5u;
     auto s = typeid(typeof(i)).toString;
-    printf("%.*s\n", s.length, s.ptr);
+    printf("%.*s\n", cast(int)s.length, s.ptr);
     assert(typeid(typeof(i)) == typeid(uint));
 }
 
@@ -247,7 +245,7 @@ void assertEqual(real* a, real* b, string file = __FILE__, size_t line = __LINE_
     {
         if (x[i] != y[i])
         {
-            printf("%02d: %02x %02x\n", i, x[i], y[i]);
+            printf("%02zd: %02x %02x\n", i, x[i], y[i]);
             import core.exception;
             throw new AssertError(file, line);
         }
@@ -358,7 +356,7 @@ class Bar17
 
 class Foo17
 {
-        void opAdd (Bar17 b) {}
+        void opBinary(string op : "+") (Bar17 b) {}
 }
 
 void test17()
@@ -557,7 +555,7 @@ void test26()
   foreach( cdouble z; A )
   {
     s = toString26(z);
-    printf("%.*s  ", s.length, s.ptr);
+    printf("%.*s  ", cast(int)s.length, s.ptr);
   }
   printf("\n");
 
@@ -571,7 +569,7 @@ void test26()
   foreach( cdouble z; A )
   {
     s = toString26(z);
-    printf("%.*s  ", s.length, s.ptr);
+    printf("%.*s  ", cast(int)s.length, s.ptr);
   }
   printf("\n");
 }
@@ -582,7 +580,7 @@ void test27()
 {   int x;
 
     string s = (int*function(int ...)[]).mangleof;
-    printf("%.*s\n", s.length, s.ptr);
+    printf("%.*s\n", cast(int)s.length, s.ptr);
     assert((int*function(int ...)[]).mangleof == "APFiXPi");
     assert(typeof(x).mangleof == "i");
     assert(x.mangleof == "_D6test226test27FZ1xi");
@@ -603,7 +601,7 @@ void test29()
     ulong a = 10_000_000_000_000_000,
           b =  1_000_000_000_000_000;
 
-    printf("test29\n%lx\n%lx\n%lx\n", a, b, a / b);
+    printf("test29\n%llx\n%llx\n%llx\n", a, b, a / b);
     assert((a / b) == 10);
 }
 
@@ -666,7 +664,7 @@ struct particle
     float yg;     /* Y Gravity       */
 }
 
-particle particles[10000];
+particle[10000] particles;
 
 void test32()
 {
@@ -923,7 +921,7 @@ in
 {
     assert(A.length > 0);
 }
-body
+do
 {
     version (D_InlineAsm_X86)
     {
@@ -1086,7 +1084,7 @@ in
 {
     assert(A.length > 0);
 }
-body
+do
 {
     ptrdiff_t i = A.length - 1;
     real r = A[i];
@@ -1101,19 +1099,17 @@ body
 void test47()
 {
     real x = 3.1;
-    static real pp[] = [56.1, 32.7, 6];
+    static real[] pp = [56.1, 32.7, 6];
     real r;
 
     printf("The result should be %Lf\n",(56.1L + (32.7L + 6L * x) * x));
     printf("The C version outputs %Lf\n", poly_c(x, pp));
     printf("The asm version outputs %Lf\n", poly_asm(x, pp));
-    printf("The std.math version outputs %Lf\n", poly(x, pp));
 
     r = (56.1L + (32.7L + 6L * x) * x);
     assert(r == poly_c(x, pp));
     version (D_InlineAsm_X86)
         assert(r == poly_asm(x, pp));
-    assert(r == poly(x, pp));
 }
 
 /*************************************/
@@ -1211,28 +1207,36 @@ void test52()
 }
 
 /*************************************/
-import std.stdio;
-import core.stdc.stdarg;
 
 void myfunc(int a1, ...) {
         va_list argument_list;
         TypeInfo argument_type;
         string sa; int ia; double da;
-        writefln("%d variable arguments", _arguments.length);
-        writefln("argument types %s", _arguments);
+        assert(_arguments.length == 9);
+
         va_start(argument_list, a1);
         for (int i = 0; i < _arguments.length; ) {
                 if ((argument_type=_arguments[i++]) == typeid(string)) {
                         va_arg(argument_list, sa);
-                        writefln("%d) string arg = '%s', length %d", i+1, sa.length<=20? sa : "?", sa.length);
+                        switch (i)
+                        {
+                            case 1: assert(sa == "2"); break;
+                            case 7: assert(sa == "8"); break;
+                            case 8: assert(sa == "9"); break;
+                            case 9: assert(sa == "10"); break;
+                            default:
+                                printf("i = %d\n", i);
+                                assert(false);
+                        }
                 } else if (argument_type == typeid(int)) {
                         va_arg(argument_list, ia);
-                        writefln("%d) int arg = %d", i+1, ia);
+                        assert(ia == i+1);
                 } else if (argument_type == typeid(double)) {
                         va_arg(argument_list, da);
-                        writefln("%d) double arg = %f", i+1, da);
+                        const e = i+1;
+                        assert((e - 0.0001) < da && da < (e + 0.0001));
                 } else {
-                        throw new Exception("invalid argument type");
+                        assert(false, argument_type.toString());
                 }
         }
         va_end(argument_list);
@@ -1245,6 +1249,24 @@ void test6758() {
         myfunc(1, "2", 3, 4, 5, 6, 7, 8, "9", "10");                    // Works OK.
 }
 
+
+/*************************************/
+
+real f18573() { return 1; }
+
+void test18573()
+{
+    cast(void) f18573();
+    cast(void) f18573();
+    cast(void) f18573();
+    cast(void) f18573();
+    cast(void) f18573();
+    cast(void) f18573();
+    cast(void) f18573();
+
+    real b = 2;
+    assert(b == 2); /* fails; should pass */
+}
 
 /*************************************/
 
@@ -1305,6 +1327,7 @@ int main()
     test51();
     test52();
     test6758();
+    test18573();
 
     printf("Success\n");
     return 0;

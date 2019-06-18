@@ -65,10 +65,21 @@ glibc_d_register_target_info (void)
   d_add_target_info_handlers (handlers);
 }
 
+/* Implement TARGET_D_OBJECT_FORMAT for Glibc targets.  */
+
+const char *
+glibc_d_object_format (void)
+{
+  return "elf";
+}
+
 #undef TARGET_D_OS_VERSIONS
 #define TARGET_D_OS_VERSIONS glibc_d_os_builtins
 
 #undef TARGET_D_REGISTER_OS_TARGET_INFO
 #define TARGET_D_REGISTER_OS_TARGET_INFO glibc_d_register_target_info
+
+#undef TARGET_D_OBJECT_FORMAT
+#define TARGET_D_OBJECT_FORMAT glibc_d_object_format
 
 struct gcc_targetdm targetdm = TARGETDM_INITIALIZER;

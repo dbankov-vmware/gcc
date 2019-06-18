@@ -32,6 +32,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "dmd/target.h"
 
 #include "tree.h"
+#include "options.h"
 #include "fold-const.h"
 #include "diagnostic.h"
 #include "stringpool.h"
@@ -39,6 +40,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "stor-layout.h"
 
 #include "d-tree.h"
+#include "d-frontend.h"
 #include "d-target.h"
 
 
@@ -211,6 +213,7 @@ make_frontend_typeinfo (Identifier *ident, ClassDeclaration *base = NULL)
   ClassDeclaration *tinfo = ClassDeclaration::create (loc, ident, NULL, NULL,
 						      true);
   tinfo->parent = object_module;
+  tinfo->members = d_gc_malloc<Dsymbols> ();
   dsymbolSemantic (tinfo, object_module->_scope);
   tinfo->baseClass = base;
   /* This is a compiler generated class, and shouldn't be mistaken for being
@@ -393,8 +396,7 @@ class TypeInfoVisitor : public Visitor
     this->layout_field (value);
   }
 
-
-  /* Write out the __vptr and __monitor fields of class CD.  */
+  /* Write out the __vptr and optionally __monitor fields of class CD.  */
 
   void layout_base (ClassDeclaration *cd)
   {
@@ -405,7 +407,8 @@ class TypeInfoVisitor : public Visitor
     else
       this->layout_field (null_pointer_node);
 
-    this->layout_field (null_pointer_node);
+    if (cd->hasMonitor ())
+      this->layout_field (null_pointer_node);
   }
 
   /* Write out the interfaces field of class CD.
@@ -839,7 +842,7 @@ public:
 	this->layout_field (base);
 
 	/* void *destructor;  */
-	tree dtor = (cd->dtor) ? build_address (get_symbol_decl (cd->dtor))
+	tree dtor = (cd->tidtor) ? build_address (get_symbol_decl (cd->tidtor))
 	  : null_pointer_node;
 	this->layout_field (dtor);
 
@@ -849,7 +852,7 @@ public:
 	this->layout_field (inv);
 
 	/* ClassFlags m_flags;  */
-	ClassFlags::Type flags = ClassFlags::hasOffTi;
+	int flags = ClassFlags::hasOffTi;
 	if (cd->isCOMclass ())
 	  flags |= ClassFlags::isCOMclass;
 
@@ -893,10 +896,7 @@ public:
 	this->layout_field (build_integer_cst (flags, d_uint_type));
 
 	/* void *deallocator;  */
-	tree ddtor = (cd->aggDelete)
-	  ? build_address (get_symbol_decl (cd->aggDelete))
-	  : null_pointer_node;
-	this->layout_field (ddtor);
+	this->layout_field (null_pointer_node);
 
 	/* OffsetTypeInfo[] m_offTi;  (not implemented)  */
 	this->layout_field (null_array_node);
@@ -915,6 +915,8 @@ public:
 	  this->layout_field (build_expr (cd->getRTInfo, true));
 	else if (!(flags & ClassFlags::noPointers))
 	  this->layout_field (size_one_node);
+	else
+	  this->layout_field (null_pointer_node);
       }
     else
       {
@@ -941,7 +943,7 @@ public:
 	this->layout_field (null_pointer_node);
 
 	/* ClassFlags m_flags;  */
-	ClassFlags::Type flags = ClassFlags::hasOffTi;
+	int flags = ClassFlags::hasOffTi;
 	flags |= ClassFlags::hasTypeInfo;
 	if (cd->isCOMinterface ())
 	  flags |= ClassFlags::isCOMclass;
@@ -1070,13 +1072,13 @@ public:
       this->layout_field (null_pointer_node);
 
     /* StructFlags m_flags;  */
-    StructFlags::Type m_flags = 0;
+    int m_flags = StructFlags::none;
     if (ti->hasPointers ())
       m_flags |= StructFlags::hasPointers;
     this->layout_field (build_integer_cst (m_flags, d_uint_type));
 
     /* void function(void*) xdtor;  */
-    tree dtor = (sd->dtor) ? build_address (get_symbol_decl (sd->dtor))
+    tree dtor = (sd->tidtor) ? build_address (get_symbol_decl (sd->tidtor))
       : null_pointer_node;
     this->layout_field (dtor);
 
@@ -1316,6 +1318,7 @@ public:
     tree type = tinfo_types[get_typeinfo_kind (tid->tinfo)];
     gcc_assert (type != NULL_TREE);
 
+    /* Built-in typeinfo will be referenced as one-only.  */
     tid->csym = declare_extern_var (ident, type);
     DECL_LANG_SPECIFIC (tid->csym) = build_lang_decl (tid);
 
@@ -1438,9 +1441,17 @@ layout_cpp_typeinfo (ClassDeclaration *cd)
   /* Use the vtable of __cpp_type_info_ptr, the EH personality routine
      expects this, as it uses .classinfo identity comparison to test for
      C++ catch handlers.  */
-  tree vptr = get_vtable_decl (ClassDeclaration::cpp_type_info_ptr);
-  CONSTRUCTOR_APPEND_ELT (init, NULL_TREE, build_address (vptr));
-  CONSTRUCTOR_APPEND_ELT (init, NULL_TREE, null_pointer_node);
+  ClassDeclaration *cppti = ClassDeclaration::cpp_type_info_ptr;
+  if (have_typeinfo_p (cppti))
+    {
+      tree vptr = get_vtable_decl (cppti);
+      CONSTRUCTOR_APPEND_ELT (init, NULL_TREE, build_address (vptr));
+    }
+  else
+    CONSTRUCTOR_APPEND_ELT (init, NULL_TREE, null_pointer_node);
+
+  if (cppti->hasMonitor ())
+    CONSTRUCTOR_APPEND_ELT (init, NULL_TREE, null_pointer_node);
 
   /* Let C++ do the RTTI generation, and just reference the symbol as
      extern, knowing the underlying type is not required.  */
@@ -1452,9 +1463,7 @@ layout_cpp_typeinfo (ClassDeclaration *cd)
 
   /* Build the initializer and emit.  */
   DECL_INITIAL (decl) = build_struct_literal (TREE_TYPE (decl), init);
-  DECL_EXTERNAL (decl) = 0;
-  d_pushdecl (decl);
-  rest_of_decl_compilation (decl, 1, 0);
+  d_finish_decl (decl);
 }
 
 /* Get the VAR_DECL of the __cpp_type_info_ptr for DECL.  If this does not yet

@@ -34,6 +34,7 @@ struct S { alias T = float*; }
 struct ST(X,Y) {}
 
 void foo(alias t)() {}
+<<<<<<< HEAD
 
 /**************************************************/
 // https://issues.dlang.org/show_bug.cgi?id=21074
@@ -66,3 +67,5 @@ static assert(is(T8 == const(ubyte*)));
 alias T8 = mixin(q{immutable(__traits(getMember, S, "T"))})*;
 static assert(is(T8 == immutable(float*)*));
 */
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

@@ -45,24 +45,6 @@ unittest
 
 /******************************************/
 
-struct Postblit
-{
-    static int count = 0;
-    int value;
-    this(this) { count++; }
-}
-
-unittest
-{
-    auto a0 = Postblit(0);
-    auto a1 = Postblit(1);
-    auto a2 = Postblit(2);
-    testVariadic!Postblit(3, a0, a1, a2);
-    assert(Postblit.count == 3);
-}
-
-/******************************************/
-
 struct Destructor
 {
     static int count = 0;
@@ -79,26 +61,6 @@ unittest
         static assert(!__traits(compiles, testVariadic!Destructor(3, a0, a1, a2)));
     }
     assert(Destructor.count == 3);
-}
-
-/******************************************/
-
-struct CopyConstructor 
-{
-    static int count = 0;
-    int value;
-    this(int v) { this.value = v; }
-    this(ref typeof(this) other) { count++; this.value = other.value; }
-}
-
-unittest
-{
-    auto a0 = CopyConstructor(0);
-    auto a1 = CopyConstructor(1);
-    auto a2 = CopyConstructor(2);
-    testVariadic!CopyConstructor(3, a0, a1, a2);
-    // NOTE: Cpctors are not implemented yet.
-    assert(CopyConstructor.count == 0 || CopyConstructor.count == 3);
 }
 
 /******************************************/

@@ -9,7 +9,10 @@ version (linux):
 extern (C):
 nothrow:
 @system:
+<<<<<<< HEAD
 @nogc:
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 version (ARM)     version = ARM_Any;
 version (AArch64) version = ARM_Any;

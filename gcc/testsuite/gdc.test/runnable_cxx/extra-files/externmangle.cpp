@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 
 template<class X>
@@ -194,17 +195,25 @@ int Module::dim(Array<Module*>* arr)
     return arr->dim;
 }
 
-#if _LP64
-unsigned long testlongmangle(int32_t a, uint32_t b, long c, unsigned long d)
+uint64_t testlongmangle(int a, unsigned int b, int64_t c, uint64_t d)
 {
     return a + b + c + d;
 }
-#else
-unsigned long long testlongmangle(int a, unsigned int b, long long c, unsigned long long d)
+
+unsigned long testCppLongMangle(long a, unsigned long b)
 {
-    return a + b + c + d;
+    return a + b;
 }
-#endif
+
+unsigned long long testCppLongLongMangle(long long a, unsigned long long b)
+{
+    return a + b;
+}
+
+size_t testCppSizeTMangle(ptrdiff_t a, size_t b)
+{
+    return a + b;
+}
 
 int test31[2][2][2] = {1, 1, 1, 1, 1, 1, 1, 1};
 int *test32 = 0;
@@ -401,4 +410,18 @@ int test39cpp(C2<char>* c2, S2<int>* s2)
     if (s2->value() != otherS2->value())
         return 2;
     return 0;
+}
+
+namespace foo
+{
+    namespace bar
+    {
+        namespace baz
+        {
+            int doStuff(int i)
+            {
+                return i * 2;
+            }
+        }
+    }
 }

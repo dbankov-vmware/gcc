@@ -10,8 +10,6 @@
 
 #pragma once
 
-class Dsymbol;
-class ScopeDsymbol;
 class Identifier;
 class Module;
 class Statement;
@@ -26,16 +24,9 @@ class UserAttributeDeclaration;
 struct DocComment;
 struct AA;
 class TemplateInstance;
+class CPPNamespaceDeclaration;
 
 #include "dsymbol.h"
-
-#if __GNUC__
-// Requires a full definition for LINK
-#include "globals.h"
-#else
-enum LINK;
-enum PINLINE;
-#endif
 
 #define CSXthis_ctor    1       // called this()
 #define CSXsuper_ctor   2       // called super()
@@ -80,15 +71,16 @@ struct Scope
     Dsymbol *parent;            // parent to use
     LabelStatement *slabel;     // enclosing labelled statement
     SwitchStatement *sw;        // enclosing switch statement
+    Statement *tryBody;         // enclosing _body of TryCatchStatement or TryFinallyStatement
     TryFinallyStatement *tf;    // enclosing try finally statement
     ScopeGuardStatement *os;       // enclosing scope(xxx) statement
     Statement *sbreak;          // enclosing statement that supports "break"
     Statement *scontinue;       // enclosing statement that supports "continue"
     ForeachStatement *fes;      // if nested function for ForeachStatement, this is it
     Scope *callsc;              // used for __FUNCTION__, __PRETTY_FUNCTION__ and __MODULE__
-    int inunion;                // we're processing members of a union
-    int nofree;                 // set if shouldn't free it
-    int noctor;                 // set if constructor calls aren't allowed
+    Dsymbol *inunion;           // !=null if processing members of a union
+    bool nofree;                // true if shouldn't free it
+    bool inLoop;                // true if inside a loop (where constructor calls aren't allowed)
     int intypeof;               // in typeof(exp)
     VarDeclaration *lastVar;    // Previous symbol used to prevent goto-skips-init
 
@@ -100,11 +92,14 @@ struct Scope
     Module *minst;              // root module where the instantiated templates should belong to
     TemplateInstance *tinst;    // enclosing template instance
 
-    unsigned callSuper;         // primitive flow analysis for constructors
-    unsigned *fieldinit;
+    unsigned char callSuper;    // primitive flow analysis for constructors
+    unsigned char *fieldinit;
     size_t fieldinit_dim;
 
     AlignDeclaration *aligndecl;    // alignment for struct members
+
+    /// C++ namespace this symbol belongs to
+    CPPNamespaceDeclaration *namespace_;
 
     LINK linkage;               // linkage for external functions
     CPPMANGLE cppmangle;        // C++ mangle type
@@ -125,10 +120,6 @@ struct Scope
     AA *anchorCounts;           // lookup duplicate anchor name count
     Identifier *prevAnchor;     // qualified symbol name of last doc anchor
 
-    static Scope *freelist;
-    static Scope *alloc();
-    static Scope *createGlobal(Module *module);
-
     Scope();
 
     Scope *copy();
@@ -140,21 +131,14 @@ struct Scope
     Scope *startCTFE();
     Scope *endCTFE();
 
-    void mergeCallSuper(Loc loc, unsigned cs);
-
-    unsigned *saveFieldInit();
-    void mergeFieldInit(Loc loc, unsigned *cses);
-
     Module *instantiatingModule();
 
-    Dsymbol *search(Loc loc, Identifier *ident, Dsymbol **pscopesym, int flags = IgnoreNone);
-    Dsymbol *search_correct(Identifier *ident);
-    static const char *search_correct_C(Identifier *ident);
-    Dsymbol *insert(Dsymbol *s);
+    Dsymbol *search(const Loc &loc, Identifier *ident, Dsymbol **pscopesym, int flags = IgnoreNone);
 
     ClassDeclaration *getClassScope();
     AggregateDeclaration *getStructClassScope();
-    void setNoFree();
 
     structalign_t alignment();
+
+    bool isDeprecated() const;
 };

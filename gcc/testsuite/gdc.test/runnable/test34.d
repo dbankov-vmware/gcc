@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 // RUNNABLE_PHOBOS_TEST
 /*
+=======
+/*
+RUNNABLE_PHOBOS_TEST
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 TEST_OUTPUT:
 ---
 Object
@@ -704,18 +709,18 @@ void test34()
 
 void foo35()
 {
-        uint a;
-        uint b;
-        uint c;
-        extern (Windows) int function(int i, int j, int k) xxx;
+    uint a;
+    uint b;
+    uint c;
+    extern (Windows) int function(int i, int j, int k) xxx;
 
-        a = 1;
-        b = 2;
-        c = 3;
+    a = 1;
+    b = 2;
+    c = 3;
 
-        xxx = cast(typeof(xxx))(a + b);
-        throw new Exception("xxx");
-        xxx( 4, 5, 6 );
+    xxx = cast(typeof(xxx))(a + b);
+    throw new Exception("xxx");
+    xxx( 4, 5, 6 );
 }
 
 void test35()
@@ -737,7 +742,7 @@ void test37()
     {
         synchronized
         {
-            writefln("Hello world!");
+            printf("Hello world!\n");
         }
     }
 }
@@ -768,7 +773,7 @@ static Rect sizeTest(bool empty) {
 }
 
 void print38(Rect r) {
-    writefln("(%d, %d)-(%d, %d)", r.left, r.top, r.right, r.bottom);
+    printf("(%d, %d)-(%d, %d)\n", r.left, r.top, r.right, r.bottom);
     assert(r.left == 0);
     assert(r.right == 0);
     assert(r.top == 0);
@@ -1061,7 +1066,7 @@ void func53(TestStruct[2] testarg)
     assert(testarg[1].dummy2 == 2);
 }
 
-TestStruct m53[2];
+TestStruct[2] m53;
 
 void test53()
 {
@@ -1295,7 +1300,7 @@ void main()
     test61();
     test62();
 
-    writefln("Success");
+    printf("Success\n");
 }
 
 

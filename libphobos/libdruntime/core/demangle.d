@@ -54,13 +54,13 @@ pure @safe:
     enum AddType { no, yes }
 
 
-    this( const(char)[] buf_, char[] dst_ = null )
+    this( return const(char)[] buf_, return char[] dst_ = null )
     {
         this( buf_, AddType.yes, dst_ );
     }
 
 
-    this( const(char)[] buf_, AddType addType_, char[] dst_ = null )
+    this( return const(char)[] buf_, AddType addType_, return char[] dst_ = null )
     {
         buf     = buf_;
         addType = addType_;
@@ -208,15 +208,15 @@ pure @safe:
         {
             assert( contains( dst[0 .. len], val ) );
             debug(info) printf( "removing (%.*s)\n", cast(int) val.length, val.ptr );
-
             size_t v = &val[0] - &dst[0];
+            assert( len >= val.length && len <= dst.length );
+            len -= val.length;
             for (size_t p = v; p < len; p++)
                 dst[p] = dst[p + val.length];
-            len -= val.length;
         }
     }
 
-    char[] append( const(char)[] val )
+    char[] append( const(char)[] val ) return scope
     {
         pragma(inline, false); // tame dmd inliner
 
@@ -227,8 +227,7 @@ pure @safe:
             assert( !contains( dst[0 .. len], val ) );
             debug(info) printf( "appending (%.*s)\n", cast(int) val.length, val.ptr );
 
-            if ( &dst[len] == &val[0] &&
-                dst.length - len >= val.length )
+            if ( dst.length - len >= val.length && &dst[len] == &val[0] )
             {
                 // data is already in place
                 auto t = dst[len .. len + val.length];
@@ -254,13 +253,13 @@ pure @safe:
             put(", ");
     }
 
-    char[] put(char c)
+    char[] put(char c) return scope
     {
         char[1] val = c;
         return put(val[]);
     }
 
-    char[] put( const(char)[] val )
+    char[] put( scope const(char)[] val ) return scope
     {
         pragma(inline, false); // tame dmd inliner
 
@@ -278,7 +277,7 @@ pure @safe:
     {
         import core.internal.string;
 
-        UnsignedStringBuf buf;
+        UnsignedStringBuf buf = void;
 
         auto s = unsignedToTempString(val, buf, 16);
         int slen = cast(int)s.length;
@@ -301,7 +300,7 @@ pure @safe:
     }
 
 
-    void silent( lazy void dg )
+    void silent( void delegate() pure @safe dg )
     {
         debug(trace) printf( "silent+\n" );
         debug(trace) scope(success) printf( "silent-\n" );
@@ -431,7 +430,7 @@ pure @safe:
         Digit
         Digit Number
     */
-    const(char)[] sliceNumber()
+    const(char)[] sliceNumber() return scope
     {
         debug(trace) printf( "sliceNumber+\n" );
         debug(trace) scope(success) printf( "sliceNumber-\n" );
@@ -449,7 +448,7 @@ pure @safe:
     }
 
 
-    size_t decodeNumber()
+    size_t decodeNumber() scope
     {
         debug(trace) printf( "decodeNumber+\n" );
         debug(trace) scope(success) printf( "decodeNumber-\n" );
@@ -458,7 +457,7 @@ pure @safe:
     }
 
 
-    size_t decodeNumber( const(char)[] num )
+    size_t decodeNumber( scope const(char)[] num ) scope
     {
         debug(trace) printf( "decodeNumber+\n" );
         debug(trace) scope(success) printf( "decodeNumber-\n" );
@@ -479,7 +478,7 @@ pure @safe:
     }
 
 
-    void parseReal()
+    void parseReal() scope
     {
         debug(trace) printf( "parseReal+\n" );
         debug(trace) scope(success) printf( "parseReal-\n" );
@@ -570,7 +569,7 @@ pure @safe:
         Namechar
         Namechar Namechars
     */
-    void parseLName()
+    void parseLName() scope
     {
         debug(trace) printf( "parseLName+\n" );
         debug(trace) scope(success) printf( "parseLName-\n" );
@@ -788,7 +787,7 @@ pure @safe:
     TypeTuple:
         B Number Arguments
     */
-    char[] parseType( char[] name = null )
+    char[] parseType( char[] name = null ) return scope
     {
         static immutable string[23] primitives = [
             "char", // a
@@ -1186,13 +1185,17 @@ pure @safe:
                 popFront();
                 put( "scope " );
                 continue;
+            case 'm': // FuncAttrLive
+                popFront();
+                put( "@live " );
+                continue;
             default:
                 error();
             }
         }
     }
 
-    void parseFuncArguments()
+    void parseFuncArguments() scope
     {
         // Arguments
         for ( size_t n = 0; true; n++ )
@@ -1260,7 +1263,7 @@ pure @safe:
         TypeFunction:
             CallConvention FuncAttrs Arguments ArgClose Type
     */
-    char[] parseTypeFunction( char[] name = null, IsDelegate isdg = IsDelegate.no )
+    char[] parseTypeFunction( char[] name = null, IsDelegate isdg = IsDelegate.no ) return
     {
         debug(trace) printf( "parseTypeFunction+\n" );
         debug(trace) scope(success) printf( "parseTypeFunction-\n" );
@@ -1349,7 +1352,7 @@ pure @safe:
         E
         F
     */
-    void parseValue( char[] name = null, char type = '\0' )
+    void parseValue(scope  char[] name = null, char type = '\0' ) scope
     {
         debug(trace) printf( "parseValue+\n" );
         debug(trace) scope(success) printf( "parseValue-\n" );
@@ -1470,7 +1473,7 @@ pure @safe:
     }
 
 
-    void parseIntegerValue( char[] name = null, char type = '\0' )
+    void parseIntegerValue( scope char[] name = null, char type = '\0' ) scope
     {
         debug(trace) printf( "parseIntegerValue+\n" );
         debug(trace) scope(success) printf( "parseIntegerValue-\n" );
@@ -1580,7 +1583,7 @@ pure @safe:
         S Number_opt QualifiedName
         X ExternallyMangledName
     */
-    void parseTemplateArgs()
+    void parseTemplateArgs() scope
     {
         debug(trace) printf( "parseTemplateArgs+\n" );
         debug(trace) scope(success) printf( "parseTemplateArgs-\n" );
@@ -1608,7 +1611,7 @@ pure @safe:
                 char t = front; // peek at type for parseValue
                 if ( t == 'Q' )
                     t = peekBackref();
-                char[] name; silent( name = parseType() );
+                char[] name; silent( delegate void() { name = parseType(); } );
                 parseValue( name, t );
                 continue;
             case 'S':
@@ -1714,7 +1717,7 @@ pure @safe:
     TemplateInstanceName:
         Number __T LName TemplateArgs Z
     */
-    void parseTemplateInstanceName(bool hasNumber)
+    void parseTemplateInstanceName(bool hasNumber) scope
     {
         debug(trace) printf( "parseTemplateInstanceName+\n" );
         debug(trace) scope(success) printf( "parseTemplateInstanceName-\n" );
@@ -1739,7 +1742,7 @@ pure @safe:
     }
 
 
-    bool mayBeTemplateInstanceName()
+    bool mayBeTemplateInstanceName() scope
     {
         debug(trace) printf( "mayBeTemplateInstanceName+\n" );
         debug(trace) scope(success) printf( "mayBeTemplateInstanceName-\n" );
@@ -1759,7 +1762,7 @@ pure @safe:
         LName
         TemplateInstanceName
     */
-    void parseSymbolName()
+    void parseSymbolName() scope
     {
         debug(trace) printf( "parseSymbolName+\n" );
         debug(trace) scope(success) printf( "parseSymbolName-\n" );
@@ -1801,7 +1804,7 @@ pure @safe:
 
     // parse optional function arguments as part of a symbol name, i.e without return type
     // if keepAttr, the calling convention and function attributes are not discarded, but returned
-    char[] parseFunctionTypeNoReturn( bool keepAttr = false )
+    char[] parseFunctionTypeNoReturn( bool keepAttr = false ) return scope
     {
         // try to demangle a function, in case we are pointing to some function local
         auto prevpos = pos;
@@ -1852,7 +1855,7 @@ pure @safe:
         SymbolName
         SymbolName QualifiedName
     */
-    char[] parseQualifiedName()
+    char[] parseQualifiedName() return scope
     {
         debug(trace) printf( "parseQualifiedName+\n" );
         debug(trace) scope(success) printf( "parseQualifiedName-\n" );
@@ -1876,7 +1879,7 @@ pure @safe:
         _D QualifiedName Type
         _D QualifiedName M Type
     */
-    void parseMangledName( bool displayType, size_t n = 0 )
+    void parseMangledName( bool displayType, size_t n = 0 ) scope
     {
         debug(trace) printf( "parseMangledName+\n" );
         debug(trace) scope(success) printf( "parseMangledName-\n" );
@@ -1951,7 +1954,16 @@ pure @safe:
         parseMangledName( AddType.yes == addType );
     }
 
-    char[] doDemangle(alias FUNC)()
+    char[] copyInput() return scope
+    {
+        if (dst.length < buf.length)
+            dst.length = buf.length;
+        char[] r = dst[0 .. buf.length];
+        r[] = buf[];
+        return r;
+    }
+
+    char[] doDemangle(alias FUNC)() return scope
     {
         while ( true )
         {
@@ -1979,10 +1991,7 @@ pure @safe:
                     auto msg = e.toString();
                     printf( "error: %.*s\n", cast(int) msg.length, msg.ptr );
                 }
-                if ( dst.length < buf.length )
-                    dst.length = buf.length;
-                dst[0 .. buf.length] = buf[];
-                return dst[0 .. buf.length];
+                return copyInput();
             }
             catch ( Exception e )
             {
@@ -2017,8 +2026,11 @@ pure @safe:
  */
 char[] demangle( const(char)[] buf, char[] dst = null ) nothrow pure @safe
 {
-    //return Demangle(buf, dst)();
     auto d = Demangle!()(buf, dst);
+    // fast path (avoiding throwing & catching exception) for obvious
+    // non-D mangled names
+    if (buf.length < 2 || !(buf[0] == 'D' || buf[0..2] == "_D"))
+        return d.copyInput();
     return d.demangleName();
 }
 
@@ -2067,7 +2079,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
         Replacement [] replacements;
 
     pure @safe:
-        size_t positionInResult(size_t pos)
+        size_t positionInResult(size_t pos) scope
         {
             foreach_reverse (r; replacements)
                 if (pos >= r.pos)
@@ -2077,7 +2089,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
 
         alias Remangle = Demangle!(PrependHooks);
 
-        void flushPosition(ref Remangle d)
+        void flushPosition(ref Remangle d) scope
         {
             if (lastpos < d.pos)
             {
@@ -2096,7 +2108,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
             }
         }
 
-        bool parseLName(ref Remangle d)
+        bool parseLName(scope ref Remangle d) scope
         {
             flushPosition(d);
 
@@ -2127,7 +2139,8 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
                     npos = positionInResult(*pid);
                 }
                 encodeBackref(reslen - npos);
-                replacements ~= Replacement(d.pos, result.length);
+                const pos = d.pos; // work around issues.dlang.org/show_bug.cgi?id=20675
+                replacements ~= Replacement(pos, result.length);
             }
             else
             {
@@ -2141,7 +2154,8 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
                     size_t npos = positionInResult(*pid);
                     result.length = reslen;
                     encodeBackref(reslen - npos);
-                    replacements ~= Replacement(d.pos, result.length);
+                    const pos = d.pos; // work around issues.dlang.org/show_bug.cgi?id=20675
+                    replacements ~= Replacement(pos, result.length);
                 }
                 else
                 {
@@ -2153,7 +2167,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
             return true;
         }
 
-        char[] parseType( ref Remangle d, char[] name = null )
+        char[] parseType( ref Remangle d, char[] name = null ) return scope
         {
             if (d.front != 'Q')
                 return null;
@@ -2174,7 +2188,7 @@ char[] reencodeMangled(const(char)[] mangled) nothrow pure @safe
             return result[reslen .. $]; // anything but null
         }
 
-        void encodeBackref(size_t relpos)
+        void encodeBackref(size_t relpos) scope
         {
             result ~= 'Q';
             enum base = 26;
@@ -2232,7 +2246,7 @@ char[] mangle(T)(const(char)[] fqn, char[] dst = null) @safe pure nothrow
 
         @property bool empty() const { return !s.length; }
 
-        @property const(char)[] front() const
+        @property const(char)[] front() const return
         {
             immutable i = indexOfDot();
             return i == -1 ? s[0 .. $] : s[0 .. i];
@@ -2335,7 +2349,6 @@ char[] mangleFunc(T:FT*, FT)(const(char)[] fqn, char[] dst = null) @safe pure no
 
 private enum hasTypeBackRef = (int function(void**,void**)).mangleof[$-4 .. $] == "QdZi";
 
-///
 @safe pure nothrow unittest
 {
     assert(mangleFunc!(int function(int))("a.b") == "_D1a1bFiZi");
@@ -2412,7 +2425,7 @@ else version (Darwin)
 else
     enum string cPrefix = "";
 
-version (unittest)
+@safe pure nothrow unittest
 {
     immutable string[2][] table =
     [
@@ -2470,7 +2483,7 @@ version (unittest)
         ["_D3foo7__arrayZ", "foo.__array"],
         ["_D8link657428__T3fooVE8link65746Methodi0Z3fooFZi", "int link6574.foo!(0).foo()"],
         ["_D8link657429__T3fooHVE8link65746Methodi0Z3fooFZi", "int link6574.foo!(0).foo()"],
-        ["_D4test22__T4funcVAyaa3_610a62Z4funcFNaNbNiNfZAya", `pure nothrow @nogc @safe immutable(char)[] test.func!("a\x0ab").func()`],
+        ["_D4test22__T4funcVAyaa3_610a62Z4funcFNaNbNiNmNfZAya", `pure nothrow @nogc @live @safe immutable(char)[] test.func!("a\x0ab").func()`],
         ["_D3foo3barFzkZzi", "cent foo.bar(ucent)"],
         ["_D5bug145Class3fooMFNlZPv", "scope void* bug14.Class.foo()"],
         ["_D5bug145Class3barMFNjZPv", "return void* bug14.Class.bar()"],
@@ -2541,9 +2554,6 @@ version (unittest)
         else
             alias staticIota = Seq!(staticIota!(x - 1), x - 1);
     }
-}
-@safe pure nothrow unittest
-{
     foreach ( i, name; table )
     {
         auto r = demangle( name[0] );
@@ -2556,8 +2566,43 @@ version (unittest)
         static assert( r == table[i][1],
                 "demangled \"" ~ table[i][0] ~ "\" as \"" ~ r ~ "\" but expected \"" ~ table[i][1] ~ "\"");
     }
+
+    {
+        // https://issues.dlang.org/show_bug.cgi?id=18531
+        auto symbol = `_D3std3uni__T6toCaseS_DQvQt12toLowerIndexFNaNbNiNewZtVii1043S_DQCjQCi10toLowerTabFNaNbNiNemZwSQDo5ascii7toLowerTAyaZQDzFNaNeQmZ14__foreachbody2MFNaNeKmKwZ14__foreachbody3MFNaNeKwZi`;
+        auto demangled = `pure @trusted int std.uni.toCase!(std.uni.toLowerIndex(dchar), 1043, std.uni.toLowerTab(ulong), std.ascii.toLower, immutable(char)[]).toCase(immutable(char)[]).__foreachbody2(ref ulong, ref dchar).__foreachbody3(ref dchar)`;
+        auto dst = new char[200];
+        auto ret = demangle( symbol, dst);
+        assert( ret == demangled );
+    }
 }
 
+unittest
+{
+    // https://issues.dlang.org/show_bug.cgi?id=18300
+    string s = demangle.mangleof;
+    foreach (i; 1..77)
+    {
+        char[] buf = new char[i];
+        auto ds = demangle(s, buf);
+        assert(ds == "pure nothrow @safe char[] core.demangle.demangle(const(char)[], char[])");
+    }
+}
+
+unittest
+{
+    // https://issues.dlang.org/show_bug.cgi?id=18300
+    string s = "_D1";
+    string expected = "int ";
+    foreach (_; 0..10_000)
+    {
+        s ~= "a1";
+        expected ~= "a.";
+    }
+    s ~= "FiZi";
+    expected ~= "F";
+    assert(s.demangle == expected);
+}
 
 /*
  *

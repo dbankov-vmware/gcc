@@ -1,11 +1,11 @@
 // RUNNABLE_PHOBOS_TEST
 module test;
 
+import core.stdc.stdio;
 import core.vararg;
 import std.stdio;
 import std.string;
 
-extern(C) int printf(const char*, ...);
 
 /*******************************************/
 
@@ -227,10 +227,10 @@ void test14()
 
 void func15(...)
 in {
-    writefln("Arguments len = %d\n", _arguments.length);
+    printf("Arguments len = %d\n", cast(int)_arguments.length);
     assert(_arguments.length == 2);
 }
-body {
+do {
 
 }
 
@@ -941,9 +941,9 @@ void test47()
 void test48()
 {
     Object o = new Object();
-    printf("%.*s\n", typeof(o).classinfo.name.length, typeof(o).classinfo.name.ptr);
-    printf("%.*s\n", (typeof(o)).classinfo.name.length, (typeof(o)).classinfo.name.ptr);
-    printf("%.*s\n", (Object).classinfo.name.length, (Object).classinfo.name.ptr);
+    printf("%.*s\n", cast(int)typeof(o).classinfo.name.length, typeof(o).classinfo.name.ptr);
+    printf("%.*s\n", cast(int)(typeof(o)).classinfo.name.length, (typeof(o)).classinfo.name.ptr);
+    printf("%.*s\n", cast(int)(Object).classinfo.name.length, (Object).classinfo.name.ptr);
 }
 
 /*******************************************/
@@ -1158,7 +1158,7 @@ struct Vector62
       z = _z;
     }
 
-    Vector62 opMul(float s)
+    Vector62 opBinary(string op : "*")(float s)
     {
       Vector62 ret;
       ret.x = x*s;
@@ -1249,6 +1249,49 @@ void test65()
 
 
 /*******************************************/
+// https://issues.dlang.org/show_bug.cgi?id=18576
+
+void delegate() callback;
+
+struct S66 {
+    int x;
+    @disable this(this);
+
+    this(int x) {
+        this.x = x;
+        callback = &inc;
+    }
+    void inc() {
+        x++;
+    }
+}
+
+auto f66()
+{
+    return g66();   // RVO should be done
+}
+
+auto g66()
+{
+    return h66();   // RVO should be done
+}
+
+auto h66()
+{
+    return S66(100);
+}
+
+void test18576()
+{
+    auto s = f66();
+    printf("%p vs %p\n", &s, callback.ptr);
+    callback();
+    printf("s.x = %d\n", s.x);
+    assert(s.x == 101);
+    assert(&s == callback.ptr);
+}
+
+/*******************************************/
 
 void main()
 {
@@ -1315,6 +1358,7 @@ void main()
     test63();
     test64();
     test65();
+    test18576();
 
     printf("Success\n");
 }

@@ -774,10 +774,14 @@ void cpuidX86()
     if (cf.miscfeatures & OSXSAVE_BIT)
     {
         version (GNU_OR_LDC) asm pure nothrow @nogc {
+<<<<<<< HEAD
             /* Old assemblers do not recognize xgetbv, and there is no easy way
              * to conditionally compile based on the assembler used, so use the
              * raw .byte sequence instead.  */
             ".byte 0x0f, 0x01, 0xd0" : "=a" (a), "=d" (d) : "c" (0);
+=======
+            "xgetbv" : "=a" (a), "=d" (d) : "c" (0);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         } else asm pure nothrow @nogc {
             mov ECX, 0;
             xgetbv;

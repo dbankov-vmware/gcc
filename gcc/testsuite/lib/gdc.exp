@@ -149,8 +149,8 @@ proc gdc_link_flags { paths } {
 	# Static linking is default. If only the shared lib is available adjust
 	# flags to always use it. If both are available, set SHARED_OPTION which
 	# will be added to PERMUTE_ARGS
-	if { [file exists "${gccpath}/libphobos/src/.libs/libgphobos.${shlib_ext}"] } {
-	    if { [file exists "${gccpath}/libphobos/src/.libs/libgphobos.a"] } {
+	if { [file exists "${gccpath}/libphobos/libdruntime/.libs/libgphobos.${shlib_ext}"] } {
+	    if { [file exists "${gccpath}/libphobos/libdruntime/.libs/libgphobos.a"] } {
 		set SHARED_OPTION "-shared-libphobos"
 	    } else {
 		append flags "-shared-libphobos "

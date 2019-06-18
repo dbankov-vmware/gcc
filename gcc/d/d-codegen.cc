@@ -1852,6 +1852,7 @@ build_array_bounds_call (const Loc &loc)
   switch (global.params.checkAction)
     {
     case CHECKACTION_D:
+    case CHECKACTION_context:
       return d_assert_call (loc, LIBCALL_ARRAY_BOUNDS);
 
     case CHECKACTION_C:
@@ -2366,40 +2367,22 @@ get_frame_for_symbol (Dsymbol *sym)
   return null_pointer_node;
 }
 
-/* Return the parent function of a nested class CD.  */
+/* Return the parent function of a nested class/struct AD.  */
 
 static FuncDeclaration *
-d_nested_class (ClassDeclaration *cd)
+get_outer_function (AggregateDeclaration *ad)
 {
   FuncDeclaration *fd = NULL;
-  while (cd && cd->isNested ())
+  while (ad && ad->isNested ())
     {
-      Dsymbol *dsym = cd->toParent2 ();
+      Dsymbol *dsym = ad->toParent2 ();
       if ((fd = dsym->isFuncDeclaration ()))
 	return fd;
       else
-	cd = dsym->isClassDeclaration ();
+	ad = dsym->isAggregateDeclaration ();
     }
   return NULL;
 }
-
-/* Return the parent function of a nested struct SD.  */
-
-static FuncDeclaration *
-d_nested_struct (StructDeclaration *sd)
-{
-  FuncDeclaration *fd = NULL;
-  while (sd && sd->isNested ())
-    {
-      Dsymbol *dsym = sd->toParent2 ();
-      if ((fd = dsym->isFuncDeclaration ()))
-	return fd;
-      else
-	sd = dsym->isStructDeclaration ();
-    }
-  return NULL;
-}
-
 
 /* Starting from the current function FD, try to find a suitable value of
    `this' in nested function instances.  A suitable `this' value is an
@@ -2423,18 +2406,17 @@ find_this_tree (ClassDeclaration *ocd)
 	    return convert_expr (get_decl_tree (fd->vthis),
 				 cd->type, ocd->type);
 
-	  fd = d_nested_class (cd);
+	  fd = get_outer_function (cd);
+	  continue;
 	}
-      else
-	{
-	  if (fd->isNested ())
-	    {
-	      fd = fd->toParent2 ()->isFuncDeclaration ();
-	      continue;
-	    }
 
-	  fd = NULL;
+      if (fd->isNested ())
+	{
+	  fd = fd->toParent2 ()->isFuncDeclaration ();
+	  continue;
 	}
+
+      fd = NULL;
     }
 
   return NULL_TREE;
@@ -2772,10 +2754,6 @@ get_framedecl (FuncDeclaration *inner, FuncDeclaration *outer)
 
   while (fd && fd != outer)
     {
-      AggregateDeclaration *ad;
-      ClassDeclaration *cd;
-      StructDeclaration *sd;
-
       /* Parent frame link is the first field.  */
       if (FRAMEINFO_CREATES_FRAME (get_frameinfo (fd)))
 	result = indirect_ref (ptr_type_node, result);
@@ -2785,12 +2763,8 @@ get_framedecl (FuncDeclaration *inner, FuncDeclaration *outer)
       /* The frame/closure record always points to the outer function's
 	 frame, even if there are intervening nested classes or structs.
 	 So, we can just skip over these.  */
-      else if ((ad = fd->isThis ()) && (cd = ad->isClassDeclaration ()))
-	fd = d_nested_class (cd);
-      else if ((ad = fd->isThis ()) && (sd = ad->isStructDeclaration ()))
-	fd = d_nested_struct (sd);
       else
-	break;
+	fd = get_outer_function (fd->isThis ());
     }
 
   if (fd != outer)

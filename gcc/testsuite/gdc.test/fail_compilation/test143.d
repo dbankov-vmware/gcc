@@ -4,7 +4,11 @@
 /*
 TEST_OUTPUT:
 ---
+<<<<<<< HEAD
 fail_compilation/test143.d(19): Error: undefined identifier `x`
+=======
+fail_compilation/test143.d(20): Error: undefined identifier `x`
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 ---
 */
 module test143;

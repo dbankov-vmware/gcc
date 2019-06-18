@@ -46,6 +46,18 @@ H
 D
 ; Different from documented use in C.
 
+HC
+D
+Generate C++ header file.
+
+HCd
+D Joined Separate
+-Hd <dir>	Write C++ header files to directory <dir>.
+
+HCf
+D Joined Separate
+-Hf <file>	Write C++ header to <file>.
+
 Hd
 D Joined Separate
 -Hd <dir>	Write D interface files to directory <dir>.
@@ -209,6 +221,40 @@ fbuiltin
 D Var(flag_no_builtin, 0)
 ; Documented in C
 
+fcheck=assert
+D Alias(fassert)
+
+fcheck=bounds
+D Alias(fbounds-check)
+
+fcheck=in
+D Alias(fpreconditions)
+
+fcheck=invariant
+D Alias(finvariants)
+
+fcheck=out
+D Alias(fpostconditions)
+
+fcheck=switch
+D Alias(fswitch-errors)
+
+fcheckaction=
+D Joined RejectNegative Enum(check_action) Var(flag_check_action)
+-fcheckaction=[throw,halt,context]	Behavior on contract failure.
+
+Enum
+Name(check_action) Type(int) UnknownError(unknown checkaction setting %qs)
+
+EnumValue
+Enum(check_action) String(throw) Value(0)
+
+EnumValue
+Enum(check_action) String(halt) Value(1)
+
+EnumValue
+Enum(check_action) String(context) Value(2)
+
 fdebug
 D
 Compile in debug code.
@@ -240,6 +286,28 @@ Assume that standard D runtime libraries and \"D main\" exist.
 fdump-d-original
 D
 Display the frontend AST after parsing and semantic passes.
+
+fextern-std=
+D Joined RejectNegative Enum(extern_stdcpp) Var(flag_extern_stdcpp)
+-fextern-std=<standard>	Set C++ name mangling compatibility with <standard>.
+
+Enum
+Name(extern_stdcpp) Type(int) UnknownError(unknown C++ standard %qs)
+
+EnumValue
+Enum(extern_stdcpp) String(c++98) Value(199711)
+
+EnumValue
+Enum(extern_stdcpp) String(c++03) Value(199711)
+
+EnumValue
+Enum(extern_stdcpp) String(c++11) Value(201103)
+
+EnumValue
+Enum(extern_stdcpp) String(c++14) Value(201402)
+
+EnumValue
+Enum(extern_stdcpp) String(c++17) Value(201703)
 
 fignore-unknown-pragmas
 D
@@ -273,13 +341,77 @@ fpreconditions
 D Var(flag_preconditions)
 Generate code for precondition contracts.
 
+fpreview=all
+D RejectNegative
+Turn on all upcoming D language features.
+
+fpreview=dip1000
+D RejectNegative
+Implement DIP1000: Scoped pointers.
+
+fpreview=dip1008
+D RejectNegative
+Implement DIP1008: Allow exceptions in @nogc code.
+
+fpreview=dip1021
+D RejectNegative
+Implement DIP1021: Mutable function arguments.
+
+fpreview=dip25
+D RejectNegative
+Implement DIP25: Sealed references.
+
+fpreview=dtorfields
+D RejectNegative
+Destruct fields of partially constructed objects.
+
+fpreview=fieldwise
+D RejectNegative
+Use field-wise comparisons for struct equality.
+
+fpreview=fixaliasthis
+D RejectNegative
+When a symbol is resolved, check alias this scope before going to upper scopes.
+
+fpreview=in
+D RejectNegative
+Implement 'in' parameters to mean scope const.
+
+fpreview=intpromote
+D RejectNegative
+Use C-style integral promotion for unary '+', '-' and '~'.
+
+fpreview=markdown
+D RejectNegative
+Enable Markdown replacements in Ddoc.
+
+fpreview=nosharedaccess
+D RejectNegative
+Disable access to shared memory objects.
+
+fpreview=rvaluerefparam
+D RejectNegative
+Enable rvalue arguments to ref parameters.
+
 frelease
 D
 Compile release version.
 
+frevert=all
+D RejectNegative
+Turn off all revertable D language features.
+
+frevert=dip25
+D RejectNegative
+Revert DIP25: Sealed references.
+
 frtti
 D
 ; Documented in C
+
+fsave-mixins=
+D Joined RejectNegative
+-fsave-mixins=<filename>	Expand and save mixins to file specified by <filename>.
 
 fswitch-errors
 D Var(flag_switch_errors)
@@ -287,19 +419,11 @@ Generate code for switches without a default case.
 
 ftransition=all
 D RejectNegative
-List information on all language changes.
+List information on all D language transitions.
 
 ftransition=complex
 D RejectNegative
-List all usages of complex or imaginary types.
-
-ftransition=dip1000
-D RejectNegative
-Implement DIP1000: Scoped pointers (experimental).
-
-ftransition=dip25
-D RejectNegative
-Implement DIP25: Sealed references (experimental).
+Give deprecation messages about all usages of complex or imaginary types.
 
 ftransition=field
 D RejectNegative
@@ -309,9 +433,17 @@ ftransition=nogc
 D RejectNegative
 List all hidden GC allocations.
 
+ftransition=templates
+D RejectNegative
+List statistics on template instantiations.
+
 ftransition=tls
 D RejectNegative
 List all variables going into thread local storage.
+
+ftransition=vmarkdown
+D RejectNegative
+List instances of Markdown replacements in Ddoc.
 
 funittest
 D

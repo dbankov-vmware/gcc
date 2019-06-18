@@ -2,7 +2,7 @@
  * Implementation of array assignment support routines.
  *
  * Copyright: Copyright Digital Mars 2004 - 2010.
- * License:   $(WEB www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
+ * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  * Authors:   Walter Bright, Sean Kelly
  */
 
@@ -14,6 +14,9 @@
 module rt.cast_;
 
 extern (C):
+@nogc:
+nothrow:
+pure:
 
 /******************************************
  * Given a pointer:
@@ -22,7 +25,7 @@ extern (C):
  *      If it is null, return null.
  *      Else, undefined crash
  */
-Object _d_toObject(void* p)
+Object _d_toObject(return void* p)
 {
     if (!p)
         return null;
@@ -74,7 +77,7 @@ void* _d_dynamic_cast(Object o, ClassInfo c)
     return res;
 }
 
-int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
+int _d_isbaseof2(scope ClassInfo oc, scope const ClassInfo c, scope ref size_t offset) @safe
 {
     if (oc is c)
         return true;
@@ -101,7 +104,7 @@ int _d_isbaseof2(ClassInfo oc, ClassInfo c, ref size_t offset)
     return false;
 }
 
-int _d_isbaseof(ClassInfo oc, ClassInfo c)
+int _d_isbaseof(scope ClassInfo oc, scope const ClassInfo c) @safe
 {
     if (oc is c)
         return true;
@@ -121,21 +124,4 @@ int _d_isbaseof(ClassInfo oc, ClassInfo c)
     } while (oc);
 
     return false;
-}
-
-/*********************************
- * Find the vtbl[] associated with Interface ic.
- */
-void* _d_interface_vtbl(ClassInfo ic, Object o)
-{
-    debug(cast_) printf("__d_interface_vtbl(o = %p, ic = %p)\n", o, ic);
-
-    assert(o);
-
-    foreach (iface; typeid(o).interfaces)
-    {
-        if (iface.classinfo is ic)
-            return cast(void*) iface.vtbl;
-    }
-    assert(0);
 }

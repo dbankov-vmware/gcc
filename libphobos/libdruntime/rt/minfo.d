@@ -7,7 +7,7 @@
  *      $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost Software License 1.0).
  *    (See accompanying file LICENSE)
  * Authors:   Walter Bright, Sean Kelly
- * Source: $(DRUNTIMESRC src/rt/_minfo.d)
+ * Source: $(DRUNTIMESRC rt/_minfo.d)
  */
 
 module rt.minfo;
@@ -287,7 +287,7 @@ struct ModuleGroup
             else
                 enum EOL = "\n";
 
-            sink("Cyclic dependency between module ");
+            sink("Cyclic dependency between module constructors/destructors of ");
             sink(_modules[sourceIdx].name);
             sink(" and ");
             sink(_modules[cycleIdx].name);
@@ -544,7 +544,7 @@ struct ModuleGroup
      * behavior.
      *
      * Params:
-     *   edges - The module edges as found in the `importedModules` member of
+     *   edges = The module edges as found in the `importedModules` member of
      *          each ModuleInfo. Generated in sortCtors.
      * Returns:
      *   true if no cycle is found, false if one was.

@@ -24,6 +24,7 @@ nothrow:
 @nogc:
 @system:
 
+<<<<<<< HEAD
 version (OSX)
     version = Darwin;
 else version (iOS)
@@ -35,6 +36,8 @@ else version (WatchOS)
 
 version (ARM)     version = ARM_Any;
 version (AArch64) version = ARM_Any;
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 version (MIPS32)  version = MIPS_Any;
 version (MIPS64)  version = MIPS_Any;
 version (PPC)     version = PPC_Any;
@@ -146,7 +149,11 @@ version (CRuntime_Glibc)
             mcontext_t      uc_mcontext;
             sigset_t        uc_sigmask;
             _libc_fpstate   __fpregs_mem;
+<<<<<<< HEAD
             ulong[4]        __ssp;
+=======
+            c_ulong[4]      __ssp;
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         }
     }
     else version (X86)

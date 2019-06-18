@@ -3503,7 +3503,11 @@ struct sigevent
     pthread_attr_t* sigev_notify_attributes;
 }
 
+<<<<<<< HEAD
 int sigqueue(pid_t, int, const sigval);
+=======
+int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
 int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 */
@@ -3543,7 +3547,11 @@ version (CRuntime_Glibc)
         } _sigev_un_t _sigev_un;
     }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }
@@ -3566,7 +3574,11 @@ else version (FreeBSD)
         }
     }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }
@@ -3581,7 +3593,11 @@ else version (NetBSD)
         void /* pthread_attr_t */*sigev_notify_attributes;
     }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }
@@ -3613,7 +3629,11 @@ else version (DragonFlyBSD)
         void function(_sigval_t)  sigev_notify_function;
     }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }
@@ -3640,7 +3660,11 @@ else version (Solaris)
         int __sigev_pad2;
     }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }
@@ -3717,7 +3741,11 @@ else version (CRuntime_UClibc)
     @property void function(sigval) sigev_notify_function(ref sigevent _sigevent) { return _sigevent._sigev_un._sigev_thread._function; }
     @property void* sigev_notify_attributes(ref sigevent _sigevent) { return  _sigevent._sigev_un._sigev_thread._attribute; }
 
+<<<<<<< HEAD
     int sigqueue(pid_t, int, const sigval);
+=======
+    int sigqueue(pid_t, int, in sigval);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     int sigtimedwait(const scope sigset_t*, siginfo_t*, const scope timespec*);
     int sigwaitinfo(const scope sigset_t*, siginfo_t*);
 }

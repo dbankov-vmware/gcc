@@ -42,8 +42,6 @@ along with GCC; see the file COPYING3.  If not see
 /* Implements the Target interface defined by the front end.
    Used for retrieving target-specific information.  */
 
-Target target;
-
 /* Internal key handlers for `__traits(getTargetInfo)'.  */
 static tree d_handle_target_cpp_std (void);
 static tree d_handle_target_cpp_runtime_library (void);
@@ -88,9 +86,6 @@ define_float_constants (T &f, tree type)
 
   /* Floating-point NaN.  */
   real_nan (&f.nan.rv (), "", 1, mode);
-
-  /* Signalling floating-point NaN.  */
-  real_nan (&f.snan.rv (), "", 0, mode);
 
   /* Floating-point +Infinity if the target supports infinities.  */
   real_inf (&f.infinity.rv ());
@@ -322,18 +317,10 @@ Target::isVectorOpSupported (Type *type, TOK op, Type *)
       /* Logical operators must have a result type of bool.  */
       return false;
 
-    case TOKue:
-    case TOKlg:
-    case TOKule:
-    case TOKul:
-    case TOKuge:
-    case TOKug:
     case TOKle:
     case TOKlt:
     case TOKge:
     case TOKgt:
-    case TOKleg:
-    case TOKunord:
     case TOKequal:
     case TOKnotequal:
     case TOKidentity:

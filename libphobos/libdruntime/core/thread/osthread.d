@@ -60,6 +60,7 @@ else version (D_InlineAsm_X86_64)
         version = AsmX86_64_Posix;
     }
 }
+<<<<<<< HEAD
 else version (X86)
 {
     version (CET) {} else
@@ -103,6 +104,8 @@ else version (ARM)
         version = AsmExternal;
     }
 }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 version (Posix)
 {
@@ -349,8 +352,12 @@ class Thread : ThreadBase
         }
         else version (Posix)
         {
+<<<<<<< HEAD
             if (m_addr != m_addr.init)
                 pthread_detach( m_addr );
+=======
+            pthread_detach( m_addr );
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             m_addr = m_addr.init;
         }
         version (Darwin)
@@ -421,6 +428,7 @@ class Thread : ThreadBase
         {
             uint[16]        m_reg; // r0-r15
         }
+<<<<<<< HEAD
         else version (PPC)
         {
             // Make the assumption that we only care about non-fp and non-vr regs.
@@ -432,6 +440,8 @@ class Thread : ThreadBase
             // As above.
             ulong[32]       m_reg; // r0-31
         }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         else
         {
             static assert(false, "Architecture not supported." );
@@ -522,7 +532,11 @@ class Thread : ThreadBase
                 {
                     version (GNU)
                     {
+<<<<<<< HEAD
                         auto libs = externDFunc!("gcc.sections.pinLoadedLibraries",
+=======
+                        auto libs = externDFunc!("gcc.sections.elf_shared.pinLoadedLibraries",
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                                                  void* function() @nogc nothrow)();
                     }
                     else
@@ -539,7 +553,11 @@ class Thread : ThreadBase
                     {
                         version (GNU)
                         {
+<<<<<<< HEAD
                             externDFunc!("gcc.sections.unpinLoadedLibraries",
+=======
+                            externDFunc!("gcc.sections.elf_shared.unpinLoadedLibraries",
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                                          void function(void*) @nogc nothrow)(libs);
                         }
                         else
@@ -590,7 +608,11 @@ class Thread : ThreadBase
     {
         version (Windows)
         {
+<<<<<<< HEAD
             if ( m_addr != m_addr.init && WaitForSingleObject( m_hndl, INFINITE ) != WAIT_OBJECT_0 )
+=======
+            if ( WaitForSingleObject( m_hndl, INFINITE ) != WAIT_OBJECT_0 )
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                 throw new ThreadException( "Unable to join thread" );
             // NOTE: m_addr must be cleared before m_hndl is closed to avoid
             //       a race condition with isRunning. The operation is done
@@ -601,7 +623,11 @@ class Thread : ThreadBase
         }
         else version (Posix)
         {
+<<<<<<< HEAD
             if ( m_addr != m_addr.init && pthread_join( m_addr, null ) != 0 )
+=======
+            if ( pthread_join( m_addr, null ) != 0 )
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                 throw new ThreadException( "Unable to join thread" );
             // NOTE: pthread_join acts as a substitute for pthread_detach,
             //       which is normally called by the dtor.  Setting m_addr
@@ -1260,6 +1286,11 @@ else version (Posix)
     extern (C) void thread_setGCSignals(int suspendSignalNo, int resumeSignalNo) nothrow @nogc
     in
     {
+<<<<<<< HEAD
+=======
+        assert(suspendSignalNumber == 0);
+        assert(resumeSignalNumber  == 0);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         assert(suspendSignalNo != 0);
         assert(resumeSignalNo  != 0);
     }
@@ -1277,11 +1308,19 @@ else version (Posix)
 
 version (Posix)
 {
+<<<<<<< HEAD
     private __gshared int suspendSignalNumber = SIGUSR1;
     private __gshared int resumeSignalNumber  = SIGUSR2;
 }
 
 private extern (D) ThreadBase attachThread(ThreadBase _thisThread) @nogc nothrow
+=======
+    __gshared int suspendSignalNumber;
+    __gshared int resumeSignalNumber;
+}
+
+private extern (D) ThreadBase attachThread(ThreadBase _thisThread) @nogc
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 {
     Thread thisThread = _thisThread.toThread();
 
@@ -1408,6 +1447,7 @@ in (fn)
     void *sp = void;
     version (GNU)
     {
+<<<<<<< HEAD
         // The generic solution below using a call to __builtin_unwind_init ()
         // followed by an assignment to sp has two issues:
         // 1) On some archs it stores a huge amount of FP and Vector state which
@@ -1480,6 +1520,10 @@ in (fn)
             __builtin_unwind_init();
             sp = &sp;
         }
+=======
+        __builtin_unwind_init();
+        sp = &sp;
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
     else version (AsmX86_Posix)
     {
@@ -1543,6 +1587,17 @@ in (fn)
     fn(sp);
 }
 
+<<<<<<< HEAD
+=======
+version (Solaris)
+{
+    import core.sys.solaris.sys.priocntl;
+    import core.sys.solaris.sys.types;
+    import core.sys.posix.sys.wait : idtype_t;
+}
+
+
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 version (Windows)
 private extern (D) void scanWindowsOnly(scope ScanAllThreadsTypeFn scan, ThreadBase _t) nothrow
 {
@@ -1621,9 +1676,15 @@ package extern(D) void* getStackBottom() nothrow @nogc
             void *bottom;
 
             version (X86)
+<<<<<<< HEAD
                 asm pure nothrow @nogc { "movl %%fs:4, %0;" : "=r" (bottom); }
             else version (X86_64)
                 asm pure nothrow @nogc { "movq %%gs:8, %0;" : "=r" (bottom); }
+=======
+                asm pure nothrow @nogc { "movl %%fs:4, %0;" : "=r" bottom; }
+            else version (X86_64)
+                asm pure nothrow @nogc { "movq %%gs:8, %0;" : "=r" bottom; }
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             else
                 static assert(false, "Platform not supported.");
 
@@ -1697,7 +1758,11 @@ package extern(D) void* getStackBottom() nothrow @nogc
  * Returns:
  *  Whether the thread is now suspended (true) or terminated (false).
  */
+<<<<<<< HEAD
 private extern (D) bool suspend( Thread t ) nothrow @nogc
+=======
+private extern (D) bool suspend( Thread t ) nothrow
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 {
     Duration waittime = dur!"usecs"(10);
  Lagain:
@@ -1872,6 +1937,7 @@ private extern (D) bool suspend( Thread t ) nothrow @nogc
             t.m_reg[14] = state.lr;
             t.m_reg[15] = state.pc;
         }
+<<<<<<< HEAD
         else version (PPC)
         {
             ppc_thread_state_t state = void;
@@ -1894,6 +1960,8 @@ private extern (D) bool suspend( Thread t ) nothrow @nogc
                 t.m_curr.tstack = cast(void*) state.r[1];
             t.m_reg[] = state.r[];
         }
+=======
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         else
         {
             static assert(false, "Architecture not supported." );
@@ -2001,7 +2069,11 @@ extern (C) void thread_suspendAll() nothrow
                 }
                 if (cnt)
                     goto Lagain;
+<<<<<<< HEAD
             }
+=======
+             }
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         }
     }
 }
@@ -2020,7 +2092,11 @@ extern (C) void thread_suspendAll() nothrow
  * Throws:
  *  ThreadError if the resume fails for a running thread.
  */
+<<<<<<< HEAD
 private extern (D) void resume(ThreadBase _t) nothrow @nogc
+=======
+private extern (D) void resume(ThreadBase _t) nothrow
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 {
     Thread t = _t.toThread;
 
@@ -2114,6 +2190,7 @@ extern (C) void thread_init() @nogc
     }
     else version (Posix)
     {
+<<<<<<< HEAD
         int         status;
         sigaction_t suspend = void;
         sigaction_t resume = void;
@@ -2122,22 +2199,53 @@ extern (C) void thread_init() @nogc
         // memset or creating a link dependency on their static initializer.
         (cast(byte*) &suspend)[0 .. sigaction_t.sizeof] = 0;
         (cast(byte*)  &resume)[0 .. sigaction_t.sizeof] = 0;
+=======
+        if ( suspendSignalNumber == 0 )
+        {
+            suspendSignalNumber = SIGUSR1;
+        }
+
+        if ( resumeSignalNumber == 0 )
+        {
+            resumeSignalNumber = SIGUSR2;
+        }
+
+        int         status;
+        sigaction_t sigusr1 = void;
+        sigaction_t sigusr2 = void;
+
+        // This is a quick way to zero-initialize the structs without using
+        // memset or creating a link dependency on their static initializer.
+        (cast(byte*) &sigusr1)[0 .. sigaction_t.sizeof] = 0;
+        (cast(byte*) &sigusr2)[0 .. sigaction_t.sizeof] = 0;
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
         // NOTE: SA_RESTART indicates that system calls should restart if they
         //       are interrupted by a signal, but this is not available on all
         //       Posix systems, even those that support multithreading.
         static if ( __traits( compiles, SA_RESTART ) )
+<<<<<<< HEAD
             suspend.sa_flags = SA_RESTART;
 
         suspend.sa_handler = &thread_suspendHandler;
         // NOTE: We want to ignore all signals while in this handler, so fill
         //       sa_mask to indicate this.
         status = sigfillset( &suspend.sa_mask );
+=======
+            sigusr1.sa_flags = SA_RESTART;
+        else
+            sigusr1.sa_flags   = 0;
+        sigusr1.sa_handler = &thread_suspendHandler;
+        // NOTE: We want to ignore all signals while in this handler, so fill
+        //       sa_mask to indicate this.
+        status = sigfillset( &sigusr1.sa_mask );
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         assert( status == 0 );
 
         // NOTE: Since resumeSignalNumber should only be issued for threads within the
         //       suspend handler, we don't want this signal to trigger a
         //       restart.
+<<<<<<< HEAD
         resume.sa_flags   = 0;
         resume.sa_handler = &thread_resumeHandler;
         // NOTE: We want to ignore all signals while in this handler, so fill
@@ -2149,6 +2257,19 @@ extern (C) void thread_init() @nogc
         assert( status == 0 );
 
         status = sigaction( resumeSignalNumber, &resume, null );
+=======
+        sigusr2.sa_flags   = 0;
+        sigusr2.sa_handler = &thread_resumeHandler;
+        // NOTE: We want to ignore all signals while in this handler, so fill
+        //       sa_mask to indicate this.
+        status = sigfillset( &sigusr2.sa_mask );
+        assert( status == 0 );
+
+        status = sigaction( suspendSignalNumber, &sigusr1, null );
+        assert( status == 0 );
+
+        status = sigaction( resumeSignalNumber, &sigusr2, null );
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         assert( status == 0 );
 
         status = sem_init( &suspendCount, 0, 0 );
@@ -2212,6 +2333,7 @@ version (Windows)
 
             void append( Throwable t )
             {
+<<<<<<< HEAD
                 if ( obj.m_unhandled is null )
                     obj.m_unhandled = t;
                 else
@@ -2221,6 +2343,9 @@ version (Windows)
                         last = last.next;
                     last.next = t;
                 }
+=======
+                obj.m_unhandled = Throwable.chainTogether(obj.m_unhandled, t);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             }
 
             version (D_InlineAsm_X86)
@@ -2300,7 +2425,11 @@ else version (Posix)
             // before initilizing GC for TLS (rt_tlsgc_init)
             version (GNUShared)
             {
+<<<<<<< HEAD
                 externDFunc!("gcc.sections.inheritLoadedLibraries",
+=======
+                externDFunc!("gcc.sections.elf_shared.inheritLoadedLibraries",
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                              void function(void*) @nogc nothrow)(loadedLibraries);
             }
             else version (Shared)
@@ -2367,6 +2496,7 @@ else version (Posix)
 
             void append( Throwable t )
             {
+<<<<<<< HEAD
                 if ( obj.m_unhandled is null )
                     obj.m_unhandled = t;
                 else
@@ -2376,6 +2506,9 @@ else version (Posix)
                         last = last.next;
                     last.next = t;
                 }
+=======
+                obj.m_unhandled = Throwable.chainTogether(obj.m_unhandled, t);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             }
             try
             {
@@ -2391,7 +2524,11 @@ else version (Posix)
                 rt_moduleTlsDtor();
                 version (GNUShared)
                 {
+<<<<<<< HEAD
                     externDFunc!("gcc.sections.cleanupLoadedLibraries",
+=======
+                    externDFunc!("gcc.sections.elf_shared.cleanupLoadedLibraries",
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                                  void function() @nogc nothrow)();
                 }
                 else version (Shared)
@@ -2616,7 +2753,11 @@ private
     import core.sys.windows.dll : dll_getRefCount;
 
     version (CRuntime_Microsoft)
+<<<<<<< HEAD
         extern(C) extern __gshared ubyte msvcUsesUCRT; // from rt/msvc.d
+=======
+        extern(C) extern __gshared ubyte msvcUsesUCRT; // from rt/msvc.c
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
     /// set during termination of a DLL on Windows, i.e. while executing DllMain(DLL_PROCESS_DETACH)
     public __gshared bool thread_DLLProcessDetaching;
@@ -2864,10 +3005,14 @@ nothrow @nogc unittest
 
     ThreadID[8] tids;
     for (int i = 0; i < tids.length; i++)
+<<<<<<< HEAD
     {
         tids[i] = createLowLevelThread(&task.run);
         assert(tids[i] != ThreadID.init);
     }
+=======
+        tids[i] = createLowLevelThread(&task.run);
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
     for (int i = 0; i < tids.length; i++)
         joinLowLevelThread(tids[i]);
@@ -2890,7 +3035,11 @@ private size_t adjustStackSize(size_t sz) nothrow @nogc
         // On glibc, TLS uses the top of the stack, so add its size to the requested size
         version (GNU)
         {
+<<<<<<< HEAD
             sz += externDFunc!("gcc.sections.elf.sizeOfTLS",
+=======
+            sz += externDFunc!("gcc.sections.elf_shared.sizeOfTLS",
+>>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                                size_t function() @nogc nothrow)();
         }
         else

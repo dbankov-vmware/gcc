@@ -1,3 +1,4 @@
+// Written in the D programming language.
 /**
 $(SCRIPT inhibitQuickIndex = 1;)
 
@@ -185,8 +186,14 @@ $(TR $(TD `onUpperBound`) $(TD If defined, $(D hook.onUpperBound(value, bound))
 binary operators `+=`,  `-=`, `*=`, `/=`, `%=`, `^^=`, `&=`, `|=`, `^=`, `<<=`, `>>=`,
 and `>>>=` is larger than the largest value representable by `T`.)
 )
+$(TR $(TD `hookToHash`) $(TD If defined, $(D hook.hookToHash(payload))
+(where `payload` is a reference to the value wrapped by Checked) is forwarded
+to when `toHash` is called on a Checked type. Custom hashing can be implemented
+in a `Hook`, otherwise the built-in hashing is used.)
+)
 )
 
+Source: $(PHOBOSSRC std/experimental/checkedint.d)
 */
 module std.experimental.checkedint;
 import std.traits : isFloatingPoint, isIntegral, isNumeric, isUnsigned, Unqual;
@@ -206,6 +213,44 @@ import std.traits : isFloatingPoint, isIntegral, isNumeric, isUnsigned, Unqual;
         return r;
     }
     assert(concatAndAdd([1, 2, 3], [4, 5], -1) == [0, 1, 2, 3, 4]);
+}
+
+
+/// `Saturate` stops at an overflow
+@safe unittest
+{
+    auto x = (cast(byte) 127).checked!Saturate;
+    assert(x == 127);
+    x++;
+    assert(x == 127);
+}
+
+/// `WithNaN` has a special "Not a Number" (NaN) value akin to the homonym value reserved for floating-point values
+@safe unittest
+{
+    auto x = 100.checked!WithNaN;
+    assert(x == 100);
+    x /= 0;
+    assert(x.isNaN);
+}
+
+/// `ProperCompare` fixes the comparison operators ==, !=, <, <=, >, and >= to return correct results
+@safe unittest
+{
+    uint x = 1;
+    auto y = x.checked!ProperCompare;
+    assert(x < -1); // built-in comparison
+    assert(y > -1); // ProperCompare
+}
+
+/// `Throw` fails every incorrect operation by throwing an exception
+@safe unittest
+{
+    import std.exception : assertThrown;
+    auto x = -1.checked!Throw;
+    assertThrown(x / 0);
+    assertThrown(x + int.min);
+    assertThrown(x == uint.max);
 }
 
 /**
@@ -435,6 +480,8 @@ if (isIntegral!T || is(T == Checked!(U, H), U, H))
     ///
     static if (is(T == int) && is(Hook == void)) @safe unittest
     {
+        import std.traits : isUnsigned;
+
         static struct MyHook
         {
             static bool thereWereErrors;
@@ -468,6 +515,41 @@ if (isIntegral!T || is(T == Checked!(U, H), U, H))
         assert(checked!MyHook2(uint(-42)) == a);
         // Hook on left hand side takes precedence, so no errors
         assert(!MyHook.thereWereErrors);
+    }
+
+    // toHash
+    /**
+    Generates a hash for `this`. If `Hook` defines `hookToHash`, the call
+    immediately returns `hook.hookToHash(payload)`. If `Hook` does not
+    implement `hookToHash`, but it has state, a hash will be generated for
+    the `Hook` using the built-in function and it will be xored with the
+    hash of the `payload`.
+    */
+    size_t toHash() const nothrow @safe
+    {
+        static if (hasMember!(Hook, "hookToHash"))
+        {
+            return hook.hookToHash(payload);
+        }
+        else static if (stateSize!Hook > 0)
+        {
+            static if (hasMember!(typeof(payload), "toHash"))
+            {
+                return payload.toHash() ^ hashOf(hook);
+            }
+            else
+            {
+                return hashOf(payload) ^ hashOf(hook);
+            }
+        }
+        else static if (hasMember!(typeof(payload), "toHash"))
+        {
+            return payload.toHash();
+        }
+        else
+        {
+            return .hashOf(payload);
+        }
     }
 
     // opCmp
@@ -536,6 +618,8 @@ if (isIntegral!T || is(T == Checked!(U, H), U, H))
     ///
     static if (is(T == int) && is(Hook == void)) @safe unittest
     {
+        import std.traits : isUnsigned;
+
         static struct MyHook
         {
             static bool thereWereErrors;
@@ -905,6 +989,10 @@ if (isIntegral!T || is(T == Checked!(U, H), U, H))
     Hook).max) and if `Hook` defines `onUpperBound`, the payload is assigned
     from $(D hook.onUpperBound(result, min)).
 
+    If the right-hand side is also a Checked but with a different hook or
+    underlying type, the hook and underlying type of this Checked takes
+    precedence.
+
     In all other cases, the built-in behavior is carried out.
 
     Params:
@@ -951,6 +1039,13 @@ if (isIntegral!T || is(T == Checked!(U, H), U, H))
             payload = cast(T) r;
         }
         return this;
+    }
+
+    /// ditto
+    ref Checked opOpAssign(string op, Rhs)(const Rhs rhs) return
+    if (is(Rhs == Checked!(RhsT, RhsHook), RhsT, RhsHook))
+    {
+        return opOpAssign!(op, typeof(rhs.payload))(rhs.payload);
     }
 
     ///
@@ -1517,7 +1612,10 @@ static:
     {
         stderr.writefln("Overflow on binary operator: %s(%s) %s %s(%s)",
             Lhs.stringof, lhs, x, Rhs.stringof, rhs);
-        return mixin("lhs" ~ x ~ "rhs");
+        static if (x == "/")               // Issue 20743: mixin below would cause SIGFPE on POSIX
+            return typeof(lhs / rhs).min;  // or EXCEPTION_INT_OVERFLOW on Windows
+        else
+            return mixin("lhs" ~ x ~ "rhs");
     }
 }
 
@@ -1529,6 +1627,23 @@ static:
     //x += long(int.max);
     auto y = checked!Warn(cast(const int) 42);
     short y1 = cast(const byte) y;
+}
+
+@system unittest
+{
+    auto a = checked!Warn(int.min);
+    auto b = checked!Warn(-1);
+    assert(a / b == a * b);
+}
+
+@system unittest
+{
+    import std.exception : assertThrown;
+    import core.exception : AssertError;
+
+    auto a = checked!Abort(int.min);
+    auto b = checked!Abort(-1);
+    assertThrown!AssertError(a / b);
 }
 
 // ProperCompare
@@ -1707,9 +1822,9 @@ static:
     */
     enum T defaultValue(T) = T.min == 0 ? T.max : T.min;
     /**
-    The maximum value representable is $(D T.max) for signed integrals, $(D
+    The maximum value representable is `T.max` for signed integrals, $(D
     T.max - 1) for unsigned integrals. The minimum value representable is $(D
-    T.min + 1) for signed integrals, $(D 0) for unsigned integrals.
+    T.min + 1) for signed integrals, `0` for unsigned integrals.
     */
     enum T max(T) = cast(T) (T.min == 0 ? T.max - 1 : T.max);
     /// ditto
@@ -1893,8 +2008,8 @@ static:
     left-hand side operand. If $(D lhs == WithNaN.defaultValue!Lhs), returns
     $(D WithNaN.defaultValue!(typeof(lhs + rhs))) without evaluating the
     operand. Otherwise, evaluates the operand. If evaluation does not overflow,
-    returns the result. Otherwise, returns $(D WithNaN.defaultValue!(typeof(lhs
-    + rhs))).
+    returns the result. Otherwise, returns $(D WithNaN.defaultValue!(typeof(lhs +
+    rhs))).
 
     Params:
     x = The operator symbol
@@ -1932,8 +2047,8 @@ static:
     right-hand side operand. If $(D rhs == WithNaN.defaultValue!Rhs), returns
     $(D WithNaN.defaultValue!(typeof(lhs + rhs))) without evaluating the
     operand. Otherwise, evaluates the operand. If evaluation does not overflow,
-    returns the result. Otherwise, returns $(D WithNaN.defaultValue!(typeof(lhs
-    + rhs))).
+    returns the result. Otherwise, returns $(D WithNaN.defaultValue!(typeof(lhs +
+    rhs))).
 
     Params:
     x = The operator symbol
@@ -2179,7 +2294,7 @@ static:
     Returns: The saturated result of the operator.
 
     */
-    typeof(~Lhs()) onOverflow(string x, Lhs)(Lhs lhs)
+    auto onOverflow(string x, Lhs)(Lhs lhs)
     {
         static assert(x == "-" || x == "++" || x == "--");
         return x == "--" ? Lhs.min : Lhs.max;
@@ -2618,7 +2733,7 @@ if (isIntegral!T && T.sizeof >= 4)
     testPow!ulong(3, 41);
 }
 
-version (unittest) private struct CountOverflows
+version (StdUnittest) private struct CountOverflows
 {
     uint calls;
     auto onOverflow(string op, Lhs)(Lhs lhs)
@@ -2643,19 +2758,18 @@ version (unittest) private struct CountOverflows
     }
 }
 
-version (unittest) private struct CountOpBinary
-{
-    uint calls;
-    auto hookOpBinary(string op, Lhs, Rhs)(Lhs lhs, Rhs rhs)
-    {
-        ++calls;
-        return mixin("lhs" ~ op ~ "rhs");
-    }
-}
-
 // opBinary
 @nogc nothrow pure @safe unittest
 {
+    static struct CountOpBinary
+    {
+        uint calls;
+        auto hookOpBinary(string op, Lhs, Rhs)(Lhs lhs, Rhs rhs)
+        {
+            ++calls;
+            return mixin("lhs" ~ op ~ "rhs");
+        }
+    }
     auto x = Checked!(const int, void)(42), y = Checked!(immutable int, void)(142);
     assert(x + y == 184);
     assert(x + 100 == 142);
@@ -3060,4 +3174,129 @@ version (unittest) private struct CountOpBinary
     assert(y < x);
     x = -1;
     assert(x > y);
+}
+
+@nogc nothrow pure @safe unittest
+{
+    alias cint = Checked!(int, void);
+    cint a = 1, b = 2;
+    a += b;
+    assert(a == cint(3));
+
+    alias ccint = Checked!(cint, Saturate);
+    ccint c = 14;
+    a += c;
+    assert(a == cint(17));
+}
+
+// toHash
+@system unittest
+{
+    assert(checked(42).toHash() == checked(42).toHash());
+    assert(checked(12).toHash() != checked(19).toHash());
+
+    static struct Hook1
+    {
+        static size_t hookToHash(T)(T payload) nothrow @trusted
+        {
+            static if (size_t.sizeof == 4)
+            {
+                return typeid(payload).getHash(&payload) ^ 0xFFFF_FFFF;
+            }
+            else
+            {
+                return typeid(payload).getHash(&payload) ^ 0xFFFF_FFFF_FFFF_FFFF;
+            }
+
+        }
+    }
+
+    auto a = checked!Hook1(78);
+    auto b = checked!Hook1(78);
+    assert(a.toHash() == b.toHash());
+
+    assert(checked!Hook1(12).toHash() != checked!Hook1(13).toHash());
+
+    static struct Hook2
+    {
+        static if (size_t.sizeof == 4)
+        {
+            static size_t hashMask = 0xFFFF_0000;
+        }
+        else
+        {
+            static size_t hashMask = 0xFFFF_0000_FFFF_0000;
+        }
+
+        static size_t hookToHash(T)(T payload) nothrow @trusted
+        {
+            return typeid(payload).getHash(&payload) ^ hashMask;
+        }
+    }
+
+    auto x = checked!Hook2(1901);
+    auto y = checked!Hook2(1989);
+
+    assert((() nothrow @safe => x.toHash() == x.toHash())());
+
+    assert(x.toHash() == x.toHash());
+    assert(x.toHash() != y.toHash());
+    assert(checked!Hook1(1901).toHash() != x.toHash());
+
+    immutable z = checked!Hook1(1901);
+    immutable t = checked!Hook1(1901);
+    immutable w = checked!Hook2(1901);
+
+    assert(z.toHash() == t.toHash());
+    assert(z.toHash() != x.toHash());
+    assert(z.toHash() != w.toHash());
+
+    const long c = 0xF0F0F0F0;
+    const long d = 0xF0F0F0F0;
+
+    assert(checked!Hook1(c).toHash() != checked!Hook2(c));
+    assert(checked!Hook1(c).toHash() != checked!Hook1(d));
+
+    // Hook with state, does not implement hookToHash
+    static struct Hook3
+    {
+        ulong var1 = ulong.max;
+        uint var2 = uint.max;
+    }
+
+    assert(checked!Hook3(12).toHash() != checked!Hook3(13).toHash());
+    assert(checked!Hook3(13).toHash() == checked!Hook3(13).toHash());
+
+    // Hook with no state and no hookToHash, payload has its own hashing function
+    auto x1 = Checked!(Checked!int, ProperCompare)(123);
+    auto x2 = Checked!(Checked!int, ProperCompare)(123);
+    auto x3 = Checked!(Checked!int, ProperCompare)(144);
+
+    assert(x1.toHash() == x2.toHash());
+    assert(x1.toHash() != x3.toHash());
+    assert(x2.toHash() != x3.toHash());
+}
+
+///
+@system unittest
+{
+    struct MyHook
+    {
+        static size_t hookToHash(T)(const T payload) nothrow @trusted
+        {
+            return .hashOf(payload);
+        }
+    }
+
+    int[Checked!(int, MyHook)] aa;
+    Checked!(int, MyHook) var = 42;
+    aa[var] = 100;
+
+    assert(aa[var] == 100);
+
+    int[Checked!(int, Abort)] bb;
+    Checked!(int, Abort) var2 = 42;
+    bb[var2] = 100;
+
+    assert(bb[var2] == 100);
 }

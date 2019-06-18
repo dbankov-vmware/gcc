@@ -19,15 +19,11 @@
 class Nspace : public ScopeDsymbol
 {
   public:
-    bool mangleOnly;
-    Nspace(Loc loc, Identifier *ident, Dsymbols *members, bool mangleOnly);
-
+    Expression *identExp;
     Dsymbol *syntaxCopy(Dsymbol *s);
     void addMember(Scope *sc, ScopeDsymbol *sds);
     void setScope(Scope *sc);
-    bool oneMember(Dsymbol **ps, Identifier *ident);
     Dsymbol *search(const Loc &loc, Identifier *ident, int flags = SearchLocalsOnly);
-    int apply(Dsymbol_apply_ft_t fp, void *param);
     bool hasPointers();
     void setFieldOffset(AggregateDeclaration *ad, unsigned *poffset, bool isunion);
     const char *kind() const;
