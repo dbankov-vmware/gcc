@@ -1,4 +1,5 @@
 // { dg-prune-output "Warning: struct HasNonConstToHash has method toHash" }
+// { dg-prune-output "HasNonConstToHash.toHash defined here:" }
 void main()
 {
     issue19562();

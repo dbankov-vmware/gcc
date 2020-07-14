@@ -883,7 +883,7 @@ extern (C++) final class PragmaDeclaration : AttribDeclaration
             {
                 error("one boolean expression expected for `pragma(inline)`, not %llu", cast(ulong) args.dim);
                 args.setDim(1);
-                (*args)[0] = new ErrorExp();
+                (*args)[0] = ErrorExp.get();
             }
             else
             {
@@ -893,7 +893,7 @@ extern (C++) final class PragmaDeclaration : AttribDeclaration
                     if (e.op != TOK.error)
                     {
                         error("pragma(`inline`, `true` or `false`) expected, not `%s`", e.toChars());
-                        (*args)[0] = new ErrorExp();
+                        (*args)[0] = ErrorExp.get();
                     }
                 }
                 else if (e.isBool(true))
@@ -1415,7 +1415,7 @@ extern (C++) final class UserAttributeDeclaration : AttribDeclaration
             arrayExpressionSemantic(atts, sc);
         }
         auto exps = new Expressions();
-        if (userAttribDecl)
+        if (userAttribDecl && userAttribDecl !is this)
             exps.push(new TupleExp(Loc.initial, userAttribDecl.getAttributes()));
         if (atts && atts.dim)
             exps.push(new TupleExp(Loc.initial, atts));

@@ -951,7 +951,7 @@ public:
 	/* Returning by hidden reference, store the result into the retval decl.
 	   The result returned then becomes the retval reference itself.  */
 	tree decl = DECL_RESULT (get_symbol_decl (this->func_));
-	gcc_assert (!tf->isref);
+	gcc_assert (!tf->isref ());
 
 	/* If returning via NRVO, just refer to the DECL_RESULT; this differs
 	   from using NULL_TREE in that it indicates that we care about the

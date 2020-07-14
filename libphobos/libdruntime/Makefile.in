@@ -264,6 +264,7 @@ am__objects_1 = core/atomic.lo core/attribute.lo core/bitop.lo \
 	gcc/unwind/arm_common.lo gcc/unwind/c6x.lo \
 	gcc/unwind/generic.lo gcc/unwind/package.lo gcc/unwind/pe.lo \
 	object.lo rt/aApply.lo rt/aApplyR.lo rt/aaA.lo rt/adi.lo \
+<<<<<<< HEAD
 	rt/arrayassign.lo rt/arraycat.lo rt/cast_.lo rt/config.lo \
 	rt/critical_.lo rt/deh.lo rt/dmain2.lo rt/ehalloc.lo \
 	rt/invariant.lo rt/lifetime.lo rt/memory.lo rt/minfo.lo \
@@ -298,6 +299,17 @@ am__objects_1 = core/atomic.lo core/attribute.lo core/bitop.lo \
 	rt/util/container/hashtab.lo rt/util/container/treap.lo \
 	rt/util/random.lo rt/util/typeinfo.lo rt/util/utility.lo
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+	rt/arrayassign.lo rt/arraycat.lo rt/backtrace/dwarf.lo \
+	rt/backtrace/elf.lo rt/backtrace/macho.lo rt/cast_.lo \
+	rt/config.lo rt/critical_.lo rt/deh.lo rt/dmain2.lo \
+	rt/ehalloc.lo rt/invariant.lo rt/lifetime.lo rt/memory.lo \
+	rt/minfo.lo rt/monitor_.lo rt/profilegc.lo rt/qsort.lo \
+	rt/sections.lo rt/tlsgc.lo rt/util/container/array.lo \
+	rt/util/container/common.lo rt/util/container/hashtab.lo \
+	rt/util/container/treap.lo rt/util/random.lo \
+	rt/util/typeinfo.lo rt/util/utility.lo
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 am__objects_2 = core/stdc/libgdruntime_la-errno_.lo
 am__objects_3 = core/sys/posix/aio.lo core/sys/posix/arpa/inet.lo \
 	core/sys/posix/config.lo core/sys/posix/dirent.lo \
@@ -992,6 +1004,7 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	gcc/unwind/arm_common.d gcc/unwind/c6x.d gcc/unwind/generic.d \
 	gcc/unwind/package.d gcc/unwind/pe.d object.d rt/aApply.d rt/aApplyR.d \
+<<<<<<< HEAD
 	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/cast_.d \
 	rt/config.d rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d \
 	rt/invariant.d rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d \
@@ -1018,6 +1031,16 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	rt/util/container/hashtab.d rt/util/container/treap.d rt/util/random.d \
 	rt/util/typeinfo.d rt/util/utility.d
+=======
+	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/backtrace/dwarf.d \
+	rt/backtrace/elf.d rt/backtrace/macho.d rt/cast_.d rt/config.d \
+	rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d rt/invariant.d \
+	rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d rt/profilegc.d \
+	rt/qsort.d rt/sections.d rt/tlsgc.d rt/util/container/array.d \
+	rt/util/container/common.d rt/util/container/hashtab.d \
+	rt/util/container/treap.d rt/util/random.d rt/util/typeinfo.d \
+	rt/util/utility.d
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 DRUNTIME_DSOURCES_STDCXX = core/stdcpp/allocator.d core/stdcpp/array.d \
 	core/stdcpp/exception.d core/stdcpp/memory.d core/stdcpp/new_.d \
@@ -1297,7 +1320,7 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/wtypes.d
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
-DRUNTIME_DISOURCES = __entrypoint.di __main.di
+DRUNTIME_DISOURCES = __main.di
 all: all-am
 
 .SUFFIXES:
@@ -1553,6 +1576,12 @@ rt/aaA.lo: rt/$(am__dirstamp)
 rt/adi.lo: rt/$(am__dirstamp)
 rt/arrayassign.lo: rt/$(am__dirstamp)
 rt/arraycat.lo: rt/$(am__dirstamp)
+rt/backtrace/$(am__dirstamp):
+	@$(MKDIR_P) rt/backtrace
+	@: > rt/backtrace/$(am__dirstamp)
+rt/backtrace/dwarf.lo: rt/backtrace/$(am__dirstamp)
+rt/backtrace/elf.lo: rt/backtrace/$(am__dirstamp)
+rt/backtrace/macho.lo: rt/backtrace/$(am__dirstamp)
 rt/cast_.lo: rt/$(am__dirstamp)
 rt/config.lo: rt/$(am__dirstamp)
 rt/critical_.lo: rt/$(am__dirstamp)
@@ -1568,6 +1597,7 @@ rt/profilegc.lo: rt/$(am__dirstamp)
 rt/qsort.lo: rt/$(am__dirstamp)
 rt/sections.lo: rt/$(am__dirstamp)
 rt/tlsgc.lo: rt/$(am__dirstamp)
+<<<<<<< HEAD
 <<<<<<< HEAD
 rt/util/$(am__dirstamp):
 	@$(MKDIR_P) rt/util
@@ -1615,6 +1645,8 @@ rt/typeinfo/ti_ushort.lo: rt/typeinfo/$(am__dirstamp)
 rt/typeinfo/ti_void.lo: rt/typeinfo/$(am__dirstamp)
 rt/typeinfo/ti_wchar.lo: rt/typeinfo/$(am__dirstamp)
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 rt/util/container/$(am__dirstamp):
 	@$(MKDIR_P) rt/util/container
 	@: > rt/util/container/$(am__dirstamp)
@@ -2303,6 +2335,11 @@ mostlyclean-compile:
 	-rm -f gcc/unwind/*.lo
 	-rm -f rt/*.$(OBJEXT)
 	-rm -f rt/*.lo
+<<<<<<< HEAD
+=======
+	-rm -f rt/backtrace/*.$(OBJEXT)
+	-rm -f rt/backtrace/*.lo
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 	-rm -f rt/util/*.$(OBJEXT)
 	-rm -f rt/util/*.lo
 	-rm -f rt/util/container/*.$(OBJEXT)
@@ -2447,6 +2484,10 @@ clean-libtool:
 	-rm -rf gcc/sections/.libs gcc/sections/_libs
 	-rm -rf gcc/unwind/.libs gcc/unwind/_libs
 	-rm -rf rt/.libs rt/_libs
+<<<<<<< HEAD
+=======
+	-rm -rf rt/backtrace/.libs rt/backtrace/_libs
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 	-rm -rf rt/util/.libs rt/util/_libs
 	-rm -rf rt/util/container/.libs rt/util/container/_libs
 install-toolexeclibDATA: $(toolexeclib_DATA)
@@ -2608,6 +2649,10 @@ distclean-generic:
 	-rm -f gcc/sections/$(am__dirstamp)
 	-rm -f gcc/unwind/$(am__dirstamp)
 	-rm -f rt/$(am__dirstamp)
+<<<<<<< HEAD
+=======
+	-rm -f rt/backtrace/$(am__dirstamp)
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 	-rm -f rt/util/$(am__dirstamp)
 	-rm -f rt/util/container/$(am__dirstamp)
 

@@ -1181,6 +1181,13 @@ class ConservativeGC : GC
         return ret;
     }
 
+
+    ulong allocatedInCurrentThread() nothrow
+    {
+        return bytesAllocated;
+    }
+
+
     //
     //
     //

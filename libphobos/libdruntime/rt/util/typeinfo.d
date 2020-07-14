@@ -623,7 +623,11 @@ class TypeInfo_Aw : TypeInfoArrayGeneric!(dchar, uint) {}
 class TypeInfo_Am : TypeInfoArrayGeneric!ulong {}
 class TypeInfo_Al : TypeInfoArrayGeneric!(long, ulong) {}
 
+<<<<<<< HEAD
 version (unittest)
+=======
+version (CoreUnittest)
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     private extern (C) void[] _adSort(void[] a, TypeInfo ti);
 
 unittest

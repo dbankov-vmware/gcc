@@ -73,6 +73,8 @@ struct Target
     // Objective-C ABI
     TargetObjC objc;
 
+    DString architectureName;    // name of the platform architecture (e.g. X86_64)
+
     template <typename T>
     struct FPTypeProperties
     {
@@ -96,6 +98,7 @@ struct Target
 
 private:
     Type *tvalist;
+    const Param *params;
 
 public:
     void _init(const Param& params);
@@ -110,6 +113,7 @@ public:
     TypeTuple *toArgTypes(Type *t);
     bool isReturnOnStack(TypeFunction *tf, bool needsThis);
     d_uns64 parameterSize(const Loc& loc, Type *t);
+    bool preferPassByRef(Type* t);
     Expression *getTargetInfo(const char* name, const Loc& loc);
 };
 

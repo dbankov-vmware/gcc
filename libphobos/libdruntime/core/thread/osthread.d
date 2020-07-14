@@ -1319,8 +1319,12 @@ private extern (D) ThreadBase attachThread(ThreadBase _thisThread) @nogc nothrow
     __gshared int resumeSignalNumber;
 }
 
+<<<<<<< HEAD
 private extern (D) ThreadBase attachThread(ThreadBase _thisThread) @nogc
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+private extern (D) ThreadBase attachThread(ThreadBase _thisThread) @nogc nothrow
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 {
     Thread thisThread = _thisThread.toThread();
 
@@ -1759,10 +1763,14 @@ package extern(D) void* getStackBottom() nothrow @nogc
  *  Whether the thread is now suspended (true) or terminated (false).
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 private extern (D) bool suspend( Thread t ) nothrow @nogc
 =======
 private extern (D) bool suspend( Thread t ) nothrow
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+private extern (D) bool suspend( Thread t ) nothrow @nogc
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 {
     Duration waittime = dur!"usecs"(10);
  Lagain:
@@ -2093,10 +2101,14 @@ extern (C) void thread_suspendAll() nothrow
  *  ThreadError if the resume fails for a running thread.
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 private extern (D) void resume(ThreadBase _t) nothrow @nogc
 =======
 private extern (D) void resume(ThreadBase _t) nothrow
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+private extern (D) void resume(ThreadBase _t) nothrow @nogc
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 {
     Thread t = _t.toThread;
 

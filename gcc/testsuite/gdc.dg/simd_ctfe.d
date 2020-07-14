@@ -1,4 +1,3 @@
-// { dg-options "-Wno-psabi" }
 // { dg-do compile }
 import core.simd;
 

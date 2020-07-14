@@ -225,6 +225,7 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	gcc/unwind/arm_common.d gcc/unwind/c6x.d gcc/unwind/generic.d \
 	gcc/unwind/package.d gcc/unwind/pe.d object.d rt/aApply.d rt/aApplyR.d \
+<<<<<<< HEAD
 	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/cast_.d \
 	rt/config.d rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d \
 	rt/invariant.d rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d \
@@ -251,6 +252,16 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	rt/util/container/hashtab.d rt/util/container/treap.d rt/util/random.d \
 	rt/util/typeinfo.d rt/util/utility.d
+=======
+	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/backtrace/dwarf.d \
+	rt/backtrace/elf.d rt/backtrace/macho.d rt/cast_.d rt/config.d \
+	rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d rt/invariant.d \
+	rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d rt/profilegc.d \
+	rt/qsort.d rt/sections.d rt/tlsgc.d rt/util/container/array.d \
+	rt/util/container/common.d rt/util/container/hashtab.d \
+	rt/util/container/treap.d rt/util/random.d rt/util/typeinfo.d \
+	rt/util/utility.d
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 DRUNTIME_DSOURCES_STDCXX = core/stdcpp/allocator.d core/stdcpp/array.d \
 	core/stdcpp/exception.d core/stdcpp/memory.d core/stdcpp/new_.d \
@@ -530,4 +541,4 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/wtypes.d
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
-DRUNTIME_DISOURCES = __entrypoint.di __main.di
+DRUNTIME_DISOURCES = __main.di

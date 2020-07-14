@@ -1046,7 +1046,7 @@ public:
     if (sd->xhash)
       {
 	TypeFunction *tf = sd->xhash->type->toTypeFunction ();
-	if (!tf->isnothrow || tf->trust == TRUSTsystem)
+	if (!tf->isnothrow () || tf->trust == TRUST::system)
 	  {
 	    warning (sd->xhash->loc, "toHash() must be declared as "
 		     "extern (D) size_t toHash() const nothrow @safe, "

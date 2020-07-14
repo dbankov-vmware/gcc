@@ -476,6 +476,16 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       global.params.betterC = !value;
       break;
 
+    case OPT_fdump_c___spec_:
+      if (global.params.doCxxHdrGeneration == CxxHeaderMode::none)
+	global.params.doCxxHdrGeneration = CxxHeaderMode::silent;
+      global.params.cxxhdrname = arg;
+      break;
+
+    case OPT_fdump_c___spec_verbose:
+      global.params.doCxxHdrGeneration = CxxHeaderMode::verbose;
+      break;
+
     case OPT_fdump_d_original:
       global.params.vcg_ast = value;
       break;
@@ -541,6 +551,7 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       global.params.dtorFields = value;
       global.params.fieldwise = value;
       global.params.fixAliasThis = value;
+      global.params.previewIn = value;
       global.params.fix16997 = value;
       global.params.markdown = value;
       global.params.noSharedAccess = value;
@@ -576,7 +587,11 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       break;
 
     case OPT_fpreview_in:
-      global.params.inMeansScopeConst = value;
+      global.params.previewIn = value;
+      break;
+
+    case OPT_fpreview_inclusiveincontracts:
+      global.params.inclusiveInContracts = value;
       break;
 
     case OPT_fpreview_intpromote:
@@ -680,20 +695,6 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
 
     case OPT_H:
       global.params.doHdrGeneration = true;
-      break;
-
-    case OPT_HC:
-      global.params.doCxxHdrGeneration = true;
-      break;
-
-    case OPT_HCd:
-      global.params.doCxxHdrGeneration = true;
-      global.params.cxxhdrdir = arg;
-      break;
-
-    case OPT_HCf:
-      global.params.doCxxHdrGeneration = true;
-      global.params.cxxhdrname = arg;
       break;
 
     case OPT_Hd:
@@ -956,7 +957,7 @@ d_parse_file (void)
   if (global.params.verbose)
     {
       message ("binary    %s", global.params.argv0.ptr);
-      message ("version   %s", global.version.ptr);
+      message ("version   %s", global.versionChars ());
 
       if (global.versionids)
 	{
@@ -1311,7 +1312,7 @@ d_parse_file (void)
     }
 
   /* Generate C++ header files.  */
-  if (global.params.doCxxHdrGeneration)
+  if (global.params.doCxxHdrGeneration != CxxHeaderMode::none)
     genCppHdrFiles (modules);
 
   if (global.errors)

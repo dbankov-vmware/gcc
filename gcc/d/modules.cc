@@ -141,6 +141,7 @@ get_internal_fn (tree ident, const Prot &prot)
 
   FuncDeclaration *fd = FuncDeclaration::genCfunc (NULL, Type::tvoid,
 						   Identifier::idPool (name));
+  fd->generated = true;
   fd->loc = Loc (mod->srcfile.toChars (), 1, 0);
   fd->parent = mod;
   fd->protection = prot;

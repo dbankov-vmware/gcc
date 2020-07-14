@@ -36,7 +36,13 @@ proc gdc-convert-args { args } {
 	    lappend out "-H"
 
 	} elseif [string match "-HC" $arg] {
-	    lappend out "-HC"
+	    upvar 1 compilable_output_file_ext compilable_output_file_ext
+	    upvar 1 name name
+	    set compilable_output_file_ext "h"
+	    lappend out "-fdump-c++-spec=[file rootname $name].h"
+
+	} elseif [string match "-HC=verbose" $arg] {
+	    lappend out "-fdump-c++-spec-verbose"
 
 	} elseif { [regexp -- {^-I([\w+/-]+)} $arg pattern path] } {
 	    lappend out "-I$path"
@@ -88,6 +94,9 @@ proc gdc-convert-args { args } {
 	} elseif [regexp -- {^-debug=(\w+)} $arg pattern value] {
 	    lappend out "-fdebug=$value"
 
+	} elseif [string match "-dip25" $arg] {
+	    lappend out "-fpreview=dip25"
+
 	} elseif [string match "-dip1000" $arg] {
 	    lappend out "-fpreview=dip1000"
 
@@ -103,6 +112,9 @@ proc gdc-convert-args { args } {
 
 	} elseif [string match "-fPIC" $arg] {
 	    lappend out "-fPIC"
+
+	} elseif [string match "-fPIE" $arg] {
+	    lappend out "-fPIE"
 
 	} elseif { [string match "-g" $arg]
 		   || [string match "-gc" $arg] } {
@@ -150,6 +162,9 @@ proc gdc-convert-args { args } {
 	} elseif [string match "-o-" $arg] {
 	    upvar 2 compilable_do_what compilable_do_what
 	    set compilable_do_what "compile"
+
+	} elseif [string match "-vgc" $arg] {
+	    lappend out "-ftransition=nogc"
 
 	} elseif [string match "-vtemplates" $arg] {
 	    lappend out "-ftransition=templates"

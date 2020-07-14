@@ -1415,6 +1415,46 @@ void test59()
 
 
 /* ================================ */
+// https://issues.dlang.org/show_bug.cgi?id=10664
+
+Exception collectExceptionE(int delegate () expression, ref int result)
+{
+    try
+    {
+        result = expression();
+    }
+    catch (Exception e)
+    {
+        return e;
+    }
+    return null;
+}
+
+RangeError collectExceptionR(int delegate () expression, ref int result)
+{
+    try
+    {
+        result = expression();
+    }
+    catch (RangeError e)
+    {
+        return e;
+    }
+    return null;
+}
+
+void test10664()
+{
+    int b;
+    int foo() { throw new Exception("blah"); }
+    assert(collectExceptionE(&foo, b));
+
+    int[] a = new int[3];
+    int goo() { return a[4]; }
+    collectExceptionR(&goo, b);
+}
+
+/* ================================ */
 
 
 int main()
@@ -1476,6 +1516,7 @@ int main()
     test57();
     test58();
     test59();
+    test10664();
 
     printf("Success\n");
     return 0;

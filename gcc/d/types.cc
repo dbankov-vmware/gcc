@@ -786,7 +786,7 @@ public:
     if (t->next != NULL)
       {
 	fntype = build_ctype (t->next);
-	if (t->isref)
+	if (t->isref ())
 	  fntype = build_reference_type (fntype);
       }
     else

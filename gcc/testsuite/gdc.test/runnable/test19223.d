@@ -1,7 +1,8 @@
-import core.simd;
 
-static if (__traits(compiles, int4))
+static if (__traits(compiles, __vector(int[4])))
 {
+    alias int4 = __vector(int[4]);
+
     int fn(const int[4] x)
     {
         int sum = 0;

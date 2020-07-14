@@ -176,7 +176,7 @@ extern (C++) final class StaticForeach : RootObject
         }
         else
         {
-            aggrfe.aggr = new ErrorExp();
+            aggrfe.aggr = ErrorExp.get();
         }
     }
 
@@ -918,6 +918,10 @@ extern (C++) final class StaticIfCondition : Condition
 
             import dmd.staticcond;
             bool errors;
+
+            if (!exp)
+                return errorReturn();
+
             bool result = evalStaticCondition(sc, exp, exp, errors);
 
             // Prevent repeated condition evaluation.

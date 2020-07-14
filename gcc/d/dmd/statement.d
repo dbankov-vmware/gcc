@@ -44,6 +44,7 @@ import dmd.dinterpret;
 import dmd.mtype;
 import dmd.parse;
 import dmd.root.outbuffer;
+import dmd.root.rmem;
 import dmd.root.rootobject;
 import dmd.sapply;
 import dmd.sideeffect;
@@ -57,7 +58,7 @@ import dmd.visitor;
  */
 TypeIdentifier getThrowable()
 {
-    auto tid = new TypeIdentifier(Loc.initial, Id.empty);
+    auto tid = Pool!TypeIdentifier.make(Loc.initial, Id.empty);
     tid.addIdent(Id.object);
     tid.addIdent(Id.Throwable);
     return tid;
@@ -69,7 +70,7 @@ TypeIdentifier getThrowable()
  */
 TypeIdentifier getException()
 {
-    auto tid = new TypeIdentifier(Loc.initial, Id.empty);
+    auto tid = Pool!TypeIdentifier.make(Loc.initial, Id.empty);
     tid.addIdent(Id.object);
     tid.addIdent(Id.Exception);
     return tid;
@@ -176,28 +177,57 @@ extern (C++) abstract class Statement : ASTNode
         return buf.extractSlice().ptr;
     }
 
-    final void error(const(char)* format, ...)
+    static if (__VERSION__ < 2092)
     {
-        va_list ap;
-        va_start(ap, format);
-        .verror(loc, format, ap);
-        va_end(ap);
-    }
+        final void error(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .verror(loc, format, ap);
+            va_end(ap);
+        }
 
-    final void warning(const(char)* format, ...)
-    {
-        va_list ap;
-        va_start(ap, format);
-        .vwarning(loc, format, ap);
-        va_end(ap);
-    }
+        final void warning(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vwarning(loc, format, ap);
+            va_end(ap);
+        }
 
-    final void deprecation(const(char)* format, ...)
+        final void deprecation(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vdeprecation(loc, format, ap);
+            va_end(ap);
+        }
+    }
+    else
     {
-        va_list ap;
-        va_start(ap, format);
-        .vdeprecation(loc, format, ap);
-        va_end(ap);
+        pragma(printf) final void error(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .verror(loc, format, ap);
+            va_end(ap);
+        }
+
+        pragma(printf) final void warning(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vwarning(loc, format, ap);
+            va_end(ap);
+        }
+
+        pragma(printf) final void deprecation(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vdeprecation(loc, format, ap);
+            va_end(ap);
+        }
     }
 
     Statement getRelatedLabeled()

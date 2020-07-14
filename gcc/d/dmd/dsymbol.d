@@ -61,6 +61,8 @@ import dmd.visitor;
  *    dg = delegate to call for each Dsymbol
  * Returns:
  *    last value returned by dg()
+ *
+ * See_Also: $(REF each, dmd, root, array)
  */
 int foreachDsymbol(Dsymbols* symbols, scope int delegate(Dsymbol) dg)
 {
@@ -85,6 +87,8 @@ int foreachDsymbol(Dsymbols* symbols, scope int delegate(Dsymbol) dg)
  * Params:
  *    symbols = Dsymbols
  *    dg = delegate to call for each Dsymbol
+ *
+ * See_Also: $(REF each, dmd, root, array)
  */
 void foreachDsymbol(Dsymbols* symbols, scope void delegate(Dsymbol) dg)
 {
@@ -307,9 +311,9 @@ extern (C++) class Dsymbol : ASTNode
         return false;
     }
 
-    bool isAnonymous()
+    final bool isAnonymous() const
     {
-        return ident is null;
+        return ident is null || ident.isAnonymous;
     }
 
     extern(D) private const(char)[] prettyFormatHelper()
@@ -318,38 +322,77 @@ extern (C++) class Dsymbol : ASTNode
         return '`' ~ cstr.toDString() ~ "`\0";
     }
 
-    final void error(const ref Loc loc, const(char)* format, ...)
+    static if (__VERSION__ < 2092)
     {
-        va_list ap;
-        va_start(ap, format);
-        .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
-        va_end(ap);
-    }
+        final void error(const ref Loc loc, const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
 
-    final void error(const(char)* format, ...)
-    {
-        va_list ap;
-        va_start(ap, format);
-        const loc = getLoc();
-        .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
-        va_end(ap);
-    }
+        final void error(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            const loc = getLoc();
+            .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
 
-    final void deprecation(const ref Loc loc, const(char)* format, ...)
-    {
-        va_list ap;
-        va_start(ap, format);
-        .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
-        va_end(ap);
-    }
+        final void deprecation(const ref Loc loc, const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
 
-    final void deprecation(const(char)* format, ...)
+        final void deprecation(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            const loc = getLoc();
+            .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
+    }
+    else
     {
-        va_list ap;
-        va_start(ap, format);
-        const loc = getLoc();
-        .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
-        va_end(ap);
+        pragma(printf) final void error(const ref Loc loc, const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
+
+        pragma(printf) final void error(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            const loc = getLoc();
+            .verror(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
+
+        pragma(printf) final void deprecation(const ref Loc loc, const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
+
+        pragma(printf) final void deprecation(const(char)* format, ...)
+        {
+            va_list ap;
+            va_start(ap, format);
+            const loc = getLoc();
+            .vdeprecation(loc, format, ap, kind(), prettyFormatHelper().ptr);
+            va_end(ap);
+        }
     }
 
     final bool checkDeprecated(const ref Loc loc, Scope* sc)

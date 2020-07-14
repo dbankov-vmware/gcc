@@ -1908,7 +1908,7 @@ array_bounds_check (void)
       fd = d_function_chain->function;
       if (fd && fd->type->ty == Tfunction)
 	{
-	  if (fd->type->isTypeFunction ()->trust == TRUSTsafe)
+	  if (fd->type->isTypeFunction ()->trust == TRUST::safe)
 	    return true;
 	}
       return false;

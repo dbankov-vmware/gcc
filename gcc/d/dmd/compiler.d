@@ -49,7 +49,7 @@ extern (C++) struct Compiler
      * modules whose source are empty, but code gets injected
      * immediately after loading.
      */
-    extern (C++) static void loadModule(Module m);
+    extern (C++) static void onParseModule(Module m);
 
     /**
      * A callback function that is called once an imported module is

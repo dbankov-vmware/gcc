@@ -157,7 +157,7 @@ binary_op (tree_code code, tree type, tree arg0, tree arg1)
 	  eptype = type;
 	}
 
-      ret = fold_build2 (code, eptype, arg0, arg1);
+      ret = build2 (code, eptype, arg0, arg1);
     }
 
   return d_convert (type, ret);
@@ -1890,7 +1890,7 @@ public:
     if (returnvalue)
       exp = compound_expr (exp, returnvalue);
 
-    if (tf->isref)
+    if (tf->isref ())
       exp = build_deref (exp);
 
     /* Some library calls are defined to return a generic type.
@@ -3177,7 +3177,7 @@ build_return_dtor (Expression *e, Type *type, TypeFunction *tf)
   result = convert_expr (result, e->type, type);
 
   /* If we are returning a reference, take the address.  */
-  if (tf->isref)
+  if (tf->isref ())
     result = build_address (result);
 
   /* The decl to store the return expression.  */

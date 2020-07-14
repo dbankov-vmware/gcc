@@ -23,13 +23,22 @@ nothrow:
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void error(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    verror(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void error(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verror(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void error(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verror(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Same as above, but allows Loc() literals to be passed.
@@ -55,14 +64,24 @@ extern (D) void error(Loc loc, const(char)* format, ...)
  *      format   = printf-style format specification
  *      ...      = printf-style variadic arguments
  */
-extern (C++) void error(const(char)* filename, uint linnum, uint charnum, const(char)* format, ...)
-{
-    const loc = Loc(filename, linnum, charnum);
-    va_list ap;
-    va_start(ap, format);
-    verror(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void error(const(char)* filename, uint linnum, uint charnum, const(char)* format, ...)
+    {
+        const loc = Loc(filename, linnum, charnum);
+        va_list ap;
+        va_start(ap, format);
+        verror(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void error(const(char)* filename, uint linnum, uint charnum, const(char)* format, ...)
+    {
+        const loc = Loc(filename, linnum, charnum);
+        va_list ap;
+        va_start(ap, format);
+        verror(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print additional details about an error message.
@@ -72,13 +91,22 @@ extern (C++) void error(const(char)* filename, uint linnum, uint charnum, const(
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void errorSupplemental(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    verrorSupplemental(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void errorSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verrorSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void errorSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        verrorSupplemental(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print a warning message, increasing the global warning count.
@@ -87,13 +115,22 @@ extern (C++) void errorSupplemental(const ref Loc loc, const(char)* format, ...)
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void warning(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vwarning(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void warning(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarning(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void warning(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarning(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print additional details about a warning message.
@@ -103,13 +140,22 @@ extern (C++) void warning(const ref Loc loc, const(char)* format, ...)
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void warningSupplemental(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vwarningSupplemental(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void warningSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarningSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void warningSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vwarningSupplemental(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print a deprecation message, may increase the global warning or error count
@@ -119,13 +165,22 @@ extern (C++) void warningSupplemental(const ref Loc loc, const(char)* format, ..
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void deprecation(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vdeprecation(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void deprecation(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecation(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void deprecation(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecation(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print additional details about a deprecation message.
@@ -135,13 +190,22 @@ extern (C++) void deprecation(const ref Loc loc, const(char)* format, ...)
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void deprecationSupplemental(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vdeprecationSupplemental(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void deprecationSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecationSupplemental(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void deprecationSupplemental(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vdeprecationSupplemental(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print a verbose message.
@@ -151,13 +215,22 @@ extern (C++) void deprecationSupplemental(const ref Loc loc, const(char)* format
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void message(const ref Loc loc, const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vmessage(loc, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void message(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vmessage(loc, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void message(const ref Loc loc, const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vmessage(loc, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Same as above, but doesn't take a location argument.
@@ -165,13 +238,22 @@ extern (C++) void message(const ref Loc loc, const(char)* format, ...)
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void message(const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vmessage(Loc.initial, format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void message(const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vmessage(Loc.initial, format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void message(const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vmessage(Loc.initial, format, ap);
+        va_end(ap);
+    }
 
 /**
  * Print a tip message with the prefix and highlighting.
@@ -179,13 +261,22 @@ extern (C++) void message(const(char)* format, ...)
  *      format = printf-style format specification
  *      ...    = printf-style variadic arguments
  */
-extern (C++) void tip(const(char)* format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    vtip(format, ap);
-    va_end(ap);
-}
+static if (__VERSION__ < 2092)
+    extern (C++) void tip(const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vtip(format, ap);
+        va_end(ap);
+    }
+else
+    pragma(printf) extern (C++) void tip(const(char)* format, ...)
+    {
+        va_list ap;
+        va_start(ap, format);
+        vtip(format, ap);
+        va_end(ap);
+    }
 
 /**
  * Same as $(D error), but takes a va_list parameter, and optionally additional message prefixes.
@@ -206,7 +297,10 @@ extern (C++) void verror(const ref Loc loc, const(char)* format, va_list ap, con
  *      format = printf-style format specification
  *      ap     = printf-style variadic arguments
  */
-extern (C++) void verrorSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void verrorSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void verrorSupplemental(const ref Loc loc, const(char)* format, va_list ap);
 
 /**
  * Same as $(D warning), but takes a va_list parameter.
@@ -215,7 +309,10 @@ extern (C++) void verrorSupplemental(const ref Loc loc, const(char)* format, va_
  *      format = printf-style format specification
  *      ap     = printf-style variadic arguments
  */
-extern (C++) void vwarning(const ref Loc loc, const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void vwarning(const ref Loc loc, const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void vwarning(const ref Loc loc, const(char)* format, va_list ap);
 
 /**
  * Same as $(D warningSupplemental), but takes a va_list parameter.
@@ -224,7 +321,10 @@ extern (C++) void vwarning(const ref Loc loc, const(char)* format, va_list ap);
  *      format = printf-style format specification
  *      ap     = printf-style variadic arguments
  */
-extern (C++) void vwarningSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void vwarningSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void vwarningSupplemental(const ref Loc loc, const(char)* format, va_list ap);
 
 /**
  * Same as $(D deprecation), but takes a va_list parameter, and optionally additional message prefixes.
@@ -244,7 +344,10 @@ extern (C++) void vdeprecation(const ref Loc loc, const(char)* format, va_list a
  *      format    = printf-style format specification
  *      ap        = printf-style variadic arguments
  */
-extern (C++) void vmessage(const ref Loc loc, const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void vmessage(const ref Loc loc, const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void vmessage(const ref Loc loc, const(char)* format, va_list ap);
 
 /**
  * Same as $(D tip), but takes a va_list parameter.
@@ -252,7 +355,10 @@ extern (C++) void vmessage(const ref Loc loc, const(char)* format, va_list ap);
  *      format    = printf-style format specification
  *      ap        = printf-style variadic arguments
  */
-extern (C++) void vtip(const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void vtip(const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void vtip(const(char)* format, va_list ap);
 
 /**
  * Same as $(D deprecationSupplemental), but takes a va_list parameter.
@@ -261,7 +367,11 @@ extern (C++) void vtip(const(char)* format, va_list ap);
  *      format = printf-style format specification
  *      ap     = printf-style variadic arguments
  */
-extern (C++) void vdeprecationSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+static if (__VERSION__ < 2092)
+    extern (C++) void vdeprecationSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+else
+    pragma(printf) extern (C++) void vdeprecationSupplemental(const ref Loc loc, const(char)* format, va_list ap);
+
 
 /**
  * Call this after printing out fatal error messages to clean up and exit

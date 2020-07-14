@@ -81,7 +81,8 @@ build_frontend_type (tree type)
     mod |= MODshared;
 
   /* If we've seen the type before, re-use the converted decl.  */
-  for (size_t i = 0; i < builtin_converted_decls.length (); ++i)
+  unsigned saved_builtin_decls_length = builtin_converted_decls.length ();
+  for (size_t i = 0; i < saved_builtin_decls_length; ++i)
     {
       tree t = builtin_converted_decls[i].ctype;
       if (TYPE_MAIN_VARIANT (t) == TYPE_MAIN_VARIANT (type))
@@ -249,7 +250,12 @@ build_frontend_type (tree type)
 	{
 	  Type *ftype = build_frontend_type (TREE_TYPE (field));
 	  if (!ftype)
-	    return NULL;
+	    {
+	      /* Drop any field types that got cached before the conversion
+		 of this record type failed.  */
+	      builtin_converted_decls.truncate (saved_builtin_decls_length);
+	      return NULL;
+	    }
 
 	  Identifier *fident;
 	  if (DECL_NAME (field) == NULL_TREE)
@@ -308,7 +314,12 @@ build_frontend_type (tree type)
 
 	      Type *targ = build_frontend_type (argtype);
 	      if (!targ)
-		return NULL;
+		{
+		  /* Drop any parameter types that got cached before the
+		     conversion of this function type failed.  */
+		  builtin_converted_decls.truncate (saved_builtin_decls_length);
+		  return NULL;
+		}
 
 	      args->push (Parameter::create (sc, targ, NULL, NULL, NULL));
 	    }
@@ -531,16 +542,16 @@ d_build_builtins_module (Module *m)
 	   flag_unsafe_math_optimizations.
 	 - Built-ins never use the GC or raise a D exception, and so are always
 	   marked as `nothrow' and `@nogc'.  */
-      tf->purity = DECL_PURE_P (decl) ? PUREstrong
-	: TREE_READONLY (decl) ? PUREconst
-	: DECL_IS_NOVOPS (decl) ? PUREweak
-	: !DECL_ASSEMBLER_NAME_SET_P (decl) ? PUREweak
-	: PUREimpure;
-      tf->trust = !DECL_ASSEMBLER_NAME_SET_P (decl) ? TRUSTsafe
-	: TREE_NOTHROW (decl) ? TRUSTtrusted
-	: TRUSTsystem;
-      tf->isnothrow = true;
-      tf->isnogc = true;
+      tf->purity = DECL_PURE_P (decl) ? PURE::strong
+	: TREE_READONLY (decl) ? PURE::const_
+	: DECL_IS_NOVOPS (decl) ? PURE::weak
+	: !DECL_ASSEMBLER_NAME_SET_P (decl) ? PURE::weak
+	: PURE::impure;
+      tf->trust = !DECL_ASSEMBLER_NAME_SET_P (decl) ? TRUST::safe
+	: TREE_NOTHROW (decl) ? TRUST::trusted
+	: TRUST::system;
+      tf->isnothrow (true);
+      tf->isnogc (true);
 
       FuncDeclaration *func
 	= FuncDeclaration::create (Loc (), Loc (),

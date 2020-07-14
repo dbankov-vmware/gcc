@@ -341,34 +341,42 @@ extern (C++) abstract class Declaration : Dsymbol
      */
     extern (D) final bool checkDisabled(Loc loc, Scope* sc, bool isAliasedDeclaration = false)
     {
-        if (storage_class & STC.disable)
+        if (!(storage_class & STC.disable))
+            return false;
+
+        if (sc.func && sc.func.storage_class & STC.disable)
+            return true;
+
+        auto p = toParent();
+        if (p && isPostBlitDeclaration())
         {
-            if (!(sc.func && sc.func.storage_class & STC.disable))
-            {
-                auto p = toParent();
-                if (p && isPostBlitDeclaration())
-                    p.error(loc, "is not copyable because it is annotated with `@disable`");
-                else
-                {
-                    // if the function is @disabled, maybe there
-                    // is an overload in the overload set that isn't
-                    if (isAliasedDeclaration)
-                    {
-                        FuncDeclaration fd = isFuncDeclaration();
-                        if (fd)
-                        {
-                            for (FuncDeclaration ovl = fd; ovl; ovl = cast(FuncDeclaration)ovl.overnext)
-                                if (!(ovl.storage_class & STC.disable))
-                                    return false;
-                        }
-                    }
-                    error(loc, "cannot be used because it is annotated with `@disable`");
-                }
-            }
+            p.error(loc, "is not copyable because it is annotated with `@disable`");
             return true;
         }
 
-        return false;
+        // if the function is @disabled, maybe there
+        // is an overload in the overload set that isn't
+        if (isAliasedDeclaration)
+        {
+            FuncDeclaration fd = isFuncDeclaration();
+            if (fd)
+            {
+                for (FuncDeclaration ovl = fd; ovl; ovl = cast(FuncDeclaration)ovl.overnext)
+                    if (!(ovl.storage_class & STC.disable))
+                        return false;
+            }
+        }
+
+        if (auto ctor = isCtorDeclaration())
+        {
+            if (ctor.isCpCtor && ctor.generated)
+            {
+                .error(loc, "Generating an `inout` copy constructor for `struct %s` failed, therefore instances of it are uncopyable", parent.toPrettyChars());
+                return true;
+            }
+        }
+        error(loc, "cannot be used because it is annotated with `@disable`");
+        return true;
     }
 
     /*************************************
@@ -1127,17 +1135,14 @@ extern (C++) class VarDeclaration : Declaration
 
     VarDeclarations* maybes;        // STC.maybescope variables that are assigned to this STC.maybescope variable
 
-    private bool _isAnonymous;
-
     final extern (D) this(const ref Loc loc, Type type, Identifier ident, Initializer _init, StorageClass storage_class = STC.undefined_)
+    in
     {
-        if (ident is Identifier.anonymous)
-        {
-            ident = Identifier.generateId("__anonvar");
-            _isAnonymous = true;
-        }
-        //printf("VarDeclaration('%s')\n", ident.toChars());
         assert(ident);
+    }
+    do
+    {
+        //printf("VarDeclaration('%s')\n", ident.toChars());
         super(loc, ident);
         debug
         {
@@ -1284,11 +1289,6 @@ extern (C++) class VarDeclaration : Declaration
     {
         //printf("VarDeclaration::needThis(%s, x%x)\n", toChars(), storage_class);
         return isField();
-    }
-
-    override final bool isAnonymous()
-    {
-        return _isAnonymous;
     }
 
     override final bool isExport() const
@@ -1540,7 +1540,7 @@ extern (C++) class VarDeclaration : Declaration
         if (!e)
         {
             .error(loc, "cannot make expression out of initializer for `%s`", toChars());
-            return new ErrorExp();
+            return ErrorExp.get();
         }
 
         e = e.copy();
@@ -1597,7 +1597,7 @@ extern (C++) class VarDeclaration : Declaration
         //printf("\tfdthis = %s\n", fdthis.toChars());
         if (loc.isValid())
         {
-            if (fdthis.getLevelAndCheck(loc, sc, fdv) == fdthis.LevelError)
+            if (fdthis.getLevelAndCheck(loc, sc, fdv, this) == fdthis.LevelError)
                 return true;
         }
 

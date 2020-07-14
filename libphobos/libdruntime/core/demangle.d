@@ -279,7 +279,7 @@ pure @safe:
 
         UnsignedStringBuf buf = void;
 
-        auto s = unsignedToTempString(val, buf, 16);
+        auto s = unsignedToTempString!16(val, buf);
         int slen = cast(int)s.length;
         if (slen < width)
         {
@@ -923,7 +923,6 @@ pure @safe:
             return dst[beg .. len];
         case 'F': case 'U': case 'W': case 'V': case 'R': // TypeFunction
             return parseTypeFunction( name );
-        case 'I': // TypeIdent (I LName)
         case 'C': // TypeClass (C LName)
         case 'S': // TypeStruct (S LName)
         case 'E': // TypeEnum (E LName)
@@ -1236,14 +1235,21 @@ pure @safe:
             }
             switch ( front )
             {
-            case 'J': // out (J Type)
+            case 'I': // in  (I Type)
                 popFront();
-                put( "out " );
+                put("in ");
+                if (front == 'K')
+                    goto case;
                 parseType();
                 continue;
             case 'K': // ref (K Type)
                 popFront();
                 put( "ref " );
+                parseType();
+                continue;
+            case 'J': // out (J Type)
+                popFront();
+                put( "out " );
                 parseType();
                 continue;
             case 'L': // lazy (L Type)
@@ -2432,6 +2438,8 @@ else
         ["printf", "printf"],
         ["_foo", "_foo"],
         ["_D88", "_D88"],
+        ["_D3fooQeFIAyaZv", "void foo.foo(in immutable(char)[])" ],
+        ["_D3barQeFIKAyaZv", "void bar.bar(in ref immutable(char)[])" ],
         ["_D4test3fooAa", "char[] test.foo"],
         ["_D8demangle8demangleFAaZAa", "char[] demangle.demangle(char[])"],
         ["_D6object6Object8opEqualsFC6ObjectZi", "int object.Object.opEquals(Object)"],
@@ -2558,13 +2566,13 @@ else
     {
         auto r = demangle( name[0] );
         assert( r == name[1],
-                "demangled \"" ~ name[0] ~ "\" as \"" ~ r ~ "\" but expected \"" ~ name[1] ~ "\"");
+                "demangled `" ~ name[0] ~ "` as `" ~ r ~ "` but expected `" ~ name[1] ~ "`");
     }
     foreach ( i; staticIota!(table.length) )
     {
         enum r = demangle( table[i][0] );
         static assert( r == table[i][1],
-                "demangled \"" ~ table[i][0] ~ "\" as \"" ~ r ~ "\" but expected \"" ~ table[i][1] ~ "\"");
+                "demangled `" ~ table[i][0] ~ "` as `" ~ r ~ "` but expected `" ~ table[i][1] ~ "`");
     }
 
     {

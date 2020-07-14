@@ -46,18 +46,6 @@ H
 D
 ; Different from documented use in C.
 
-HC
-D
-Generate C++ header file.
-
-HCd
-D Joined Separate
--Hd <dir>	Write C++ header files to directory <dir>.
-
-HCf
-D Joined Separate
--Hf <file>	Write C++ header to <file>.
-
 Hd
 D Joined Separate
 -Hd <dir>	Write D interface files to directory <dir>.
@@ -283,6 +271,14 @@ fdruntime
 D
 Assume that standard D runtime libraries and \"D main\" exist.
 
+fdump-c++-spec-verbose
+D RejectNegative
+Add comments for ignored declarations in the generated C++ header.
+
+fdump-c++-spec=
+D RejectNegative Joined
+-fdump-cxx-spec=<filename>	Write all declarations as C++ code to <file>.
+
 fdump-d-original
 D
 Display the frontend AST after parsing and semantic passes.
@@ -376,6 +372,10 @@ When a symbol is resolved, check alias this scope before going to upper scopes.
 fpreview=in
 D RejectNegative
 Implement 'in' parameters to mean scope const.
+
+fpreview=inclusiveincontracts
+D RejectNegative
+Implement 'in' contracts of overridden methods to be a superset of parent contract.
 
 fpreview=intpromote
 D RejectNegative

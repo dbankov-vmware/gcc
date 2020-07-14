@@ -515,9 +515,13 @@ ushort byteswap(ushort x) pure
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 ///
 =======
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+///
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 unittest
 {
     assert(byteswap(cast(ushort)0xF234) == 0x34F2);
@@ -532,6 +536,7 @@ unittest
  */
 uint bswap(uint v) pure;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 ///
 unittest
@@ -581,17 +586,38 @@ q{
 };
 
 version (BSwap64Template)
+=======
+///
+unittest
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 {
-    ulong bswap()(ulong v) pure { mixin(bswap64); }
+    assert(bswap(0x01020304u) == 0x04030201u);
+    static uint xx = 0x10203040u;
+    assert(bswap(xx) == 0x40302010u);
 }
-else
+
+/**
+ * Swaps bytes in an 8 byte ulong end-to-end, i.e. byte 0 becomes
+ * byte 7, byte 1 becomes byte 6, etc.
+ * This is meant to be recognized by the compiler as an intrinsic.
+ */
+ulong bswap(ulong v) pure;
+
+///
+unittest
 {
+<<<<<<< HEAD
     /**
      * Swaps bytes in an 8 byte ulong end-to-end, i.e. byte 0 becomes
      * byte 7, byte 1 becomes byte 6, etc.
      */
     ulong bswap(ulong v) pure { mixin(bswap64); }
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    assert(bswap(0x01020304_05060708uL) == 0x08070605_04030201uL);
+    static ulong xx = 0x10203040_50607080uL;
+    assert(bswap(xx) == 0x80706050_40302010uL);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 }
 
 version (DigitalMars) version (AnyX86) @system // not pure

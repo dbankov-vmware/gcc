@@ -464,7 +464,7 @@ Target::isReturnOnStack (TypeFunction *tf, bool)
   /* Need the back-end type to determine this, but this is called from the
      frontend before semantic processing is finished.  An accurate value
      is not currently needed anyway.  */
-  if (tf->isref)
+  if (tf->isref ())
     return false;
 
   Type *tn = tf->next->toBasetype ();

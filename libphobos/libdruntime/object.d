@@ -348,16 +348,14 @@ class TypeInfo
         return hashOf(this.toString());
     }
 
-    override int opCmp(Object o)
+    override int opCmp(Object rhs)
     {
-        import core.internal.string : dstrcmp;
-
-        if (this is o)
+        if (this is rhs)
             return 0;
-        TypeInfo ti = cast(TypeInfo)o;
+        auto ti = cast(TypeInfo) rhs;
         if (ti is null)
             return 1;
-        return dstrcmp(this.toString(), ti.toString());
+        return __cmp(this.toString(), ti.toString());
     }
 
     override bool opEquals(Object o)
@@ -462,8 +460,8 @@ class TypeInfo_Enum : TypeInfo
     }
 
     override size_t getHash(scope const void* p) const { return base.getHash(p); }
-    override bool equals(scope const void* p1, scope const void* p2) const { return base.equals(p1, p2); }
-    override int compare(scope const void* p1, scope const void* p2) const { return base.compare(p1, p2); }
+    override bool equals(in void* p1, in void* p2) const { return base.equals(p1, p2); }
+    override int compare(in void* p1, in void* p2) const { return base.compare(p1, p2); }
     override @property size_t tsize() nothrow pure const { return base.tsize; }
     override void swap(void* p1, void* p2) const { return base.swap(p1, p2); }
 
@@ -652,7 +650,7 @@ class TypeInfo_StaticArray : TypeInfo
         import core.internal.string : unsignedToTempString;
 
         char[20] tmpBuff = void;
-        return value.toString() ~ "[" ~ unsignedToTempString(len, tmpBuff, 10) ~ "]";
+        return value.toString() ~ "[" ~ unsignedToTempString(len, tmpBuff) ~ "]";
     }
 
     override bool opEquals(Object o)
@@ -2044,7 +2042,7 @@ class Throwable : Object
 
         sink(typeid(this).name);
         sink("@"); sink(file);
-        sink("("); sink(unsignedToTempString(line, tmpBuff, 10)); sink(")");
+        sink("("); sink(unsignedToTempString(line, tmpBuff)); sink(")");
 
         if (msg.length)
         {
@@ -3046,7 +3044,6 @@ private size_t getArrayHash(const scope TypeInfo element, const scope void* ptr,
             || cast(const TypeInfo_Interface) element;
     }
 
-    import core.internal.traits : externDFunc;
     if (!hasCustomToHash(element))
         return hashOf(ptr[0 .. elementSize * count]);
 

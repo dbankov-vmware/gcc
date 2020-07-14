@@ -4,10 +4,14 @@ TEST_OUTPUT:
 ---
 compilable/interpret3.d(2914): Deprecation: `case` variables have to be `const` or `immutable`
 <<<<<<< HEAD
+<<<<<<< HEAD
 compilable/interpret3.d(6351): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
 =======
 compilable/interpret3.d(6313): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+compilable/interpret3.d(6351): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 ---
 */
 
@@ -3267,6 +3271,7 @@ long ctfeSort6250b()
 
 static assert(ctfeSort6250b() == 57);
 
+/**************************************************/
 // https://issues.dlang.org/show_bug.cgi?id=6672
 // circular references in array
 
@@ -7680,7 +7685,7 @@ int test15251()
 {
     for (ubyte lwr = 19;
         lwr != 20;
-        cast(void)++lwr)    // have to to be evaluated with ctfeNeedNothing
+        cast(void)++lwr)    // have to to be evaluated with CTFEGoal.Nothing
     {}
     return 1;
 }

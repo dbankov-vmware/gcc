@@ -506,7 +506,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
             Statement fpreinv = null;
             if (funcdecl.addPreInvariant())
             {
-                Expression e = addInvariant(funcdecl.loc, sc, funcdecl.isThis(), funcdecl.vthis);
+                Expression e = addInvariant(funcdecl.isThis(), funcdecl.vthis);
                 if (e)
                     fpreinv = new ExpStatement(Loc.initial, e);
             }
@@ -515,7 +515,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
             Statement fpostinv = null;
             if (funcdecl.addPostInvariant())
             {
-                Expression e = addInvariant(funcdecl.loc, sc, funcdecl.isThis(), funcdecl.vthis);
+                Expression e = addInvariant(funcdecl.isThis(), funcdecl.vthis);
                 if (e)
                     fpostinv = new ExpStatement(Loc.initial, e);
             }
@@ -566,9 +566,6 @@ private extern(C++) final class Semantic3Visitor : Visitor
                         v.ctorinit = 0;
                     }
                 }
-
-                if (!funcdecl.inferRetType && !target.isReturnOnStack(f, funcdecl.needThis()))
-                    funcdecl.nrvo_can = 0;
 
                 bool inferRef = (f.isref && (funcdecl.storage_class & STC.auto_));
 
@@ -881,7 +878,13 @@ private extern(C++) final class Semantic3Visitor : Visitor
                         const hasCopyCtor = exp.type.ty == Tstruct && (cast(TypeStruct)exp.type).sym.hasCopyCtor;
                         // if a copy constructor is present, the return type conversion will be handled by it
                         if (!(hasCopyCtor && exp.isLvalue()))
-                            exp = exp.implicitCastTo(sc2, tret);
+                        {
+                            if (f.isref && !MODimplicitConv(exp.type.mod, tret.mod) && !tret.isTypeSArray())
+                                error(exp.loc, "expression `%s` of type `%s` is not implicitly convertible to return type `ref %s`",
+                                      exp.toChars(), exp.type.toChars(), tret.toChars());
+                            else
+                                exp = exp.implicitCastTo(sc2, tret);
+                        }
 
                         if (f.isref)
                         {
@@ -932,7 +935,15 @@ private extern(C++) final class Semantic3Visitor : Visitor
                 sc2 = sc2.pop();
             }
 
-            funcdecl.frequire = funcdecl.mergeFrequire(funcdecl.frequire, funcdecl.fdrequireParams);
+            if (global.params.inclusiveInContracts)
+            {
+                funcdecl.frequire = funcdecl.mergeFrequireInclusivePreview(
+                    funcdecl.frequire, funcdecl.fdrequireParams);
+            }
+            else
+            {
+                funcdecl.frequire = funcdecl.mergeFrequire(funcdecl.frequire, funcdecl.fdrequireParams);
+            }
             funcdecl.fensure = funcdecl.mergeFensure(funcdecl.fensure, Id.result, funcdecl.fdensureParams);
 
             Statement freq = funcdecl.frequire;
@@ -1304,7 +1315,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
         {
             notMaybeScope(funcdecl.vthis);
             funcdecl.vthis.storage_class |= STC.scope_ | STC.scopeinferred;
-            f.isscope = true;
+            f.isScopeQual = true;
             f.isscopeinferred = true;
         }
 
@@ -1351,13 +1362,15 @@ private extern(C++) final class Semantic3Visitor : Visitor
 
         /* If any of the fields of the aggregate have a destructor, add
          *   scope (failure) { this.fieldDtor(); }
-         * as the first statement. It is not necessary to add it after
+         * as the first statement of the constructor (unless the constructor
+         * doesn't define a body - @disable, extern)
+         *.It is not necessary to add it after
          * each initialization of a field, because destruction of .init constructed
          * structs should be benign.
          * https://issues.dlang.org/show_bug.cgi?id=14246
          */
         AggregateDeclaration ad = ctor.isMemberDecl();
-        if (ad && ad.fieldDtor && global.params.dtorFields)
+        if (ctor.fbody && ad && ad.fieldDtor && global.params.dtorFields && !ctor.type.toTypeFunction.isnothrow)
         {
             /* Generate:
              *   this.fieldDtor()
@@ -1473,7 +1486,7 @@ private extern(C++) final class Semantic3Visitor : Visitor
             // Evaluate: RTinfo!type
             auto tiargs = new Objects();
             tiargs.push(ad.type);
-            auto ti = new TemplateInstance(ad.loc, Type.rtinfo, tiargs);
+            auto ti = Pool!TemplateInstance.make(ad.loc, Type.rtinfo, tiargs);
 
             Scope* sc3 = ti.tempdecl._scope.startCTFE();
             sc3.tinst = sc.tinst;

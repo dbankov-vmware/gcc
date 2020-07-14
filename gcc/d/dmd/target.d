@@ -64,6 +64,9 @@ extern (C++) struct Target
     /// Objective-C ABI
     TargetObjC objc;
 
+    /// Architecture name
+    const(char)[] architectureName;
+
     /**
      * Values representing all properties for floating point types
      */
@@ -88,6 +91,8 @@ extern (C++) struct Target
     FPTypeProperties!real_t RealProperties;     ///
 
     private Type tvalist; // cached lazy result of va_listType()
+
+    private const(Param)* params;  // cached reference to global.params
 
     /**
      * Initialize the Target
@@ -204,6 +209,16 @@ extern (C++) struct Target
      *  size used on parameter stack
      */
     extern (C++) ulong parameterSize(const ref Loc loc, Type t);
+
+    /**
+     * Decides whether an `in` parameter of the specified POD type is to be
+     * passed by reference or by value. To be used with `-preview=in` only!
+     * Params:
+     *  t = type of the `in` parameter, must be a POD
+     * Returns:
+     *  `true` if the `in` parameter is to be passed by reference
+     */
+    extern(C++) bool preferPassByRef(Type t);
 
     /**
      * Get targetInfo by key

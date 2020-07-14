@@ -35,6 +35,9 @@ struct ST(X,Y) {}
 
 void foo(alias t)() {}
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 /**************************************************/
 // https://issues.dlang.org/show_bug.cgi?id=21074
@@ -67,5 +70,8 @@ static assert(is(T8 == const(ubyte*)));
 alias T8 = mixin(q{immutable(__traits(getMember, S, "T"))})*;
 static assert(is(T8 == immutable(float*)*));
 */
+<<<<<<< HEAD
 =======
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe

@@ -787,65 +787,29 @@ template DerivedToFront(TList...)
     static assert(is(TL == AliasSeq!(C, B, A)));
 }
 
+private enum staticMapExpandFactor = 150;
+private string generateCases()
+{
+    string[staticMapExpandFactor] chunks;
+    chunks[0] = q{};
+    static foreach (enum i; 0 .. staticMapExpandFactor - 1)
+        chunks[i + 1] = chunks[i] ~ `F!(Args[` ~ i.stringof ~ `]),`;
+    string ret = `AliasSeq!(`;
+    foreach (chunk; chunks)
+        ret ~= `q{alias staticMap = AliasSeq!(` ~ chunk ~ `);},`;
+    return ret ~ `)`;
+}
+private alias staticMapBasicCases = AliasSeq!(mixin(generateCases()));
+
 /**
 Evaluates to $(D AliasSeq!(F!(T[0]), F!(T[1]), ..., F!(T[$ - 1]))).
  */
-template staticMap(alias F, T...)
+template staticMap(alias F, Args ...)
 {
-    static if (T.length == 0)
-    {
-        alias staticMap = AliasSeq!();
-    }
-    else static if (T.length == 1)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]));
-    }
-    /* Cases 2 to 8 improve compile performance by reducing
-     * the number of recursive instantiations of staticMap
-     */
-    else static if (T.length == 2)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]));
-    }
-    else static if (T.length == 3)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]));
-    }
-    else static if (T.length == 4)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]), F!(T[3]));
-    }
-    else static if (T.length == 5)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]), F!(T[3]), F!(T[4]));
-    }
-    else static if (T.length == 6)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]), F!(T[3]), F!(T[4]), F!(T[5]));
-    }
-    else static if (T.length == 7)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]), F!(T[3]), F!(T[4]), F!(T[5]), F!(T[6]));
-    }
-    else static if (T.length == 8)
-    {
-        alias staticMap = AliasSeq!(F!(T[0]), F!(T[1]), F!(T[2]), F!(T[3]), F!(T[4]), F!(T[5]), F!(T[6]), F!(T[7]));
-    }
-
+    static if (Args.length < staticMapExpandFactor)
+        mixin(staticMapBasicCases[Args.length]);
     else
-    {
-        /* While:
-         *   alias staticMap = AliasSeq!(F!T[0], staticMap!(F, T[1 .. $]));
-         * does fewer template instantiations, the compiler implements
-         * recursive template instantiations with recursion, and long
-         * sequences overflow the compiler's stack.
-         * The divide-and-conquer approach uses log_2(n) stack frames.
-         */
-        alias staticMap =
-            AliasSeq!(
-                staticMap!(F, T[ 0  .. $/2]),
-                staticMap!(F, T[$/2 ..  $ ]));
-    }
+        alias staticMap = AliasSeq!(staticMap!(F, Args[0 .. $/2]), staticMap!(F, Args[$/2 .. $]));
 }
 
 ///
@@ -870,6 +834,15 @@ template staticMap(alias F, T...)
 
     alias T = staticMap!(Unqual, int, const int, immutable int, uint, ubyte, byte, short, ushort, long);
     static assert(is(T == AliasSeq!(int, int, int, uint, ubyte, byte, short, ushort, long)));
+}
+
+// regression test for https://issues.dlang.org/show_bug.cgi?id=21088
+@system unittest // typeid opEquals is @system
+{
+    enum getTypeId(T) = typeid(T);
+    alias A = staticMap!(getTypeId, int);
+
+    assert(A == typeid(int));
 }
 
 /**
@@ -916,29 +889,17 @@ template anySatisfy(alias F, T...)
     static assert( anySatisfy!(isIntegral, int, double));
 }
 
-
-/**
- * Filters an `AliasSeq` using a template predicate. Returns an
- * `AliasSeq` of the elements which satisfy the predicate.
- */
-template Filter(alias pred, TList...)
-{
-    static if (TList.length == 0)
-    {
-        alias Filter = AliasSeq!();
-    }
-    else static if (TList.length == 1)
-    {
+private alias FilterShortCode = AliasSeq!(
+    q{
+        alias Filter = Nothing;
+    },
+    q{
         static if (pred!(TList[0]))
             alias Filter = AliasSeq!(TList[0]);
         else
-            alias Filter = AliasSeq!();
-    }
-    /* The next case speeds up compilation by reducing
-     * the number of Filter instantiations
-     */
-    else static if (TList.length == 2)
-    {
+            alias Filter = Nothing;
+    },
+    q{
         static if (pred!(TList[0]))
         {
             static if (pred!(TList[1]))
@@ -951,15 +912,146 @@ template Filter(alias pred, TList...)
             static if (pred!(TList[1]))
                 alias Filter = AliasSeq!(TList[1]);
             else
-                alias Filter = AliasSeq!();
+                alias Filter = Nothing;
         }
+    },
+    q{
+        static if (pred!(TList[0]))
+        {
+            static if (pred!(TList[1]))
+            {
+                static if (pred!(TList[2]))
+                    alias Filter = AliasSeq!(TList[0], TList[1], TList[2]);
+                else
+                    alias Filter = AliasSeq!(TList[0], TList[1]);
+            }
+            else
+            {
+                static if (pred!(TList[2]))
+                    alias Filter = AliasSeq!(TList[0], TList[2]);
+                else
+                    alias Filter = AliasSeq!(TList[0]);
+            }
+        }
+        else
+        {
+            static if (pred!(TList[1]))
+            {
+                static if (pred!(TList[2]))
+                    alias Filter = AliasSeq!(TList[1], TList[2]);
+                else
+                    alias Filter = AliasSeq!(TList[1]);
+            }
+            else
+            {
+                static if (pred!(TList[2]))
+                    alias Filter = AliasSeq!(TList[2]);
+                else
+                    alias Filter = Nothing;
+            }
+        }
+    },
+    q{
+        static if (pred!(TList[0]))
+        {
+            static if (pred!(TList[1]))
+            {
+                static if (pred!(TList[2]))
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[0], TList[1], TList[2], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[0], TList[1], TList[2]);
+                }
+                else
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[0], TList[1], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[0], TList[1]);
+                }
+            }
+            else
+            {
+                static if (pred!(TList[2]))
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[0], TList[2], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[0], TList[2]);
+                }
+                else
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[0], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[0]);
+                }
+            }
+        }
+        else
+        {
+            static if (pred!(TList[1]))
+            {
+                static if (pred!(TList[2]))
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[1], TList[2], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[1], TList[2]);
+                }
+                else
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[1], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[1]);
+                }
+            }
+            else
+            {
+                static if (pred!(TList[2]))
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[2], TList[3]);
+                    else
+                        alias Filter = AliasSeq!(TList[2]);
+                }
+                else
+                {
+                    static if (pred!(TList[3]))
+                        alias Filter = AliasSeq!(TList[3]);
+                    else
+                        alias Filter = Nothing;
+                }
+            }
+        }
+    }
+);
+
+private enum filterExpandFactor = FilterShortCode.length;
+
+package alias Nothing = AliasSeq!(); // yes, this really does speed up compilation!
+/**
+ * Filters an `AliasSeq` using a template predicate. Returns an
+ * `AliasSeq` of the elements which satisfy the predicate.
+ */
+template Filter(alias pred, TList ...)
+{
+    static if (TList.length < filterExpandFactor)
+    {
+        mixin(FilterShortCode[TList.length]);
     }
     else
     {
-        alias Filter =
-            AliasSeq!(
-                Filter!(pred, TList[ 0  .. $/2]),
-                Filter!(pred, TList[$/2 ..  $ ]));
+        template MaybeNothing(Q ...)
+        {
+            static if (pred!(Q[0]))
+                alias MaybeNothing = AliasSeq!(Q[0]);
+            else
+                alias MaybeNothing = Nothing;
+        }
+        alias Filter = staticMap!(MaybeNothing, TList);
     }
 }
 
@@ -985,6 +1077,12 @@ template Filter(alias pred, TList...)
     static assert(is(Filter!isPointer == AliasSeq!()));
 }
 
+@safe unittest
+{
+    enum Yes(T) = true;
+    static struct S {}
+    static assert(is(Filter!(Yes, const(int), const(S)) == AliasSeq!(const(int), const(S))));
+}
 
 // Used in template predicate unit tests below.
 private version (StdUnittest)

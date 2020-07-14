@@ -461,6 +461,7 @@ version (D_SIMD)
     *      result of opcode
     */
 <<<<<<< HEAD
+<<<<<<< HEAD
     pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2);
 =======
     pure @safe V1 simd(XMM opcode, V1, V2)(V1 op1, V2 op2)
@@ -472,21 +473,29 @@ version (D_SIMD)
 
     pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2); // intrinsic
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
     ///
     unittest
     {
         float4 a;
 <<<<<<< HEAD
+<<<<<<< HEAD
         a = cast(float4)__simd(XMM.PXOR, a, a);
 =======
         a = simd!(XMM.PXOR)(a, a);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+        a = cast(float4)__simd(XMM.PXOR, a, a);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     }
 
     /**
     * Unary SIMD instructions.
     */
+<<<<<<< HEAD
 <<<<<<< HEAD
     pure @safe void16 __simd(XMM opcode, void16 op1);
     pure @safe void16 __simd(XMM opcode, double d);   ///
@@ -519,16 +528,25 @@ version (D_SIMD)
     pure @safe void16 __simd(XMM opcode, double d);   // intrinsic
     pure @safe void16 __simd(XMM opcode, float f);    // intrinsic
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    pure @safe void16 __simd(XMM opcode, void16 op1);
+    pure @safe void16 __simd(XMM opcode, double d);   ///
+    pure @safe void16 __simd(XMM opcode, float f);    ///
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
     ///
     unittest
     {
         float4 a;
 <<<<<<< HEAD
+<<<<<<< HEAD
         a = cast(float4)__simd(XMM.LODSS, a);
 =======
         a = simd!(XMM.LODSS)(a);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+        a = cast(float4)__simd(XMM.LODSS, a);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     }
 
     /****
@@ -547,6 +565,7 @@ version (D_SIMD)
     *      result of opcode
     */
 <<<<<<< HEAD
+<<<<<<< HEAD
     pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2, ubyte imm8);
 =======
     pure @safe V1 simd(XMM opcode, ubyte imm8, V1, V2)(V1 op1, V2 op2)
@@ -558,16 +577,23 @@ version (D_SIMD)
 
     pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2, ubyte imm8); // intrinsic
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    pure @safe void16 __simd(XMM opcode, void16 op1, void16 op2, ubyte imm8);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
     ///
     unittest
     {
         float4 a;
 <<<<<<< HEAD
+<<<<<<< HEAD
         a = cast(float4)__simd(XMM.CMPPD, a, a, 0x7A);
 =======
         a = simd!(XMM.CMPPD, 0x7A)(a, a);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+        a = cast(float4)__simd(XMM.CMPPD, a, a, 0x7A);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     }
 
     /***
@@ -582,6 +608,7 @@ version (D_SIMD)
     *      result of opcode
     */
 <<<<<<< HEAD
+<<<<<<< HEAD
     pure @safe void16 __simd_ib(XMM opcode, void16 op1, ubyte imm8);
 =======
     pure @safe V1 simd(XMM opcode, ubyte imm8, V1)(V1 op1)
@@ -593,16 +620,23 @@ version (D_SIMD)
 
     pure @safe void16 __simd_ib(XMM opcode, void16 op1, ubyte imm8);  // intrinsic
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    pure @safe void16 __simd_ib(XMM opcode, void16 op1, ubyte imm8);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
     ///
     unittest
     {
         float4 a;
 <<<<<<< HEAD
+<<<<<<< HEAD
         a = cast(float4) __simd_ib(XMM.PSRLQ, a, 0x7A);
 =======
         a = simd!(XMM.PSRLQ, 0x7A)(a);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+        a = cast(float4) __simd_ib(XMM.PSRLQ, a, 0x7A);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     }
 
     /*****
@@ -612,6 +646,7 @@ version (D_SIMD)
     *    op2
     * These cannot be marked as pure, as semantic() doesn't check them.
     */
+<<<<<<< HEAD
 <<<<<<< HEAD
     @safe void16 __simd_sto(XMM opcode, void16 op1, void16 op2);
     @safe void16 __simd_sto(XMM opcode, double op1, void16 op2); ///
@@ -644,6 +679,11 @@ version (D_SIMD)
     @safe void16 __simd_sto(XMM opcode, double op1, void16 op2);  // intrinsic
     @safe void16 __simd_sto(XMM opcode, float op1, void16 op2);   // intrinsic
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+    @safe void16 __simd_sto(XMM opcode, void16 op1, void16 op2);
+    @safe void16 __simd_sto(XMM opcode, double op1, void16 op2); ///
+    @safe void16 __simd_sto(XMM opcode, float op1, void16 op2);  ///
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
     ///
     unittest
@@ -653,6 +693,7 @@ version (D_SIMD)
         double d = 1;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         cast(void)__simd_sto(XMM.STOUPS, a, a);
         cast(void)__simd_sto(XMM.STOUPS, f, a);
         cast(void)__simd_sto(XMM.STOUPS, d, a);
@@ -661,6 +702,11 @@ version (D_SIMD)
         //simd_sto!(XMM.STOUPS)(f, a);
         //simd_sto!(XMM.STOUPS)(d, a);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+        cast(void)__simd_sto(XMM.STOUPS, a, a);
+        cast(void)__simd_sto(XMM.STOUPS, f, a);
+        cast(void)__simd_sto(XMM.STOUPS, d, a);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
     }
 
     /* The following use overloading to ensure correct typing.

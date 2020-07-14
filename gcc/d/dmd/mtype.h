@@ -218,7 +218,7 @@ public:
     bool equivalent(Type *t);
     // kludge for template.isType()
     DYNCAST dyncast() const { return DYNCAST_TYPE; }
-    int covariant(Type *t, StorageClass *pstc = NULL, bool fix17349 = true);
+    int covariant(Type *t, StorageClass *pstc = NULL);
     const char *toChars() const;
     char *toPrettyChars(bool QualifyTypes = false);
     static void _init();
@@ -520,12 +520,12 @@ enum RET
     RETstack    = 2     // returned on stack
 };
 
-enum TRUST
+enum class TRUST : unsigned char
 {
-    TRUSTdefault = 0,
-    TRUSTsystem = 1,    // @system (same as TRUSTdefault)
-    TRUSTtrusted = 2,   // @trusted
-    TRUSTsafe = 3       // @safe
+    default_ = 0,
+    system = 1,    // @system (same as TRUSTdefault)
+    trusted = 2,   // @trusted
+    safe = 3       // @safe
 };
 
 enum TRUSTformat
@@ -534,13 +534,13 @@ enum TRUSTformat
     TRUSTformatSystem    // emit @system when trust == TRUSTdefault
 };
 
-enum PURE
+enum class PURE : unsigned char
 {
-    PUREimpure = 0,     // not pure at all
-    PUREfwdref = 1,     // it's pure, but not known which level yet
-    PUREweak = 2,       // no mutable globals are read or written
-    PUREconst = 3,      // parameters are values or const
-    PUREstrong = 4      // parameters are values or immutable
+    impure = 0,     // not pure at all
+    fwdref = 1,     // it's pure, but not known which level yet
+    weak = 2,       // no mutable globals are read or written
+    const_ = 3,     // parameters are values or const
+    strong = 4      // parameters are values or immutable
 };
 
 class Parameter : public ASTNode
@@ -561,9 +561,9 @@ public:
     void accept(Visitor *v) { v->visit(this); }
 
     static size_t dim(Parameters *parameters);
-    static Parameter *getNth(Parameters *parameters, d_size_t nth, d_size_t *pn = NULL);
+    static Parameter *getNth(Parameters *parameters, d_size_t nth);
     const char *toChars() const;
-    bool isCovariant(bool returnByRef, const Parameter *p) const;
+    bool isCovariant(bool returnByRef, const Parameter *p, bool previewIn) const;
 };
 
 struct ParameterList
@@ -581,25 +581,13 @@ class TypeFunction : public TypeNext
 public:
     // .next is the return type
 
-    ParameterList parameterList;     // function parameters
-
-    bool isnothrow;     // true: nothrow
-    bool isnogc;        // true: is @nogc
-    bool isproperty;    // can be called without parentheses
-    bool isref;         // true: returns a reference
-    bool isreturn;      // true: 'this' is returned by ref
-    bool isscope;       // true: 'this' is scope
-    bool isreturninferred;      // true: 'this' is return from inference
-    bool isscopeinferred; // true: 'this' is scope from inference
-    bool islive;        // is @live
-    LINK linkage;  // calling convention
-    TRUST trust;   // level of trust
-    PURE purity;   // PURExxxx
-    unsigned char iswild;   // bit0: inout on params, bit1: inout on qualifier
-    Expressions *fargs; // function arguments
-
-    int inuse;
-    bool incomplete;
+    ParameterList parameterList; // function parameters
+    LINK linkage;                // calling convention
+    unsigned funcFlags;
+    TRUST trust;                 // level of trust
+    PURE purity;                 // PURExxxx
+    char inuse;
+    Expressions *fargs;          // function arguments
 
     static TypeFunction *create(Parameters *parameters, Type *treturn, VarArg varargs, LINK linkage, StorageClass stc = 0);
     const char *kind();
@@ -612,6 +600,32 @@ public:
     Type *addStorageClass(StorageClass stc);
 
     Type *substWildTo(unsigned mod);
+
+    bool isnothrow() const;
+    void isnothrow(bool v);
+    bool isnogc() const;
+    void isnogc(bool v);
+    bool isproperty() const;
+    void isproperty(bool v);
+    bool isref() const;
+    void isref(bool v);
+    bool isreturn() const;
+    void isreturn(bool v);
+    bool isScopeQual() const;
+    void isScopeQual(bool v);
+    bool isreturninferred() const;
+    void isreturninferred(bool v);
+    bool isscopeinferred() const;
+    void isscopeinferred(bool v);
+    bool islive() const;
+    void islive(bool v);
+    bool incomplete() const;
+    void incomplete(bool v);
+    bool isInOutParam() const;
+    void isInOutParam(bool v);
+    bool isInOutQual() const;
+    void isInOutQual(bool v);
+    bool iswild() const;
 
     void accept(Visitor *v) { v->visit(this); }
 };

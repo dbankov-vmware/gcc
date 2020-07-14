@@ -776,10 +776,14 @@ package(core.thread):
 ///////////////////////////////////////////////////////////////////////////////
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc nothrow);
 =======
 private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc nothrow);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 extern (C) void _d_monitordelete_nogc(Object h) @nogc;
 
@@ -997,10 +1001,14 @@ package __gshared bool multiThreadedFlag = false;
 package __gshared uint suspendDepth = 0;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow @nogc);
 =======
 private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow);
 >>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+=======
+private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow @nogc);
+>>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 /**
  * Resume all threads but the calling thread for "stop the world" garbage
