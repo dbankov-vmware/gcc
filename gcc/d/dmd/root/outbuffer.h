@@ -1,5 +1,5 @@
 
-/* Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+/* Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * written by Walter Bright
  * http://www.digitalmars.com
  * Distributed under the Boost Software License, Version 1.0.
@@ -17,10 +17,12 @@ class RootObject;
 
 struct OutBuffer
 {
+    // IMPORTANT: PLEASE KEEP STATE AND DESTRUCTOR IN SYNC WITH DEFINITION IN ./outbuffer.d.
 private:
     DArray<unsigned char> data;
     d_size_t offset;
     bool notlinehead;
+    void* fileMapping;  // pointer to a file mapping object not used on the C++ side
 public:
     bool doindent;
     bool spaces;
@@ -34,6 +36,7 @@ public:
         doindent = 0;
         level = 0;
         notlinehead = 0;
+        fileMapping = 0;
     }
     ~OutBuffer()
     {
@@ -62,7 +65,6 @@ public:
     void fill0(d_size_t nbytes);
     void vprintf(const char *format, va_list args);
     void printf(const char *format, ...);
-    void print(unsigned long long u);
     void bracket(char left, char right);
     d_size_t bracket(d_size_t i, const char *left, d_size_t j, const char *right);
     void spread(d_size_t offset, d_size_t nbytes);

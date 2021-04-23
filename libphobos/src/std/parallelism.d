@@ -53,7 +53,7 @@ else version (WatchOS)
 @system unittest
 {
     import std.algorithm.iteration : map;
-    import std.math : approxEqual;
+    import std.math.operations : isClose;
     import std.parallelism : taskPool;
     import std.range : iota;
 
@@ -82,7 +82,7 @@ else version (WatchOS)
 
     immutable pi = 4.0 * taskPool.reduce!"a + b"(n.iota.map!getTerm);
 
-    assert(pi.approxEqual(3.1415926));
+    assert(pi.isClose(3.14159, 1e-5));
 }
 
 import core.atomic;
@@ -95,7 +95,6 @@ import std.meta;
 import std.range.primitives;
 import std.traits;
 
-<<<<<<< HEAD
 /*
 (For now public undocumented with reserved name.)
 
@@ -114,43 +113,6 @@ Params:
     outOfBandValue = A value that cannot be valid, it is used for initialization
     initializer = The function performing initialization; must be `nothrow`
 
-=======
-version (Darwin)
-{
-    version = useSysctlbyname;
-}
-else version (FreeBSD)
-{
-    version = useSysctlbyname;
-}
-else version (DragonFlyBSD)
-{
-    version = useSysctlbyname;
-}
-else version (NetBSD)
-{
-    version = useSysctlbyname;
-}
-
-/*
-(For now public undocumented with reserved name.)
-
-A lazily initialized global constant. The underlying value is a shared global
-statically initialized to `outOfBandValue` which must not be a legit value of
-the constant. Upon the first call the situation is detected and the global is
-initialized by calling `initializer`. The initializer is assumed to be pure
-(even if not marked as such), i.e. return the same value upon repeated calls.
-For that reason, no special precautions are taken so `initializer` may be called
-more than one time leading to benign races on the cached value.
-
-In the quiescent state the cost of the function is an atomic load from a global.
-
-Params:
-    T = The type of the pseudo-constant (may be qualified)
-    outOfBandValue = A value that cannot be valid, it is used for initialization
-    initializer = The function performing initialization; must be `nothrow`
-
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 Returns:
     The lazily initialized value
 */
@@ -973,11 +935,6 @@ if (is(typeof(fun(args))) && isSafeTask!F)
     return ret;
 }
 
-version (useSysctlbyname)
-    private extern(C) int sysctlbyname(
-        const char *, void *, size_t *, void *, size_t
-    ) @nogc nothrow;
-
 /**
 The total number of CPU cores available on the current machine, as reported by
 the operating system.
@@ -1010,7 +967,6 @@ uint totalCPUsImpl() @nogc nothrow @trusted
         }
         return cast(uint) sysconf(_SC_NPROCESSORS_ONLN);
     }
-<<<<<<< HEAD
     else version (Darwin)
     {
         import core.sys.darwin.sys.sysctl : sysctlbyname;
@@ -1043,43 +999,15 @@ uint totalCPUsImpl() @nogc nothrow @trusted
         sysctlbyname("hw.ncpu", &result, &len, null, 0);
         return result;
     }
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     else version (Solaris)
     {
         import core.sys.posix.unistd : _SC_NPROCESSORS_ONLN, sysconf;
         return cast(uint) sysconf(_SC_NPROCESSORS_ONLN);
     }
-<<<<<<< HEAD
     else version (OpenBSD)
     {
         import core.sys.posix.unistd : _SC_NPROCESSORS_ONLN, sysconf;
         return cast(uint) sysconf(_SC_NPROCESSORS_ONLN);
-=======
-    else version (useSysctlbyname)
-    {
-        version (Darwin)
-        {
-            enum nameStr = "hw.physicalcpu";
-        }
-        else version (FreeBSD)
-        {
-            auto nameStr = "hw.ncpu\0".ptr;
-        }
-        else version (DragonFlyBSD)
-        {
-            auto nameStr = "hw.ncpu\0".ptr;
-        }
-        else version (NetBSD)
-        {
-            auto nameStr = "hw.ncpu\0".ptr;
-        }
-
-        uint result;
-        size_t len = result.sizeof;
-        sysctlbyname(nameStr, &result, &len, null, 0);
-        return result;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
     else
     {
@@ -1783,7 +1711,7 @@ public:
         auto amap(Args...)(Args args)
         if (isRandomAccessRange!(Args[0]))
         {
-            import std.conv : emplaceRef;
+            import core.internal.lifetime : emplaceRef;
 
             alias fun = adjoin!(staticMap!(unaryFun, functions));
 
@@ -2601,7 +2529,7 @@ public:
         auto reduce(Args...)(Args args)
         {
             import core.exception : OutOfMemoryError;
-            import std.conv : emplaceRef;
+            import core.internal.lifetime : emplaceRef;
             import std.exception : enforce;
 
             alias fun = reduceAdjoin!functions;
@@ -4222,7 +4150,9 @@ version (StdUnittest)
     import std.array : split;
     import std.conv : text;
     import std.exception : assertThrown;
-    import std.math : approxEqual, sqrt, log, abs;
+    import std.math.operations : isClose;
+    import std.math.algebraic : sqrt, abs;
+    import std.math.exponential : log;
     import std.range : indexed, iota, join;
     import std.typecons : Tuple, tuple;
     import std.stdio;
@@ -4355,7 +4285,7 @@ version (StdUnittest)
 
     foreach (i, elem; logs)
     {
-        assert(approxEqual(elem, cast(double) log(i + 1)));
+        assert(isClose(elem, cast(double) log(i + 1)));
     }
 
     assert(poolInstance.amap!"a * a"([1,2,3,4,5]) == [1,4,9,16,25]);
@@ -4534,7 +4464,7 @@ version (StdUnittest)
     int ii;
     foreach ( elem; (lmchain))
     {
-        if (!approxEqual(elem, ii))
+        if (!isClose(elem, ii))
         {
             stderr.writeln(ii, '\t', elem);
         }
@@ -4628,8 +4558,12 @@ version (StdUnittest)
 // tons of stuff and should not be run every time make unittest is run.
 version (parallelismStressTest)
 {
-    @safe unittest
+    @system unittest
     {
+        import std.stdio : stderr, writeln, readln;
+        import std.range : iota;
+        import std.algorithm.iteration : filter, reduce;
+
         size_t attempt;
         for (; attempt < 10; attempt++)
             foreach (poolSize; [0, 4])
@@ -4711,8 +4645,16 @@ version (parallelismStressTest)
 
     // These unittests are intended more for actual testing and not so much
     // as examples.
-    @safe unittest
+    @system unittest
     {
+        import std.stdio : stderr;
+        import std.range : iota;
+        import std.algorithm.iteration : filter, reduce;
+        import std.math.algebraic : sqrt;
+        import std.math.operations : isClose;
+        import std.math.traits : isNaN;
+        import std.conv : text;
+
         foreach (attempt; 0 .. 10)
         foreach (poolSize; [0, 4])
         {
@@ -4782,7 +4724,7 @@ version (parallelismStressTest)
                 foreach (j, elem; row)
                 {
                     real shouldBe = sqrt( cast(real) i * j);
-                    assert(approxEqual(shouldBe, elem));
+                    assert(isClose(shouldBe, elem));
                     sqrtMatrix[i][j] = shouldBe;
                 }
             }
@@ -4809,10 +4751,11 @@ version (parallelismStressTest)
                                )
                            );
 
-            assert(approxEqual(sumSqrt, 4.437e8));
+            assert(isClose(sumSqrt, 4.437e8, 1e-2));
             stderr.writeln("Done sum of square roots.");
 
             // Test whether tasks work with function pointers.
+            /+ // This part is buggy and needs to be fixed...
             auto nanTask = task(&isNaN, 1.0L);
             poolInstance.put(nanTask);
             assert(nanTask.spinForce == false);
@@ -4839,6 +4782,7 @@ version (parallelismStressTest)
                     uselessTask.workForce();
                 }
             }
+             +/
 
             // Test the case of non-random access + ref returns.
             int[] nums = [1,2,3,4,5];

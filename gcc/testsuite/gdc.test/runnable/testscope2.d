@@ -1,9 +1,5 @@
-<<<<<<< HEAD
 // RUNNABLE_PHOBOS_TEST
-// REQUIRED_ARGS: -dip25
-=======
-// REQUIRED_ARGS: -preview=dip25
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+// REQUIRED_ARGS:
 /*
 TEST_OUTPUT:
 ---

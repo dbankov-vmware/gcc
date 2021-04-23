@@ -6,7 +6,7 @@
  * Copyright: Copyright Digital Mars 2015 - 2018.
  * License:   $(HTTP www.boost.org/LICENSE_1_0.txt, Boost License 1.0).
  * Authors:   Martin Kinkelin
- * Source: $(DRUNTIMESRC core/elf/dl.d)
+ * Source: $(DRUNTIMESRC core/internal/elf/dl.d)
  */
 
 module core.internal.elf.dl;
@@ -29,6 +29,11 @@ else version (NetBSD)
 else version (DragonFlyBSD)
 {
     import core.sys.dragonflybsd.sys.link_elf;
+    version = LinuxOrBSD;
+}
+else version (OpenBSD)
+{
+    import core.sys.openbsd.sys.link_elf;
     version = LinuxOrBSD;
 }
 else version (Solaris)
@@ -86,6 +91,7 @@ struct SharedObject
     {
         version (linux)        enum IterateManually = true;
         else version (NetBSD)  enum IterateManually = true;
+        else version (OpenBSD) enum IterateManually = true;
         else version (Solaris) enum IterateManually = true;
         else                   enum IterateManually = false;
 

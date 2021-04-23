@@ -35,6 +35,7 @@ public:
     void visit(AST.StaticAssert s) { visit(cast(AST.Dsymbol)s); }
     void visit(AST.DebugSymbol s) { visit(cast(AST.Dsymbol)s); }
     void visit(AST.VersionSymbol s) { visit(cast(AST.Dsymbol)s); }
+    void visit(AST.AliasAssign s) { visit(cast(AST.Dsymbol)s); }
 
     // ScopeDsymbols
     void visit(AST.Package s) { visit(cast(AST.ScopeDsymbol)s); }
@@ -72,7 +73,7 @@ public:
     void visit(AST.AlignDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.CPPMangleDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.CPPNamespaceDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
-    void visit(AST.ProtDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
+    void visit(AST.VisibilityDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.PragmaDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.StorageClassDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
     void visit(AST.ConditionalDeclaration s) { visit(cast(AST.AttribDeclaration)s); }
@@ -139,6 +140,7 @@ public:
     void visit(AST.TypeBasic t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeError t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeNull t) { visit(cast(AST.Type)t); }
+    void visit(AST.TypeNoreturn t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeVector t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeEnum t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeTuple t) { visit(cast(AST.Type)t); }
@@ -148,6 +150,7 @@ public:
     void visit(AST.TypeQualified t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeTraits t) { visit(cast(AST.Type)t); }
     void visit(AST.TypeMixin t) { visit(cast(AST.Type)t); }
+    void visit(AST.TypeTag t) { visit(cast(AST.Type)t); }
 
     // TypeNext
     void visit(AST.TypeReference t) { visit(cast(AST.TypeNext)t); }
@@ -288,4 +291,5 @@ public:
     void visit(AST.StructInitializer i) { visit(cast(AST.Initializer)i); }
     void visit(AST.ArrayInitializer i) { visit(cast(AST.Initializer)i); }
     void visit(AST.VoidInitializer i) { visit(cast(AST.Initializer)i); }
+    void visit(AST.CInitializer i) { visit(cast(AST.CInitializer)i); }
 }

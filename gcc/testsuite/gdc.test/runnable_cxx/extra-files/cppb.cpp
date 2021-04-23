@@ -419,34 +419,15 @@ char32_t f13289_d_dchar(char32_t ch);
 #endif
 wchar_t f13289_d_wchar_t(wchar_t ch);
 
-wchar_t f13289_d_wchar_t(wchar_t ch);
-
 bool f13289_cpp_test()
 {
     if (!(f13289_d_wchar_t(L'e') == L'E')) return false;
     if (!(f13289_d_wchar_t(L'F') == L'F')) return false;
-<<<<<<< HEAD
-#if __linux__ || __APPLE__ || __FreeBSD__ || __OpenBSD__ || __sun || __NetBSD__
-    if (!(f13289_d_wchar((unsigned short)'c') == (unsigned short)'C')) return false;
-    if (!(f13289_d_wchar((unsigned short)'D') == (unsigned short)'D')) return false;
-    if (!(f13289_d_dchar(L'e') == L'E')) return false;
-    if (!(f13289_d_dchar(L'F') == L'F')) return false;
-    return true;
-#elif _WIN32
-    if (!(f13289_d_wchar(L'c') == L'C')) return false;
-    if (!(f13289_d_wchar(L'D') == L'D')) return false;
-    if (!(f13289_d_dchar((unsigned int)'e') == (unsigned int)'E')) return false;
-    if (!(f13289_d_dchar((unsigned int)'F') == (unsigned int)'F')) return false;
-    return true;
-#else
-    return false;
-=======
 #ifdef TEST_UNICODE
     if (!(f13289_d_wchar(u'c') == u'C')) return false;
     if (!(f13289_d_wchar(u'D') == u'D')) return false;
     if (!(f13289_d_dchar(U'e') == U'E')) return false;
     if (!(f13289_d_dchar(U'F') == U'F')) return false;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 #endif
     return true;
 }

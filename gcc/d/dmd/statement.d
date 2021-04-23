@@ -3,7 +3,7 @@
  *
  * Specification: $(LINK2 https://dlang.org/spec/statement.html, Statements)
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/statement.d, _statement.d)
@@ -20,6 +20,7 @@ import dmd.aggregate;
 import dmd.arraytypes;
 import dmd.attrib;
 import dmd.astcodegen;
+import dmd.astenums;
 import dmd.ast_node;
 import dmd.gluelayer;
 import dmd.canthrow;
@@ -44,7 +45,6 @@ import dmd.dinterpret;
 import dmd.mtype;
 import dmd.parse;
 import dmd.root.outbuffer;
-import dmd.root.rmem;
 import dmd.root.rootobject;
 import dmd.sapply;
 import dmd.sideeffect;
@@ -58,7 +58,7 @@ import dmd.visitor;
  */
 TypeIdentifier getThrowable()
 {
-    auto tid = Pool!TypeIdentifier.make(Loc.initial, Id.empty);
+    auto tid = new TypeIdentifier(Loc.initial, Id.empty);
     tid.addIdent(Id.object);
     tid.addIdent(Id.Throwable);
     return tid;
@@ -70,60 +70,11 @@ TypeIdentifier getThrowable()
  */
 TypeIdentifier getException()
 {
-    auto tid = Pool!TypeIdentifier.make(Loc.initial, Id.empty);
+    auto tid = new TypeIdentifier(Loc.initial, Id.empty);
     tid.addIdent(Id.object);
     tid.addIdent(Id.Exception);
     return tid;
 }
-
-/********************************
- * Identify Statement types with this enum rather than
- * virtual functions.
- */
-
-enum STMT : ubyte
-{
-    Error,
-    Peel,
-    Exp, DtorExp,
-    Compile,
-    Compound, CompoundDeclaration, CompoundAsm,
-    UnrolledLoop,
-    Scope,
-    Forwarding,
-    While,
-    Do,
-    For,
-    Foreach,
-    ForeachRange,
-    If,
-    Conditional,
-    StaticForeach,
-    Pragma,
-    StaticAssert,
-    Switch,
-    Case,
-    CaseRange,
-    Default,
-    GotoDefault,
-    GotoCase,
-    SwitchError,
-    Return,
-    Break,
-    Continue,
-    Synchronized,
-    With,
-    TryCatch,
-    TryFinally,
-    ScopeGuard,
-    Throw,
-    Debug,
-    Goto,
-    Label,
-    Asm, InlineAsm, GccAsm,
-    Import,
-}
-
 
 /***********************************************************
  * Specification: http://dlang.org/spec/statement.html
@@ -491,7 +442,7 @@ extern (C++) final class ErrorStatement : Statement
         assert(global.gaggedErrors || global.errors);
     }
 
-    override Statement syntaxCopy()
+    override ErrorStatement syntaxCopy()
     {
         return this;
     }
@@ -621,7 +572,7 @@ private Statement toStatement(Dsymbol s)
             result = visitMembers(d.loc, d.decl);
         }
 
-        override void visit(ProtDeclaration d)
+        override void visit(VisibilityDeclaration d)
         {
             result = visitMembers(d.loc, d.decl);
         }
@@ -708,7 +659,7 @@ extern (C++) class ExpStatement : Statement
         return new ExpStatement(loc, exp);
     }
 
-    override Statement syntaxCopy()
+    override ExpStatement syntaxCopy()
     {
         return new ExpStatement(loc, exp ? exp.syntaxCopy() : null);
     }
@@ -794,7 +745,7 @@ extern (C++) final class DtorExpStatement : ExpStatement
         this.var = var;
     }
 
-    override Statement syntaxCopy()
+    override DtorExpStatement syntaxCopy()
     {
         return new DtorExpStatement(loc, exp ? exp.syntaxCopy() : null, var);
     }
@@ -825,7 +776,7 @@ extern (C++) final class CompileStatement : Statement
         this.exps = exps;
     }
 
-    override Statement syntaxCopy()
+    override CompileStatement syntaxCopy()
     {
         return new CompileStatement(loc, Expression.arraySyntaxCopy(exps));
     }
@@ -924,7 +875,7 @@ extern (C++) class CompoundStatement : Statement
         return new CompoundStatement(loc, s1, s2);
     }
 
-    override Statement syntaxCopy()
+    override CompoundStatement syntaxCopy()
     {
         return new CompoundStatement(loc, Statement.arraySyntaxCopy(statements));
     }
@@ -978,7 +929,7 @@ extern (C++) final class CompoundDeclarationStatement : CompoundStatement
         super(loc, statements, STMT.CompoundDeclaration);
     }
 
-    override Statement syntaxCopy()
+    override CompoundDeclarationStatement syntaxCopy()
     {
         auto a = new Statements(statements.dim);
         foreach (i, s; *statements)
@@ -1008,7 +959,7 @@ extern (C++) final class UnrolledLoopStatement : Statement
         this.statements = statements;
     }
 
-    override Statement syntaxCopy()
+    override UnrolledLoopStatement syntaxCopy()
     {
         auto a = new Statements(statements.dim);
         foreach (i, s; *statements)
@@ -1047,7 +998,8 @@ extern (C++) class ScopeStatement : Statement
         this.statement = statement;
         this.endloc = endloc;
     }
-    override Statement syntaxCopy()
+
+    override ScopeStatement syntaxCopy()
     {
         return new ScopeStatement(loc, statement ? statement.syntaxCopy() : null, endloc);
     }
@@ -1105,7 +1057,7 @@ extern (C++) final class ForwardingStatement : Statement
         this(loc, sym, statement);
     }
 
-    override Statement syntaxCopy()
+    override ForwardingStatement syntaxCopy()
     {
         return new ForwardingStatement(loc, statement.syntaxCopy());
     }
@@ -1155,24 +1107,26 @@ extern (C++) final class ForwardingStatement : Statement
  */
 extern (C++) final class WhileStatement : Statement
 {
+    Parameter param;
     Expression condition;
     Statement _body;
     Loc endloc;             // location of closing curly bracket
 
-    extern (D) this(const ref Loc loc, Expression condition, Statement _body, Loc endloc)
+    extern (D) this(const ref Loc loc, Expression condition, Statement _body, Loc endloc, Parameter param = null)
     {
         super(loc, STMT.While);
         this.condition = condition;
         this._body = _body;
         this.endloc = endloc;
+        this.param = param;
     }
 
-    override Statement syntaxCopy()
+    override WhileStatement syntaxCopy()
     {
         return new WhileStatement(loc,
             condition.syntaxCopy(),
             _body ? _body.syntaxCopy() : null,
-            endloc);
+            endloc, param ? param.syntaxCopy() : null);
     }
 
     override bool hasBreak() const pure nothrow
@@ -1208,7 +1162,7 @@ extern (C++) final class DoStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override DoStatement syntaxCopy()
     {
         return new DoStatement(loc,
             _body ? _body.syntaxCopy() : null,
@@ -1258,7 +1212,7 @@ extern (C++) final class ForStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override ForStatement syntaxCopy()
     {
         return new ForStatement(loc,
             _init ? _init.syntaxCopy() : null,
@@ -1326,7 +1280,7 @@ extern (C++) final class ForeachStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override ForeachStatement syntaxCopy()
     {
         return new ForeachStatement(loc, op,
             Parameter.arraySyntaxCopy(parameters),
@@ -1376,7 +1330,7 @@ extern (C++) final class ForeachRangeStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override ForeachRangeStatement syntaxCopy()
     {
         return new ForeachRangeStatement(loc, op, prm.syntaxCopy(), lwr.syntaxCopy(), upr.syntaxCopy(), _body ? _body.syntaxCopy() : null, endloc);
     }
@@ -1419,7 +1373,7 @@ extern (C++) final class IfStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override IfStatement syntaxCopy()
     {
         return new IfStatement(loc,
             prm ? prm.syntaxCopy() : null,
@@ -1452,7 +1406,7 @@ extern (C++) final class ConditionalStatement : Statement
         this.elsebody = elsebody;
     }
 
-    override Statement syntaxCopy()
+    override ConditionalStatement syntaxCopy()
     {
         return new ConditionalStatement(loc, condition.syntaxCopy(), ifbody.syntaxCopy(), elsebody ? elsebody.syntaxCopy() : null);
     }
@@ -1539,7 +1493,7 @@ extern (C++) final class StaticForeachStatement : Statement
         this.sfe = sfe;
     }
 
-    override Statement syntaxCopy()
+    override StaticForeachStatement syntaxCopy()
     {
         return new StaticForeachStatement(loc, sfe.syntaxCopy());
     }
@@ -1591,7 +1545,7 @@ extern (C++) final class PragmaStatement : Statement
         this._body = _body;
     }
 
-    override Statement syntaxCopy()
+    override PragmaStatement syntaxCopy()
     {
         return new PragmaStatement(loc, ident, Expression.arraySyntaxCopy(args), _body ? _body.syntaxCopy() : null);
     }
@@ -1615,9 +1569,9 @@ extern (C++) final class StaticAssertStatement : Statement
         this.sa = sa;
     }
 
-    override Statement syntaxCopy()
+    override StaticAssertStatement syntaxCopy()
     {
-        return new StaticAssertStatement(cast(StaticAssert)sa.syntaxCopy(null));
+        return new StaticAssertStatement(sa.syntaxCopy(null));
     }
 
     override void accept(Visitor v)
@@ -1652,7 +1606,7 @@ extern (C++) final class SwitchStatement : Statement
         this.isFinal = isFinal;
     }
 
-    override Statement syntaxCopy()
+    override SwitchStatement syntaxCopy()
     {
         return new SwitchStatement(loc, condition.syntaxCopy(), _body.syntaxCopy(), isFinal);
     }
@@ -1678,7 +1632,7 @@ extern (C++) final class SwitchStatement : Statement
         {
             for (auto v = vd; v && v != lastVar; v = v.lastVar)
             {
-                if (v.isDataseg() || (v.storage_class & (STC.manifest | STC.temp)) || v._init.isVoidInitializer())
+                if (v.isDataseg() || (v.storage_class & (STC.manifest | STC.temp) && vd.ident != Id.withSym) || v._init.isVoidInitializer())
                     continue;
                 if (vd.ident == Id.withSym)
                     error("`switch` skips declaration of `with` temporary at %s", v.loc.toChars());
@@ -1727,7 +1681,7 @@ extern (C++) final class CaseStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override CaseStatement syntaxCopy()
     {
         return new CaseStatement(loc, exp.syntaxCopy(), statement.syntaxCopy());
     }
@@ -1755,7 +1709,7 @@ extern (C++) final class CaseRangeStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override CaseRangeStatement syntaxCopy()
     {
         return new CaseRangeStatement(loc, first.syntaxCopy(), last.syntaxCopy(), statement.syntaxCopy());
     }
@@ -1781,7 +1735,7 @@ extern (C++) final class DefaultStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override DefaultStatement syntaxCopy()
     {
         return new DefaultStatement(loc, statement.syntaxCopy());
     }
@@ -1804,7 +1758,7 @@ extern (C++) final class GotoDefaultStatement : Statement
         super(loc, STMT.GotoDefault);
     }
 
-    override Statement syntaxCopy()
+    override GotoDefaultStatement syntaxCopy()
     {
         return new GotoDefaultStatement(loc);
     }
@@ -1830,7 +1784,7 @@ extern (C++) final class GotoCaseStatement : Statement
         this.exp = exp;
     }
 
-    override Statement syntaxCopy()
+    override GotoCaseStatement syntaxCopy()
     {
         return new GotoCaseStatement(loc, exp ? exp.syntaxCopy() : null);
     }
@@ -1878,7 +1832,7 @@ extern (C++) final class ReturnStatement : Statement
         this.exp = exp;
     }
 
-    override Statement syntaxCopy()
+    override ReturnStatement syntaxCopy()
     {
         return new ReturnStatement(loc, exp ? exp.syntaxCopy() : null);
     }
@@ -1907,7 +1861,7 @@ extern (C++) final class BreakStatement : Statement
         this.ident = ident;
     }
 
-    override Statement syntaxCopy()
+    override BreakStatement syntaxCopy()
     {
         return new BreakStatement(loc, ident);
     }
@@ -1931,7 +1885,7 @@ extern (C++) final class ContinueStatement : Statement
         this.ident = ident;
     }
 
-    override Statement syntaxCopy()
+    override ContinueStatement syntaxCopy()
     {
         return new ContinueStatement(loc, ident);
     }
@@ -1957,7 +1911,7 @@ extern (C++) final class SynchronizedStatement : Statement
         this._body = _body;
     }
 
-    override Statement syntaxCopy()
+    override SynchronizedStatement syntaxCopy()
     {
         return new SynchronizedStatement(loc, exp ? exp.syntaxCopy() : null, _body ? _body.syntaxCopy() : null);
     }
@@ -1996,7 +1950,7 @@ extern (C++) final class WithStatement : Statement
         this.endloc = endloc;
     }
 
-    override Statement syntaxCopy()
+    override WithStatement syntaxCopy()
     {
         return new WithStatement(loc, exp.syntaxCopy(), _body ? _body.syntaxCopy() : null, endloc);
     }
@@ -2024,7 +1978,7 @@ extern (C++) final class TryCatchStatement : Statement
         this.catches = catches;
     }
 
-    override Statement syntaxCopy()
+    override TryCatchStatement syntaxCopy()
     {
         auto a = new Catches(catches.dim);
         foreach (i, c; *catches)
@@ -2102,7 +2056,7 @@ extern (C++) final class TryFinallyStatement : Statement
         return new TryFinallyStatement(loc, _body, finalbody);
     }
 
-    override Statement syntaxCopy()
+    override TryFinallyStatement syntaxCopy()
     {
         return new TryFinallyStatement(loc, _body.syntaxCopy(), finalbody.syntaxCopy());
     }
@@ -2138,7 +2092,7 @@ extern (C++) final class ScopeGuardStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override ScopeGuardStatement syntaxCopy()
     {
         return new ScopeGuardStatement(loc, tok, statement.syntaxCopy());
     }
@@ -2211,7 +2165,7 @@ extern (C++) final class ThrowStatement : Statement
         this.exp = exp;
     }
 
-    override Statement syntaxCopy()
+    override ThrowStatement syntaxCopy()
     {
         auto s = new ThrowStatement(loc, exp.syntaxCopy());
         s.internalThrow = internalThrow;
@@ -2236,7 +2190,7 @@ extern (C++) final class DebugStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override DebugStatement syntaxCopy()
     {
         return new DebugStatement(loc, statement ? statement.syntaxCopy() : null);
     }
@@ -2278,7 +2232,7 @@ extern (C++) final class GotoStatement : Statement
         this.ident = ident;
     }
 
-    override Statement syntaxCopy()
+    override GotoStatement syntaxCopy()
     {
         return new GotoStatement(loc, ident);
     }
@@ -2384,7 +2338,7 @@ extern (C++) final class LabelStatement : Statement
         this.statement = statement;
     }
 
-    override Statement syntaxCopy()
+    override LabelStatement syntaxCopy()
     {
         return new LabelStatement(loc, ident, statement ? statement.syntaxCopy() : null);
     }
@@ -2439,9 +2393,9 @@ extern (C++) final class LabelDsymbol : Dsymbol
     bool deleted;           // set if rewritten to return in foreach delegate
     bool iasm;              // set if used by inline assembler
 
-    extern (D) this(Identifier ident)
+    extern (D) this(Identifier ident, const ref Loc loc = Loc.initial)
     {
-        super(ident);
+        super(loc, ident);
     }
 
     static LabelDsymbol create(Identifier ident)
@@ -2480,7 +2434,7 @@ extern (C++) class AsmStatement : Statement
         this.tokens = tokens;
     }
 
-    override Statement syntaxCopy()
+    override AsmStatement syntaxCopy()
     {
         return new AsmStatement(loc, tokens);
     }
@@ -2507,7 +2461,7 @@ extern (C++) final class InlineAsmStatement : AsmStatement
         super(loc, tokens, STMT.InlineAsm);
     }
 
-    override Statement syntaxCopy()
+    override InlineAsmStatement syntaxCopy()
     {
         return new InlineAsmStatement(loc, tokens);
     }
@@ -2539,7 +2493,7 @@ extern (C++) final class GccAsmStatement : AsmStatement
         super(loc, tokens, STMT.GccAsm);
     }
 
-    override Statement syntaxCopy()
+    override GccAsmStatement syntaxCopy()
     {
         return new GccAsmStatement(loc, tokens);
     }
@@ -2597,7 +2551,7 @@ extern (C++) final class ImportStatement : Statement
         this.imports = imports;
     }
 
-    override Statement syntaxCopy()
+    override ImportStatement syntaxCopy()
     {
         auto m = new Dsymbols(imports.dim);
         foreach (i, s; *imports)

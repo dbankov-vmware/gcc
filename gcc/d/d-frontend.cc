@@ -80,7 +80,7 @@ eval_builtin (Loc loc, FuncDeclaration *fd, Expressions *arguments)
 Type *
 getTypeInfoType (Loc loc, Type *type, Scope *sc)
 {
-  gcc_assert (type->ty != Terror);
+  gcc_assert (type->ty != TY::Terror);
   check_typeinfo_type (loc, sc);
   create_typeinfo (type, sc ? sc->_module->importedFrom : NULL);
   return type->vtinfo->type;

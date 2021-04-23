@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-/* RUNNABLE_PHOBOS_TEST
-=======
+// RUNNABLE_PHOBOS_TEST
 /*
 REQUIRED_ARGS: -preview=rvaluerefparam
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 PERMUTE_ARGS:
 EXTRA_FILES: imports/testmangle.d
 TEST_OUTPUT:
@@ -4193,9 +4190,6 @@ static assert(is(typeof(TypeTuple13252!(cast(long)1)[0]) == long));
 static assert(is(typeof(TypeTuple13252!(cast(float )3.14)[0]) == float ));
 static assert(is(typeof(TypeTuple13252!(cast(double)3.14)[0]) == double));
 
-static assert(is(typeof(TypeTuple13252!(cast(cfloat )(1 + 2i))[0]) == cfloat ));
-static assert(is(typeof(TypeTuple13252!(cast(cdouble)(1 + 2i))[0]) == cdouble));
-
 static assert(is(typeof(TypeTuple13252!(cast(string  )null)[0]) == string  ));
 static assert(is(typeof(TypeTuple13252!(cast(string[])null)[0]) == string[]));  // OK <- NG
 
@@ -4524,11 +4518,7 @@ void test13807()
 }
 
 /******************************************/
-<<<<<<< HEAD
-// 14174
-=======
 // https://issues.dlang.org/show_bug.cgi?id=14174
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 import imports.testmangle;
 
 struct Config14174(a, b) {}
@@ -4545,11 +4535,7 @@ void accepter14174a(Config : Config14174!(T) = defConfig14174, T...)()
            "accepter14174a"~
            "HTS7breaker51__T11Config14174TS7breaker6N14174TS7breaker6N14174Z11Config14174TS7breaker6N14174TS7breaker6N14174Z14"~
            "accepter14174a"~
-<<<<<<< HEAD
-           "FZv"));
-=======
            "FNaNbNiNfZv"));
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 
 @safe @nogc pure nothrow
@@ -4560,11 +4546,7 @@ void accepter14174b(Config : Config14174!(T) = defConfig14174, T...)()
            "accepter14174b"~
            "HTS7breaker51__T11Config14174TS7breaker6N14174TS7breaker6N14174Z11Config14174TS7breaker6N14174TS7breaker6N14174Z14"~
            "accepter14174b"~
-<<<<<<< HEAD
-           "FZv"));
-=======
            "FNaNbNiNfZv"));
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 
 void test14174()
@@ -5020,8 +5002,6 @@ void test15653()
     foreach (U; TypeTuple15653!( byte,    short,   int,  long,
                                 ubyte,   ushort,  uint, ulong,
                                  float,  double,  real,
-                                ifloat, idouble, ireal,
-                                cfloat, cdouble, creal,
                                 void delegate(),
                                 int[2], X, X[2]))
     {

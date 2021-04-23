@@ -7,33 +7,67 @@ TEST_OUTPUT:
 
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
 
+#ifdef CUSTOM_D_ARRAY_TYPE
+#define _d_dynamicArray CUSTOM_D_ARRAY_TYPE
+#else
+/// Represents a D [] array
+template<typename T>
+struct _d_dynamicArray final
+{
+    size_t length;
+    T *ptr;
 
-struct S;
-struct Inner;
+    _d_dynamicArray() : length(0), ptr(NULL) { }
 
-struct S
+    _d_dynamicArray(size_t length_in, T *ptr_in)
+        : length(length_in), ptr(ptr_in) { }
+
+    T& operator[](const size_t idx) {
+        assert(idx < length);
+        return ptr[idx];
+    }
+
+    const T& operator[](const size_t idx) const {
+        assert(idx < length);
+        return ptr[idx];
+    }
+};
+#endif
+
+struct S final
 {
     int8_t a;
     int32_t b;
     int64_t c;
+    _d_dynamicArray< int32_t > arr;
     S() :
         a(),
         b(),
-        c()
+        c(),
+        arr()
     {
     }
+    S(int8_t a, int32_t b = 0, int64_t c = 0LL, _d_dynamicArray< int32_t > arr = {}) :
+        a(a),
+        b(b),
+        c(c),
+        arr(arr)
+        {}
 };
 
-struct S2
+struct S2 final
 {
     int32_t a;
     int32_t b;
     int64_t c;
     S d;
     S2(int32_t a);
+    S2(char ) = delete;
     S2() :
         a(42),
         b(),
@@ -42,7 +76,7 @@ struct S2
     }
 };
 
-struct S3
+struct S3 final
 {
     int32_t a;
     int32_t b;
@@ -56,7 +90,7 @@ struct S3
     }
 };
 
-struct S4
+struct S4 final
 {
     int32_t a;
     int64_t b;
@@ -69,10 +103,16 @@ struct S4
         d()
     {
     }
+    S4(int32_t a, int64_t b = 0LL, int32_t c = 0, int8_t d = 0) :
+        a(a),
+        b(b),
+        c(c),
+        d(d)
+        {}
 };
 
 #pragma pack(push, 1)
-struct Aligned
+struct Aligned final
 {
     int8_t a;
     int32_t b;
@@ -87,7 +127,19 @@ struct Aligned
 };
 #pragma pack(pop)
 
-struct A
+struct Null final
+{
+    void* field;
+    Null() :
+        field(nullptr)
+    {
+    }
+    Null(void* field) :
+        field(field)
+        {}
+};
+
+struct A final
 {
     int32_t a;
     S s;
@@ -103,13 +155,16 @@ struct A
         int32_t u1;
         char u2[4$?:32=u|64=LLU$];
     };
-    struct Inner
+    struct Inner final
     {
         int32_t x;
         Inner() :
             x()
         {
         }
+        Inner(int32_t x) :
+            x(x)
+            {}
     };
 
     typedef Inner I;
@@ -120,6 +175,10 @@ struct A
         s()
     {
     }
+    A(int32_t a, S s = S(0, 0, 0LL, {})) :
+        a(a),
+        s(s)
+        {}
 };
 
 union U
@@ -141,6 +200,7 @@ extern (C++) struct S
     byte a;
     int b;
     long c;
+    int[] arr;
 }
 
 extern (C++) struct S2
@@ -152,6 +212,7 @@ extern (C++) struct S2
 
     this(int a) {}
     extern(D) this(int, int, long) {}
+    @disable this(char);
 }
 
 extern (C) struct S3
@@ -179,6 +240,11 @@ extern (C++) align(1) struct Aligned
     long c;
 
     this(int a) {}
+}
+
+extern (C++) struct Null
+{
+    void* field = null;
 }
 
 extern (C++) struct A

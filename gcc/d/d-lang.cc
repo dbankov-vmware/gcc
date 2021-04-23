@@ -104,7 +104,7 @@ deps_add_target (const char *target, bool quoted)
 
   if (!quoted)
     {
-      obstack_grow (&buffer, target, strlen (target));
+      obstack_grow0 (&buffer, target, strlen (target));
       d_option.deps_target.safe_push ((const char *) obstack_finish (&buffer));
       return;
     }
@@ -145,6 +145,7 @@ deps_add_target (const char *target, bool quoted)
       obstack_1grow (&buffer, *p);
     }
 
+  obstack_1grow (&buffer, '\0');
   d_option.deps_target.safe_push ((const char *) obstack_finish (&buffer));
 }
 
@@ -243,9 +244,9 @@ deps_write (Module *module, obstack *buffer)
 		  && m->parent == NULL)
 		continue;
 
-	      if (m->md && m->md->packages)
+	      if (m->md && m->md->packages.length)
 		{
-		  Identifier *package = (*m->md->packages)[0];
+		  Identifier *package = m->md->packages.ptr[0];
 
 		  if (package == Identifier::idPool ("core")
 		      || package == Identifier::idPool ("std")
@@ -272,6 +273,8 @@ deps_write (Module *module, obstack *buffer)
       obstack_grow (buffer, str, strlen (str));
       obstack_grow (buffer, ":\n", 2);
     }
+
+  obstack_1grow (buffer, '\0');
 }
 
 /* Implements the lang_hooks.init_options routine for language D.
@@ -501,6 +504,7 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
 	case CppStdRevisionCpp11:
 	case CppStdRevisionCpp14:
 	case CppStdRevisionCpp17:
+	case CppStdRevisionCpp20:
 	  global.params.cplusplus = (CppStdRevision) value;
 	  break;
 
@@ -544,11 +548,11 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       break;
 
     case OPT_fpreview_all:
-      global.params.vsafe = value;
       global.params.ehnogc = value;
-      global.params.useDIP25 = value;
+      global.params.useDIP25 = FeatureState::enabled;
+      global.params.useDIP1000 = FeatureState::enabled;
       global.params.useDIP1021 = value;
-      global.params.dtorFields = value;
+      global.params.dtorFields = FeatureState::enabled;
       global.params.fieldwise = value;
       global.params.fixAliasThis = value;
       global.params.previewIn = value;
@@ -556,10 +560,12 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       global.params.markdown = value;
       global.params.noSharedAccess = value;
       global.params.rvalueRefParam = value;
+      global.params.inclusiveInContracts = value;
+      global.params.shortenedMethods = value;
       break;
 
     case OPT_fpreview_dip1000:
-      global.params.vsafe = value;
+      global.params.useDIP1000 = FeatureState::enabled;
       break;
 
     case OPT_fpreview_dip1008:
@@ -571,11 +577,11 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       break;
 
     case OPT_fpreview_dip25:
-      global.params.useDIP25 = value;
+      global.params.useDIP25 = FeatureState::enabled;
       break;
 
     case OPT_fpreview_dtorfields:
-      global.params.dtorFields = value;
+      global.params.dtorFields = FeatureState::enabled;
       break;
 
     case OPT_fpreview_fieldwise:
@@ -598,10 +604,6 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       global.params.fix16997 = value;
       break;
 
-    case OPT_fpreview_markdown:
-      global.params.markdown = value;
-      break;
-
     case OPT_fpreview_nosharedaccess:
       global.params.noSharedAccess = value;
       break;
@@ -610,16 +612,30 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       global.params.rvalueRefParam = value;
       break;
 
+    case OPT_fpreview_shortenedMethods:
+      global.params.shortenedMethods = value;
+      break;
+
     case OPT_frelease:
       global.params.release = value;
       break;
 
     case OPT_frevert_all:
-      global.params.noDIP25 = value;
+      global.params.useDIP25 = FeatureState::disabled;
+      global.params.markdown = !value;
+      global.params.dtorFields = FeatureState::disabled;
       break;
 
     case OPT_frevert_dip25:
-      global.params.noDIP25 = value;
+      global.params.useDIP25 = FeatureState::disabled;
+      break;
+
+    case OPT_frevert_dtorfields:
+      global.params.dtorFields = FeatureState::disabled;
+      break;
+
+    case OPT_frevert_markdown:
+      global.params.markdown = !value;
       break;
 
     case OPT_frtti:
@@ -636,15 +652,10 @@ d_handle_option (size_t scode, const char *arg, HOST_WIDE_INT value,
       break;
 
     case OPT_ftransition_all:
-      global.params.vcomplex = value;
       global.params.vfield = value;
       global.params.vgc = value;
       global.params.vmarkdown= value;
       global.params.vtls = value;
-      break;
-
-    case OPT_ftransition_complex:
-      global.params.vcomplex = value;
       break;
 
     case OPT_ftransition_field:
@@ -878,7 +889,11 @@ d_post_options (const char ** fn)
 
   /* Enabling DIP1021 implies DIP1000.  */
   if (global.params.useDIP1021)
-    global.params.vsafe = true;
+    global.params.useDIP1000 = FeatureState::enabled;
+
+  /* Enabling DIP1000 implies DIP25.  */
+  if (global.params.useDIP1000 == FeatureState::enabled)
+    global.params.useDIP25 = FeatureState::enabled;
 
   /* Keep in sync with existing -fbounds-check flag.  */
   flag_bounds_check = (global.params.useArrayBounds == CHECKENABLEon);
@@ -972,6 +987,7 @@ d_parse_file (void)
 	      obstack_grow (&buffer, str, strlen (str));
 	    }
 
+	  obstack_1grow (&buffer, '\0');
 	  message ("%s", (char *) obstack_finish (&buffer));
 	}
     }
@@ -1269,7 +1285,7 @@ d_parse_file (void)
       if (name && (name[0] != '-' || name[1] != '\0'))
 	{
 	  const char *nameext
-	    = FileName::defaultExt (name, global.json_ext.ptr);
+	    = FileName::defaultExt (name, json_ext.ptr);
 	  json_stream = fopen (nameext, "w");
 	  if (!json_stream)
 	    {
@@ -1496,7 +1512,7 @@ d_type_promotes_to (tree type)
   /* Promotions are only applied on unnamed function arguments for declarations
      with `extern(C)' or `extern(C++)' linkage.  */
   if (cfun && DECL_LANG_FRONTEND (cfun->decl)
-      && DECL_LANG_FRONTEND (cfun->decl)->linkage != LINKd)
+      && DECL_LANG_FRONTEND (cfun->decl)->linkage != LINK::d)
     {
       /* In [type/integer-promotions], integer promotions are conversions of the
 	 following types:
@@ -1649,7 +1665,8 @@ d_types_compatible_p (tree x, tree y)
 	return true;
 
       /* Type system allows implicit conversion between.  */
-      if (tx->implicitConvTo (ty) || ty->implicitConvTo (tx))
+      if (tx->implicitConvTo (ty) != MATCH::nomatch
+	  || ty->implicitConvTo (tx) != MATCH::nomatch)
 	return true;
     }
 

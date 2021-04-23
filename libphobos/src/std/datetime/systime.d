@@ -41,11 +41,6 @@ else version (TVOS)
 else version (WatchOS)
     version = Darwin;
 
-<<<<<<< HEAD
-import core.time;
-import std.datetime.date;
-import std.datetime.timezone;
-=======
 /// Get the current time as a $(LREF SysTime)
 @safe unittest
 {
@@ -88,7 +83,6 @@ import std.datetime.date;// : _monthNames, AllowDayOverflow, CmpTimeUnits, Date,
     //DateTime, DateTimeException, DayOfWeek, enforceValid, getDayOfWeek, maxDay,
     //Month, splitUnitsFromHNSecs, TimeOfDay, validTimeUnits, yearIsLeapYear;
 import std.datetime.timezone;// : LocalTime, SimpleTimeZone, TimeZone, UTC;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 import std.exception : enforce;
 import std.format : format;
 import std.range.primitives;
@@ -182,10 +176,8 @@ public:
         assert(abs(norm1 - norm2) <= seconds(2));
 
         import std.meta : AliasSeq;
-<<<<<<< HEAD
-        foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
-        {
-            scope(failure) writefln("ClockType.%s", ct);
+        static foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
+        {{
             static if (clockSupported(ct))
             {
                 auto value1 = Clock.currTime!ct;
@@ -193,16 +185,7 @@ public:
                 assert(value1 <= value2, format("%s %s (ClockType: %s)", value1, value2, ct));
                 assert(abs(value1 - value2) <= seconds(2), format("ClockType.%s", ct));
             }
-        }
-=======
-        static foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
-        {{
-            auto value1 = Clock.currTime!ct;
-            auto value2 = Clock.currTime!ct(UTC());
-            assert(value1 <= value2, format("%s %s (ClockType: %s)", value1, value2, ct));
-            assert(abs(value1 - value2) <= seconds(2), format("ClockType.%s", ct));
         }}
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
 
 
@@ -336,7 +319,6 @@ public:
                     }
                     return convert!("seconds", "hnsecs")(ts.tv_sec) +
                            ts.tv_nsec / 100 +
-<<<<<<< HEAD
                            hnsecsToUnixEpoch;
                 }
             }
@@ -356,8 +338,6 @@ public:
                         throw new TimeException("Call to clock_gettime() failed");
                     return convert!("seconds", "hnsecs")(ts.tv_sec) +
                            ts.tv_nsec / 100 +
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                            hnsecsToUnixEpoch;
                 }
             }
@@ -418,7 +398,7 @@ public:
     @safe unittest
     {
         import std.format : format;
-        import std.math : abs;
+        import std.math.algebraic : abs;
         import std.meta : AliasSeq;
         enum limit = convert!("seconds", "hnsecs")(2);
 
@@ -427,10 +407,8 @@ public:
         assert(norm1 <= norm2, format("%s %s", norm1, norm2));
         assert(abs(norm1 - norm2) <= limit);
 
-<<<<<<< HEAD
-        foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
-        {
-            scope(failure) writefln("ClockType.%s", ct);
+        static foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
+        {{
             static if (clockSupported(ct))
             {
                 auto value1 = Clock.currStdTime!ct;
@@ -438,16 +416,7 @@ public:
                 assert(value1 <= value2, format("%s %s (ClockType: %s)", value1, value2, ct));
                 assert(abs(value1 - value2) <= limit);
             }
-        }
-=======
-        static foreach (ct; AliasSeq!(ClockType.coarse, ClockType.precise, ClockType.second))
-        {{
-            auto value1 = Clock.currStdTime!ct;
-            auto value2 = Clock.currStdTime!ct;
-            assert(value1 <= value2, format("%s %s (ClockType: %s)", value1, value2, ct));
-            assert(abs(value1 - value2) <= limit);
         }}
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
 
 
@@ -2140,7 +2109,7 @@ public:
         The total hnsecs from midnight, January 1st, 1 A.D. UTC. This is the
         internal representation of $(LREF SysTime).
      +/
-    @property long stdTime() @safe const pure nothrow scope
+    @property long stdTime() @safe const pure nothrow scope @nogc
     {
         return _stdTime;
     }
@@ -8782,6 +8751,7 @@ public:
         auto found = (skipFirst ? str[1..$] : str).byCodeUnit.find('.', 'Z', '+', '-');
         auto dateTimeStr = str[0 .. $ - found[0].length];
 
+        typeof(str.byCodeUnit) foundTZ; // needs to have longer lifetime than zoneStr
         typeof(str) fracSecStr;
         typeof(str) zoneStr;
 
@@ -8789,19 +8759,19 @@ public:
         {
             if (found[1] == 1)
             {
-                auto foundTZ = found[0].find('Z', '+', '-');
+                foundTZ = found[0].find('Z', '+', '-')[0];
 
-                if (foundTZ[1] != 0)
+                if (foundTZ.length != 0)
                 {
                     static if (isNarrowString!S)
                     {
-                        fracSecStr = found[0][0 .. $ - foundTZ[0].length].source;
-                        zoneStr = foundTZ[0].source;
+                        fracSecStr = found[0][0 .. $ - foundTZ.length].source;
+                        zoneStr = foundTZ.source;
                     }
                     else
                     {
-                        fracSecStr = found[0][0 .. $ - foundTZ[0].length];
-                        zoneStr = foundTZ[0];
+                        fracSecStr = found[0][0 .. $ - foundTZ.length];
+                        zoneStr = foundTZ;
                     }
                 }
                 else
@@ -9082,6 +9052,7 @@ public:
         auto found = str[tIndex + 1 .. $].find('.', 'Z', '+', '-');
         auto dateTimeStr = str[0 .. $ - found[0].length];
 
+        typeof(str) foundTZ;  // needs to have longer lifetime than zoneStr
         typeof(str) fracSecStr;
         typeof(str) zoneStr;
 
@@ -9089,12 +9060,12 @@ public:
         {
             if (found[1] == 1)
             {
-                auto foundTZ = found[0].find('Z', '+', '-');
+                foundTZ = found[0].find('Z', '+', '-')[0];
 
-                if (foundTZ[1] != 0)
+                if (foundTZ.length != 0)
                 {
-                    fracSecStr = found[0][0 .. $ - foundTZ[0].length];
-                    zoneStr = foundTZ[0];
+                    fracSecStr = found[0][0 .. $ - foundTZ.length];
+                    zoneStr = foundTZ;
                 }
                 else
                     fracSecStr = found[0];
@@ -9330,6 +9301,7 @@ public:
         auto found = str[spaceIndex + 1 .. $].find('.', 'Z', '+', '-');
         auto dateTimeStr = str[0 .. $ - found[0].length];
 
+        typeof(str) foundTZ;  // needs to have longer lifetime than zoneStr
         typeof(str) fracSecStr;
         typeof(str) zoneStr;
 
@@ -9337,12 +9309,12 @@ public:
         {
             if (found[1] == 1)
             {
-                auto foundTZ = found[0].find('Z', '+', '-');
+                foundTZ = found[0].find('Z', '+', '-')[0];
 
-                if (foundTZ[1] != 0)
+                if (foundTZ.length != 0)
                 {
-                    fracSecStr = found[0][0 .. $ - foundTZ[0].length];
-                    zoneStr = foundTZ[0];
+                    fracSecStr = found[0][0 .. $ - foundTZ.length];
+                    zoneStr = foundTZ;
                 }
                 else
                     fracSecStr = found[0];

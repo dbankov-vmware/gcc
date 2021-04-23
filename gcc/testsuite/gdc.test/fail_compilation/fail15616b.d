@@ -1,9 +1,6 @@
 /*
 REQUIRED_ARGS: -v
-<<<<<<< HEAD
-=======
 TRANSFORM_OUTPUT: remove_lines("^(predefs|binary|version|config|DFLAG|parse|import|semantic|entry|\s*$)")
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 TEST_OUTPUT:
 ---
 fail_compilation/fail15616b.d(44): Error: none of the overloads of `foo` are callable using argument types `(double)`, candidates are:

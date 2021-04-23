@@ -95,21 +95,10 @@ creal   csqrtl(creal z);
  float  cargf(cfloat z);
  real   cargl(creal z);
 
-<<<<<<< HEAD
 pragma(inline, true) double cimag(cdouble z) { return z.im; }
 pragma(inline, true) float  cimagf(cfloat z) { return z.im; }
 pragma(inline, true) real   cimagl(creal z)  { return z.im; }
 
-=======
-///
-pragma(inline, true) double cimag(cdouble z) { return z.im; }
-///
-pragma(inline, true) float  cimagf(cfloat z) { return z.im; }
-///
-pragma(inline, true) real   cimagl(creal z)  { return z.im; }
-
-///
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 cdouble conj(cdouble z);
 cfloat  conjf(cfloat z);
 creal   conjl(creal z);
@@ -121,14 +110,6 @@ creal   cprojl(creal z);
 // Note: `creal` is a keyword in D and so this function is inaccessible, use `creald` instead
 //pragma(inline, true) double creal(cdouble z) { return z.re; }
 
-<<<<<<< HEAD
 pragma(inline, true) double creald(cdouble z) { return z.re; }
 pragma(inline, true) float  crealf(cfloat z) { return z.re; }
-=======
-///
-pragma(inline, true) double creald(cdouble z) { return z.re; }
-///
-pragma(inline, true) float  crealf(cfloat z) { return z.re; }
-///
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 pragma(inline, true) real   creall(creal z)  { return z.re; }

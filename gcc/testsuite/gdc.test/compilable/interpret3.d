@@ -3,15 +3,7 @@
 TEST_OUTPUT:
 ---
 compilable/interpret3.d(2914): Deprecation: `case` variables have to be `const` or `immutable`
-<<<<<<< HEAD
-<<<<<<< HEAD
 compilable/interpret3.d(6351): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
-=======
-compilable/interpret3.d(6313): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
-=======
-compilable/interpret3.d(6351): Deprecation: identity comparison of static arrays implicitly coerces them to slices, which are compared by reference
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 ---
 */
 
@@ -6819,27 +6811,6 @@ static assert(md5_digest11535(`TEST`) == [84, 69, 83, 84, 0, 0]);
 
 static assert(()
 {
-    // enter to TryCatchStatement.body
-    {
-        bool c = false;
-        try
-        {
-            if (c)  // need to bypass front-end optimization
-                throw new Exception("");
-            else
-            {
-                goto Lx;
-              L1:
-                c = true;
-            }
-        }
-        catch (Exception e) {}
-
-      Lx:
-        if (!c)
-            goto L1;
-    }
-
     // jump inside TryCatchStatement.body
     {
         bool c = false;
@@ -6931,23 +6902,6 @@ static assert(()
 
 static assert(()
 {
-    // enter back to TryFinallyStatement.body
-    {
-        bool c = false;
-        try
-        {
-            goto Lx;
-          L1:
-            c = true;
-        }
-        finally {
-        }
-
-      Lx:
-        if (!c)
-            goto L1;
-    }
-
     // jump inside TryFinallyStatement.body
     {
         try

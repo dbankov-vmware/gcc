@@ -88,7 +88,7 @@ Compiler::paintAsType (UnionExp *, Expression *expr, Type *type)
   /* Encode CST to buffer.  */
   int len = native_encode_expr (cst, buffer, sizeof (buffer));
 
-  if (tb->ty == Tsarray)
+  if (tb->ty == TY::Tsarray)
     {
       /* Interpret value as a vector of the same size,
 	 then return the array literal.  */
@@ -126,22 +126,22 @@ Compiler::onParseModule (Module *m)
 {
   ModuleDeclaration *md = m->md;
 
-  if (!md || !md->id || !md->packages)
+  if (!md || !md->id|| md->packages.length == 0)
     {
       Identifier *id = (md && md->id) ? md->id : m->ident;
       if (!strcmp (id->toChars (), "object"))
 	create_tinfo_types (m);
     }
-  else if (md->packages->length == 1)
+  else if (md->packages.length == 1)
     {
-      if (!strcmp ((*md->packages)[0]->toChars (), "gcc")
+      if (!strcmp (md->packages.ptr[0]->toChars (), "gcc")
 	  && !strcmp (md->id->toChars (), "builtins"))
 	d_build_builtins_module (m);
     }
-  else if (md->packages->length == 2)
+  else if (md->packages.length == 2)
     {
-      if (!strcmp ((*md->packages)[0]->toChars (), "core")
-	  && !strcmp ((*md->packages)[1]->toChars (), "stdc"))
+      if (!strcmp (md->packages.ptr[0]->toChars (), "core")
+	  && !strcmp (md->packages.ptr[1]->toChars (), "stdc"))
 	d_add_builtin_module (m);
     }
 }

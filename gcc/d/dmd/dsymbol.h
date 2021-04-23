@@ -47,7 +47,7 @@ class UnitTestDeclaration;
 class NewDeclaration;
 class VarDeclaration;
 class AttribDeclaration;
-class ProtDeclaration;
+class VisibilityDeclaration;
 class Package;
 class Module;
 class Import;
@@ -68,6 +68,7 @@ class ArrayScopeSymbol;
 class SymbolDeclaration;
 class Expression;
 class ExpressionDsymbol;
+class AliasAssign;
 class OverloadSet;
 struct AA;
 #ifdef IN_GCC
@@ -88,7 +89,7 @@ void dsymbolSemantic(Dsymbol *dsym, Scope *sc);
 void semantic2(Dsymbol *dsym, Scope *sc);
 void semantic3(Dsymbol *dsym, Scope* sc);
 
-struct Prot
+struct Visibility
 {
     enum Kind
     {
@@ -102,9 +103,6 @@ struct Prot
     };
     Kind kind;
     Package *pkg;
-
-    bool isMoreRestrictiveThan(const Prot other) const;
-    bool isSubsetOf(const Prot& other) const;
 };
 
 /* State of symbol in winding its way through the passes of the compiler
@@ -137,7 +135,8 @@ enum
                                     // meaning don't search imports in that scope,
                                     // because qualified module searches search
                                     // their imports
-    IgnoreSymbolVisibility  = 0x80  // also find private and package protected symbols
+    IgnoreSymbolVisibility  = 0x80,  // also find private and package protected symbols
+    TagNameSpace            = 0x100, // search ImportC tag symbol table
 };
 
 class Dsymbol : public ASTNode
@@ -155,6 +154,7 @@ public:
     const utf8_t *prettystring;
     bool errors;                // this symbol failed to pass semantic()
     PASS semanticRun;
+    unsigned short localNum;        // perturb mangled name to avoid collisions with those in FuncDeclaration.localsymtab
     DeprecatedDeclaration *depdecl; // customized deprecation message
     UserAttributeDeclaration *userAttribDecl;   // user defined attributes
     UnitTestDeclaration *ddocUnittest; // !=NULL means there's a ddoc unittest associated with this symbol (only use this with ddoc)
@@ -212,7 +212,7 @@ public:
     ClassDeclaration *isClassMember();          // isMember() is a ClassDeclaration?
     virtual Type *getType();                    // is this a type?
     virtual bool needThis();                    // need a 'this' pointer?
-    virtual Prot prot();
+    virtual Visibility visible();
     virtual Dsymbol *syntaxCopy(Dsymbol *s);    // copy only syntax trees
     virtual bool oneMember(Dsymbol **ps, Identifier *ident);
     virtual void setFieldOffset(AggregateDeclaration *ad, unsigned *poffset, bool isunion);
@@ -238,6 +238,7 @@ public:
     virtual Declaration *isDeclaration() { return NULL; }
     virtual StorageClassDeclaration *isStorageClassDeclaration(){ return NULL; }
     virtual ExpressionDsymbol *isExpressionDsymbol() { return NULL; }
+    virtual AliasAssign *isAliasAssign() { return NULL; }
     virtual ThisDeclaration *isThisDeclaration() { return NULL; }
     virtual TypeInfoDeclaration *isTypeInfoDeclaration() { return NULL; }
     virtual TupleDeclaration *isTupleDeclaration() { return NULL; }
@@ -274,7 +275,7 @@ public:
     virtual AttribDeclaration *isAttribDeclaration() { return NULL; }
     virtual AnonDeclaration *isAnonDeclaration() { return NULL; }
     virtual CPPNamespaceDeclaration *isCPPNamespaceDeclaration() { return NULL; }
-    virtual ProtDeclaration *isProtDeclaration() { return NULL; }
+    virtual VisibilityDeclaration *isVisibilityDeclaration() { return NULL; }
     virtual OverloadSet *isOverloadSet() { return NULL; }
     virtual CompileDeclaration *isCompileDeclaration() { return NULL; }
     void accept(Visitor *v) { v->visit(this); }
@@ -291,15 +292,15 @@ public:
 
 private:
     Dsymbols *importedScopes;   // imported Dsymbol's
-    Prot::Kind *prots;            // array of PROTKIND, one for each import
+    Visibility::Kind *visibilities;   // array of `Visibility.Kind`, one for each import
 
     BitArray accessiblePackages, privateAccessiblePackages;
 
 public:
-    Dsymbol *syntaxCopy(Dsymbol *s);
+    ScopeDsymbol *syntaxCopy(Dsymbol *s);
     Dsymbol *search(const Loc &loc, Identifier *ident, int flags = SearchLocalsOnly);
-    virtual void importScope(Dsymbol *s, Prot protection);
-    virtual bool isPackageAccessible(Package *p, Prot protection, int flags = 0);
+    virtual void importScope(Dsymbol *s, Visibility visibility);
+    virtual bool isPackageAccessible(Package *p, Visibility visibility, int flags = 0);
     bool isforwardRef();
     static void multiplyDefined(const Loc &loc, Dsymbol *s1, Dsymbol *s2);
     const char *kind() const;
@@ -362,7 +363,7 @@ public:
 
     Dsymbol *symtabInsert(Dsymbol *s);
     Dsymbol *symtabLookup(Dsymbol *s, Identifier *id);
-    void importScope(Dsymbol *s, Prot protection);
+    void importScope(Dsymbol *s, Visibility visibility);
     const char *kind() const;
 
     ForwardingScopeDsymbol *isForwardingScopeDsymbol() { return this; }
@@ -387,7 +388,7 @@ public:
     Dsymbol *lookup(Identifier const * const ident);
 
     // Look for Dsymbol in table. If there, return it. If not, insert s and return that.
-    Dsymbol *update(Dsymbol *s);
+    void update(Dsymbol *s);
 
     // Insert Dsymbol in table. Return NULL if already there.
     Dsymbol *insert(Dsymbol *s);

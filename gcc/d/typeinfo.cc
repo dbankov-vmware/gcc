@@ -112,37 +112,37 @@ get_typeinfo_kind (Type *type)
 
   switch (type->ty)
     {
-    case Tpointer:
+    case TY::Tpointer:
       return TK_POINTER_TYPE;
 
-    case  Tarray:
+    case TY::Tarray:
       return TK_ARRAY_TYPE;
 
-    case Tsarray:
+    case TY::Tsarray:
       return TK_STATICARRAY_TYPE;
 
-    case Taarray:
+    case TY::Taarray:
       return TK_ASSOCIATIVEARRAY_TYPE;
 
-    case Tstruct:
+    case TY::Tstruct:
       return TK_STRUCT_TYPE;
 
-    case Tvector:
+    case TY::Tvector:
       return TK_VECTOR_TYPE;
 
-    case Tenum:
+    case TY::Tenum:
       return TK_ENUMERAL_TYPE;
 
-    case Tfunction:
+    case TY::Tfunction:
       return TK_FUNCTION_TYPE;
 
-    case Tdelegate:
+    case TY::Tdelegate:
       return TK_DELEGATE_TYPE;
 
-    case Ttuple:
+    case TY::Ttuple:
       return TK_TYPELIST_TYPE;
 
-    case Tclass:
+    case TY::Tclass:
       if (type->isTypeClass ()->sym->isInterfaceDeclaration ())
 	return TK_INTERFACE_TYPE;
       else
@@ -207,9 +207,26 @@ make_frontend_typeinfo (Identifier *ident, ClassDeclaration *base = NULL)
   if (!object_module->_scope)
     object_module->importAll (NULL);
 
+  /* Object class doesn't exist, create a stub one that will cause an error if
+     used.  */
+  Loc loc = (object_module->md) ? object_module->md->loc : object_module->loc;
+  if (!base)
+    {
+      if (!ClassDeclaration::object)
+	{
+	  ClassDeclaration *object
+	    = ClassDeclaration::create (loc, Identifier::idPool ("Object"),
+					NULL, NULL, true);
+	  object->parent = object_module;
+	  object->members = d_gc_malloc<Dsymbols> ();
+	  object->storage_class |= STCtemp;
+	}
+
+      base = ClassDeclaration::object;
+    }
+
   /* Assignment of global typeinfo variables is managed by the ClassDeclaration
      constructor, so only need to new the declaration here.  */
-  Loc loc = (object_module->md) ? object_module->md->loc : object_module->loc;
   ClassDeclaration *tinfo = ClassDeclaration::create (loc, ident, NULL, NULL,
 						      true);
   tinfo->parent = object_module;
@@ -1280,17 +1297,17 @@ layout_classinfo_interfaces (ClassDeclaration *decl)
 static bool
 builtin_typeinfo_p (Type *type)
 {
-  if (type->isTypeBasic () || type->ty == Tclass || type->ty == Tnull)
+  if (type->isTypeBasic () || type->ty == TY::Tclass || type->ty == TY::Tnull)
     return !type->mod;
 
-  if (type->ty == Tarray)
+  if (type->ty == TY::Tarray)
     {
       /* Strings are so common, make them builtin.  */
       Type *next = type->nextOf ();
       return !type->mod
 	&& ((next->isTypeBasic () != NULL && !next->mod)
-	    || (next->ty == Tchar && next->mod == MODimmutable)
-	    || (next->ty == Tchar && next->mod == MODconst));
+	    || (next->ty == TY::Tchar && next->mod == MODimmutable)
+	    || (next->ty == TY::Tchar && next->mod == MODconst));
     }
 
   return false;
@@ -1343,7 +1360,7 @@ get_typeinfo_decl (TypeInfoDeclaration *decl)
   if (decl->csym)
     return decl->csym;
 
-  gcc_assert (decl->tinfo->ty != Terror);
+  gcc_assert (decl->tinfo->ty != TY::Terror);
 
   TypeInfoDeclVisitor v = TypeInfoDeclVisitor ();
   decl->accept (&v);
@@ -1403,7 +1420,7 @@ check_typeinfo_type (const Loc &loc, Scope *sc)
       /* If TypeInfo has not been declared, warn about each location once.  */
       static Loc warnloc;
 
-      if (!warnloc.equals (loc))
+      if (loc.filename && !warnloc.equals (loc))
 	{
 	  error_at (make_location_t (loc),
 		    "%<object.TypeInfo%> could not be found, "
@@ -1418,7 +1435,7 @@ check_typeinfo_type (const Loc &loc, Scope *sc)
 tree
 build_typeinfo (const Loc &loc, Type *type)
 {
-  gcc_assert (type->ty != Terror);
+  gcc_assert (type->ty != TY::Terror);
   check_typeinfo_type (loc, NULL);
   create_typeinfo (type, NULL);
   return build_address (get_typeinfo_decl (type->vtinfo));

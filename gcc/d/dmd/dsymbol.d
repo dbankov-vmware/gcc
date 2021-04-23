@@ -1,7 +1,7 @@
 /**
  * The base class for a D symbol, which can be a module, variable, function, enum, etc.
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/dsymbol.d, _dsymbol.d)
@@ -20,6 +20,7 @@ import dmd.aggregate;
 import dmd.aliasthis;
 import dmd.arraytypes;
 import dmd.attrib;
+import dmd.astenums;
 import dmd.ast_node;
 import dmd.gluelayer;
 import dmd.dclass;
@@ -121,10 +122,10 @@ struct Ungag
     }
 }
 
-struct Prot
+struct Visibility
 {
     ///
-    enum Kind : int
+    enum Kind : ubyte
     {
         undefined,
         none,           // no access
@@ -138,60 +139,51 @@ struct Prot
     Kind kind;
     Package pkg;
 
-    extern (D) this(Prot.Kind kind) pure nothrow @nogc @safe
+    extern (D):
+
+    this(Visibility.Kind kind) pure nothrow @nogc @safe
     {
         this.kind = kind;
     }
 
-    extern (C++):
-
     /**
-     * Checks if `this` is superset of `other` restrictions.
-     * For example, "protected" is more restrictive than "public".
+     * Checks if `this` is less or more visible than `other`
+     *
+     * Params:
+     *   other = Visibility to compare `this` to.
+     *
+     * Returns:
+     *   A value `< 0` if `this` is less visible than `other`,
+     *   a value `> 0` if `this` is more visible than `other`,
+     *   and `0` if they are at the same level.
+     *   Note that `package` visibility with different packages
+     *   will also return `0`.
      */
-    bool isMoreRestrictiveThan(const Prot other) const
+    int opCmp(const Visibility other) const pure nothrow @nogc @safe
     {
-        return this.kind < other.kind;
+        return this.kind - other.kind;
+    }
+
+    ///
+    unittest
+    {
+        assert(Visibility(Visibility.Kind.public_) > Visibility(Visibility.Kind.private_));
+        assert(Visibility(Visibility.Kind.private_) < Visibility(Visibility.Kind.protected_));
+        assert(Visibility(Visibility.Kind.package_) >= Visibility(Visibility.Kind.package_));
     }
 
     /**
-     * Checks if `this` is absolutely identical protection attribute to `other`
+     * Checks if `this` is absolutely identical visibility attribute to `other`
      */
-    bool opEquals(ref const Prot other) const
+    bool opEquals(ref const Visibility other) const
     {
         if (this.kind == other.kind)
         {
-            if (this.kind == Prot.Kind.package_)
+            if (this.kind == Visibility.Kind.package_)
                 return this.pkg == other.pkg;
             return true;
         }
         return false;
-    }
-
-    /**
-     * Checks if parent defines different access restrictions than this one.
-     *
-     * Params:
-     *  parent = protection attribute for scope that hosts this one
-     *
-     * Returns:
-     *  'true' if parent is already more restrictive than this one and thus
-     *  no differentiation is needed.
-     */
-    bool isSubsetOf(ref const Prot parent) const
-    {
-        if (this.kind != parent.kind)
-            return false;
-        if (this.kind == Prot.Kind.package_)
-        {
-            if (!this.pkg)
-                return true;
-            if (!parent.pkg)
-                return false;
-            if (parent.pkg.isAncestorPackageOf(this.pkg))
-                return true;
-        }
-        return true;
     }
 }
 
@@ -223,6 +215,7 @@ enum : int
                                     // because qualified module searches search
                                     // their imports
     IgnoreSymbolVisibility  = 0x80, // also find private and package protected symbols
+    TagNameSpace            = 0x100, // search ImportC tag symbol table
 }
 
 /***********************************************************
@@ -241,6 +234,7 @@ extern (C++) class Dsymbol : ASTNode
     const(char)* prettystring;  // cached value of toPrettyChars()
     bool errors;            // this symbol failed to pass semantic()
     PASS semanticRun = PASS.init;
+    ushort localNum;        /// perturb mangled name to avoid collisions with those in FuncDeclaration.localsymtab
 
     DeprecatedDeclaration depdecl;           // customized deprecation message
     UserAttributeDeclaration userAttribDecl;    // user defined attributes
@@ -306,7 +300,9 @@ extern (C++) class Dsymbol : ASTNode
             return false;
         auto s = cast(Dsymbol)o;
         // Overload sets don't have an ident
-        if (s && ident && s.ident && ident.equals(s.ident))
+        // Function-local declarations may have identical names
+        // if they are declared in different scopes
+        if (s && ident && s.ident && ident.equals(s.ident) && localNum == s.localNum)
             return true;
         return false;
     }
@@ -404,6 +400,10 @@ extern (C++) class Dsymbol : ASTNode
         // Don't complain if we're inside a deprecated symbol's scope
         if (sc.isDeprecated())
             return false;
+        // Don't complain if we're inside a template constraint
+        // https://issues.dlang.org/show_bug.cgi?id=21831
+        if (sc.flags & SCOPE.constraint)
+            return false;
 
         const(char)* message = null;
         for (Dsymbol p = this; p; p = p.parent)
@@ -416,6 +416,11 @@ extern (C++) class Dsymbol : ASTNode
             deprecation(loc, "is deprecated - %s", message);
         else
             deprecation(loc, "is deprecated");
+
+        if (auto ti = sc.parent ? sc.parent.isInstantiated() : null)
+            ti.printInstantiationTrace(Classification.deprecation);
+        else if (auto ti = sc.parent ? sc.parent.isTemplateInstance() : null)
+            ti.printInstantiationTrace(Classification.deprecation);
 
         return true;
     }
@@ -508,7 +513,7 @@ extern (C++) class Dsymbol : ASTNode
      *  module mod;
      *  template Foo(alias a) { mixin Bar!(); }
      *  mixin template Bar() {
-     *    public {  // ProtDeclaration
+     *    public {  // VisibilityDeclaration
      *      void baz() { a = 2; }
      *    }
      *  }
@@ -771,6 +776,12 @@ extern (C++) class Dsymbol : ASTNode
             if (isAliasDeclaration() && !_scope)
                 setScope(sc);
             Dsymbol s2 = sds.symtabLookup(this,ident);
+
+            // If using C tag/prototype/forward declaration rules
+            if (sc.flags & SCOPE.Cfile &&
+                handleTagSymbols(*sc, this, s2, sds))
+                    return;
+
             if (!s2.overloadInsert(this))
             {
                 sds.multiplyDefined(Loc.initial, this, s2);
@@ -827,7 +838,7 @@ extern (C++) class Dsymbol : ASTNode
         /***************************************************
          * Search for symbol with correct spelling.
          */
-        extern (D) Dsymbol symbol_search_fp(const(char)[] seed, ref int cost)
+        extern (D) Dsymbol symbol_search_fp(const(char)[] seed, out int cost)
         {
             /* If not in the lexer's string table, it certainly isn't in the symbol table.
              * Doing this first is a lot faster.
@@ -837,7 +848,7 @@ extern (C++) class Dsymbol : ASTNode
             Identifier id = Identifier.lookup(seed);
             if (!id)
                 return null;
-            cost = 0;
+            cost = 0;   // all the same cost
             Dsymbol s = this;
             Module.clearCache();
             return s.search(Loc.initial, id, IgnoreErrors);
@@ -959,7 +970,7 @@ extern (C++) class Dsymbol : ASTNode
     }
 
     // is Dsymbol deprecated?
-    bool isDeprecated() const
+    bool isDeprecated() @safe @nogc pure nothrow const
     {
         return false;
     }
@@ -1032,9 +1043,9 @@ extern (C++) class Dsymbol : ASTNode
 
     /*************************************
      */
-    Prot prot() pure nothrow @nogc @safe
+    Visibility visible() pure nothrow @nogc @safe
     {
-        return Prot(Prot.Kind.public_);
+        return Visibility(Visibility.Kind.public_);
     }
 
     /**************************************
@@ -1216,6 +1227,7 @@ extern (C++) class Dsymbol : ASTNode
     inout(Declaration)                 isDeclaration()                 inout { return null; }
     inout(StorageClassDeclaration)     isStorageClassDeclaration()     inout { return null; }
     inout(ExpressionDsymbol)           isExpressionDsymbol()           inout { return null; }
+    inout(AliasAssign)                 isAliasAssign()                 inout { return null; }
     inout(ThisDeclaration)             isThisDeclaration()             inout { return null; }
     inout(TypeInfoDeclaration)         isTypeInfoDeclaration()         inout { return null; }
     inout(TupleDeclaration)            isTupleDeclaration()            inout { return null; }
@@ -1252,7 +1264,7 @@ extern (C++) class Dsymbol : ASTNode
     inout(AttribDeclaration)           isAttribDeclaration()           inout { return null; }
     inout(AnonDeclaration)             isAnonDeclaration()             inout { return null; }
     inout(CPPNamespaceDeclaration)     isCPPNamespaceDeclaration()     inout { return null; }
-    inout(ProtDeclaration)             isProtDeclaration()             inout { return null; }
+    inout(VisibilityDeclaration)             isVisibilityDeclaration()             inout { return null; }
     inout(OverloadSet)                 isOverloadSet()                 inout { return null; }
     inout(CompileDeclaration)          isCompileDeclaration()          inout { return null; }
 }
@@ -1269,7 +1281,7 @@ extern (C++) class ScopeDsymbol : Dsymbol
 private:
     /// symbols whose members have been imported, i.e. imported modules and template mixins
     Dsymbols* importedScopes;
-    Prot.Kind* prots;            // array of Prot.Kind, one for each import
+    Visibility.Kind* visibilities; // array of Visibility.Kind, one for each import
 
     import dmd.root.bitarray;
     BitArray accessiblePackages, privateAccessiblePackages;// whitelists of accessible (imported) packages
@@ -1289,7 +1301,7 @@ public:
         super(loc, ident);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override ScopeDsymbol syntaxCopy(Dsymbol s)
     {
         //printf("ScopeDsymbol::syntaxCopy('%s')\n", toChars());
         ScopeDsymbol sds = s ? cast(ScopeDsymbol)s : new ScopeDsymbol(ident);
@@ -1332,11 +1344,11 @@ public:
         for (size_t i = 0; i < importedScopes.dim; i++)
         {
             // If private import, don't search it
-            if ((flags & IgnorePrivateImports) && prots[i] == Prot.Kind.private_)
+            if ((flags & IgnorePrivateImports) && visibilities[i] == Visibility.Kind.private_)
                 continue;
             int sflags = flags & (IgnoreErrors | IgnoreAmbiguous); // remember these in recursive searches
             Dsymbol ss = (*importedScopes)[i];
-            //printf("\tscanning import '%s', prots = %d, isModule = %p, isImport = %p\n", ss.toChars(), prots[i], ss.isModule(), ss.isImport());
+            //printf("\tscanning import '%s', visibilities = %d, isModule = %p, isImport = %p\n", ss.toChars(), visibilities[i], ss.isModule(), ss.isImport());
 
             if (ss.isModule())
             {
@@ -1372,7 +1384,7 @@ public:
                      * alias is deprecated or less accessible, prefer
                      * the other.
                      */
-                    if (s.isDeprecated() || s.prot().isMoreRestrictiveThan(s2.prot()) && s2.prot().kind != Prot.Kind.none)
+                    if (s.isDeprecated() || s.visible() < s2.visible() && s2.visible().kind != Visibility.Kind.none)
                         s = s2;
                 }
                 else
@@ -1485,7 +1497,7 @@ public:
                 Dsymbol s2 = os.a[j];
                 if (s.toAlias() == s2.toAlias())
                 {
-                    if (s2.isDeprecated() || (s2.prot().isMoreRestrictiveThan(s.prot()) && s.prot().kind != Prot.Kind.none))
+                    if (s2.isDeprecated() || (s2.visible() < s.visible() && s.visible().kind != Visibility.Kind.none))
                     {
                         os.a[j] = s;
                     }
@@ -1498,9 +1510,9 @@ public:
         return os;
     }
 
-    void importScope(Dsymbol s, Prot protection)
+    void importScope(Dsymbol s, Visibility visibility)
     {
-        //printf("%s.ScopeDsymbol::importScope(%s, %d)\n", toChars(), s.toChars(), protection);
+        //printf("%s.ScopeDsymbol::importScope(%s, %d)\n", toChars(), s.toChars(), visibility);
         // No circular or redundant import's
         if (s != this)
         {
@@ -1513,36 +1525,36 @@ public:
                     Dsymbol ss = (*importedScopes)[i];
                     if (ss == s) // if already imported
                     {
-                        if (protection.kind > prots[i])
-                            prots[i] = protection.kind; // upgrade access
+                        if (visibility.kind > visibilities[i])
+                            visibilities[i] = visibility.kind; // upgrade access
                         return;
                     }
                 }
             }
             importedScopes.push(s);
-            prots = cast(Prot.Kind*)mem.xrealloc(prots, importedScopes.dim * (prots[0]).sizeof);
-            prots[importedScopes.dim - 1] = protection.kind;
+            visibilities = cast(Visibility.Kind*)mem.xrealloc(visibilities, importedScopes.dim * (visibilities[0]).sizeof);
+            visibilities[importedScopes.dim - 1] = visibility.kind;
         }
     }
 
-    extern (D) final void addAccessiblePackage(Package p, Prot protection)
+    extern (D) final void addAccessiblePackage(Package p, Visibility visibility)
     {
-        auto pary = protection.kind == Prot.Kind.private_ ? &privateAccessiblePackages : &accessiblePackages;
+        auto pary = visibility.kind == Visibility.Kind.private_ ? &privateAccessiblePackages : &accessiblePackages;
         if (pary.length <= p.tag)
             pary.length = p.tag + 1;
         (*pary)[p.tag] = true;
     }
 
-    bool isPackageAccessible(Package p, Prot protection, int flags = 0)
+    bool isPackageAccessible(Package p, Visibility visibility, int flags = 0)
     {
         if (p.tag < accessiblePackages.length && accessiblePackages[p.tag] ||
-            protection.kind == Prot.Kind.private_ && p.tag < privateAccessiblePackages.length && privateAccessiblePackages[p.tag])
+            visibility.kind == Visibility.Kind.private_ && p.tag < privateAccessiblePackages.length && privateAccessiblePackages[p.tag])
             return true;
         foreach (i, ss; importedScopes ? (*importedScopes)[] : null)
         {
             // only search visible scopes && imported modules should ignore private imports
-            if (protection.kind <= prots[i] &&
-                ss.isScopeDsymbol.isPackageAccessible(p, protection, IgnorePrivateImports))
+            if (visibility.kind <= visibilities[i] &&
+                ss.isScopeDsymbol.isPackageAccessible(p, visibility, IgnorePrivateImports))
                 return true;
         }
         return false;
@@ -1629,6 +1641,13 @@ public:
         return fdx;
     }
 
+    /********************************
+     * Insert Dsymbol in table.
+     * Params:
+     *   s = symbol to add
+     * Returns:
+     *   null if already in table, `s` if inserted
+     */
     Dsymbol symtabInsert(Dsymbol s)
     {
         return symtab.insert(s);
@@ -1636,8 +1655,12 @@ public:
 
     /****************************************
      * Look up identifier in symbol table.
+     * Params:
+     *  s = symbol
+     *  id = identifier to look up
+     * Returns:
+     *   Dsymbol if found, null if not
      */
-
     Dsymbol symtabLookup(Dsymbol s, Identifier id)
     {
         return symtab.lookup(id);
@@ -2095,9 +2118,9 @@ extern (C++) final class ForwardingScopeDsymbol : ScopeDsymbol
         return forward.symtabLookup(s,id);
     }
 
-    override void importScope(Dsymbol s, Prot protection)
+    override void importScope(Dsymbol s, Visibility visibility)
     {
-        forward.importScope(s, protection);
+        forward.importScope(s, visibility);
     }
 
     override const(char)* kind()const{ return "local scope"; }
@@ -2110,7 +2133,7 @@ extern (C++) final class ForwardingScopeDsymbol : ScopeDsymbol
 }
 
 /**
- * Class that holds an expression in a Dsymbol wraper.
+ * Class that holds an expression in a Dsymbol wrapper.
  * This is not an AST node, but a class used to pass
  * an expression as a function parameter of type Dsymbol.
  */
@@ -2129,6 +2152,51 @@ extern (C++) final class ExpressionDsymbol : Dsymbol
     }
 }
 
+/**********************************************
+ * Encapsulate assigning to an alias:
+ *      `identifier = type;`
+ *      `identifier = symbol;`
+ * where `identifier` is an AliasDeclaration in scope.
+ */
+extern (C++) final class AliasAssign : Dsymbol
+{
+    Identifier ident; /// Dsymbol's ident will be null, as this class is anonymous
+    Type type;        /// replace previous RHS of AliasDeclaration with `type`
+    Dsymbol aliassym; /// replace previous RHS of AliasDeclaration with `aliassym`
+                      /// only one of type and aliassym can be != null
+
+    extern (D) this(const ref Loc loc, Identifier ident, Type type, Dsymbol aliassym)
+    {
+        super(loc, null);
+        this.ident = ident;
+        this.type = type;
+        this.aliassym = aliassym;
+    }
+
+    override AliasAssign syntaxCopy(Dsymbol s)
+    {
+        assert(!s);
+        AliasAssign aa = new AliasAssign(loc, ident,
+                type     ? type.syntaxCopy()         : null,
+                aliassym ? aliassym.syntaxCopy(null) : null);
+        return aa;
+    }
+
+    override inout(AliasAssign) isAliasAssign() inout
+    {
+        return this;
+    }
+
+    override const(char)* kind() const
+    {
+        return "alias assignment";
+    }
+
+    override void accept(Visitor v)
+    {
+        v.visit(this);
+    }
+}
 
 /***********************************************************
  * Table of Dsymbol's
@@ -2137,33 +2205,53 @@ extern (C++) final class DsymbolTable : RootObject
 {
     AssocArray!(Identifier, Dsymbol) tab;
 
-    // Look up Identifier. Return Dsymbol if found, NULL if not.
+   /***************************
+    * Look up Identifier in symbol table
+    * Params:
+    *   ident = identifer to look up
+    * Returns:
+    *   Dsymbol if found, null if not
+    */
     Dsymbol lookup(const Identifier ident)
     {
         //printf("DsymbolTable::lookup(%s)\n", ident.toChars());
         return tab[ident];
     }
 
-    // Look for Dsymbol in table. If there, return it. If not, insert s and return that.
-    Dsymbol update(Dsymbol s)
+    /**********
+     * Replace existing symbol in symbol table with `s`.
+     * If it's not there, add it.
+     * Params:
+     *   s = replacement symbol with same identifier
+     */
+    void update(Dsymbol s)
     {
-        const ident = s.ident;
-        Dsymbol* ps = tab.getLvalue(ident);
-        *ps = s;
-        return s;
+        *tab.getLvalue(s.ident) = s;
     }
 
-    // Insert Dsymbol in table. Return NULL if already there.
+    /**************************
+     * Insert Dsymbol in table.
+     * Params:
+     *   s = symbol to add
+     * Returns:
+     *   null if already in table, `s` if inserted
+     */
     Dsymbol insert(Dsymbol s)
     {
-        //printf("DsymbolTable::insert(this = %p, '%s')\n", this, s.ident.toChars());
         return insert(s.ident, s);
     }
 
-    // when ident and s are not the same
+    /**************************
+     * Insert Dsymbol in table.
+     * Params:
+     *   ident = identifier to serve as index
+     *   s = symbol to add
+     * Returns:
+     *   null if already in table, `s` if inserted
+     */
     Dsymbol insert(const Identifier ident, Dsymbol s)
     {
-        //printf("DsymbolTable::insert()\n");
+        //printf("DsymbolTable.insert(this = %p, '%s')\n", this, s.ident.toChars());
         Dsymbol* ps = tab.getLvalue(ident);
         if (*ps)
             return null; // already in table
@@ -2171,7 +2259,7 @@ extern (C++) final class DsymbolTable : RootObject
         return s;
     }
 
-    /*****
+    /*****************
      * Returns:
      *  number of symbols in symbol table
      */
@@ -2180,3 +2268,103 @@ extern (C++) final class DsymbolTable : RootObject
         return tab.length;
     }
 }
+
+/**********************************************
+ * ImportC tag symbols sit in a parallel symbol table,
+ * so that this C code works:
+ * ---
+ * struct S { a; };
+ * int S;
+ * struct S s;
+ * ---
+ * But there are relatively few such tag symbols, so that would be
+ * a waste of memory and complexity. An additional problem is we'd like the D side
+ * to find the tag symbols with ordinary lookup, not lookup in both
+ * tables, if the tag symbol is not conflicting with an ordinary symbol.
+ * The solution is to put the tag symbols that conflict into an associative
+ * array, indexed by the address of the ordinary symbol that conflicts with it.
+ * C has no modules, so this associative array is tagSymTab[] in ModuleDeclaration.
+ * A side effect of our approach is that D code cannot access a tag symbol that is
+ * hidden by an ordinary symbol. This is more of a theoretical problem, as nobody
+ * has mentioned it when importing C headers. If someone wants to do it,
+ * too bad so sad. Change the C code.
+ * This function fixes up the symbol table when faced with adding a new symbol
+ * `s` when there is an existing symbol `s2` with the same name.
+ * C also allows forward and prototype declarations of tag symbols,
+ * this function merges those.
+ * Params:
+ *      sc = context
+ *      s = symbol to add to symbol table
+ *      s2 = existing declaration
+ *      sds = symbol table
+ * Returns:
+ *      if s and s2 are successfully put in symbol table then return the merged symbol,
+ *      null if they conflict
+ */
+Dsymbol handleTagSymbols(ref Scope sc, Dsymbol s, Dsymbol s2, ScopeDsymbol sds)
+{
+    enum log = false;
+    if (log) printf("handleTagSymbols('%s')\n", s.toChars());
+    auto sd = s.isScopeDsymbol(); // new declaration
+    auto sd2 = s2.isScopeDsymbol(); // existing declaration
+
+    if (!sd2)
+    {
+        /* Look in tag table
+         */
+        if (log) printf(" look in tag table\n");
+        if (auto p = cast(void*)s2 in sc._module.tagSymTab)
+        {
+            Dsymbol s2tag = *p;
+            sd2 = s2tag.isScopeDsymbol();
+            assert(sd2);        // only tags allowed in tag symbol table
+        }
+    }
+
+    if (sd && sd2) // `s` is a tag, `sd2` is the same tag
+    {
+        if (log) printf(" tag is already defined\n");
+
+        if (sd.kind() != sd2.kind())  // being enum/struct/union must match
+            return null;              // conflict
+
+        /* Not a redeclaration if one is a forward declaration.
+         * Move members to the first declared type, which is sd2.
+         */
+        if (sd2.members)
+        {
+            if (!sd.members)
+                return sd2;  // ignore the sd redeclaration
+        }
+        else if (sd.members)
+        {
+            sd2.members = sd.members; // transfer definition to sd2
+            sd.members = null;
+            return sd2;
+        }
+        else
+            return sd2; // ignore redeclaration
+    }
+    else if (sd) // `s` is a tag, `s2` is not
+    {
+        if (log) printf(" s is tag, s2 is not\n");
+        /* add `s` as tag indexed by s2
+         */
+        sc._module.tagSymTab[cast(void*)s2] = s;
+        return s;
+    }
+    else if (s2 is sd2) // `s2` is a tag, `s` is not
+    {
+        if (log) printf(" s2 is tag, s is not\n");
+        /* replace `s2` in symbol table with `s`,
+         * then add `s2` as tag indexed by `s`
+         */
+        sds.symtab.update(s);
+        sc._module.tagSymTab[cast(void*)s] = s2;
+        return s;
+    }
+    if (log) printf(" collision\n");
+    return null;
+}
+
+

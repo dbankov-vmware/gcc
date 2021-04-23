@@ -106,9 +106,9 @@ gcc_attribute_p (Dsymbol *decl)
 {
   ModuleDeclaration *md = decl->getModule ()->md;
 
-  if (md && md->packages && md->packages->length == 1)
+  if (md && md->packages.length == 1)
     {
-      if (!strcmp ((*md->packages)[0]->toChars (), "gcc")
+      if (!strcmp (md->packages.ptr[0]->toChars (), "gcc")
 	  && !strcmp (md->id->toChars (), "attributes"))
 	return true;
     }
@@ -156,7 +156,7 @@ apply_pragma_crt (Dsymbol *sym, bool isctor)
 	  decl_fini_priority_insert (decl, DEFAULT_INIT_PRIORITY);
 	}
 
-      if (fd->linkage != LINKc)
+      if (fd->linkage != LINK::c)
 	{
 	  error_at (make_location_t (fd->loc),
 		    "must be %<extern(C)%> for %<pragma(%s)%>",
@@ -376,14 +376,14 @@ public:
        nested members.  Only applies to classes or structs.  */
     Type *tb = fd->type->nextOf ()->baseElemOf ();
 
-    while (tb->ty == Tarray || tb->ty == Tpointer)
+    while (tb->ty == TY::Tarray || tb->ty == TY::Tpointer)
       tb = tb->nextOf ()->baseElemOf ();
 
     TemplateInstance *ti = NULL;
 
-    if (tb->ty == Tstruct)
+    if (tb->ty == TY::Tstruct)
       ti = tb->isTypeStruct ()->sym->isInstantiated ();
-    else if (tb->ty == Tclass)
+    else if (tb->ty == TY::Tclass)
       ti = tb->isTypeClass ()->sym->isInstantiated ();
 
     /* Return type is instantiated from this template declaration, walk over
@@ -425,7 +425,7 @@ public:
     if (d->semanticRun >= PASSobj)
       return;
 
-    if (d->type->ty == Terror)
+    if (d->type->ty == TY::Terror)
       {
 	error_at (make_location_t (d->loc),
 		  "had semantic errors when compiling");
@@ -451,9 +451,10 @@ public:
       create_typeinfo (d->type, NULL);
 
     /* Generate static initializer.  */
-    d->sinit = aggregate_initializer_decl (d);
-    DECL_INITIAL (d->sinit) = layout_struct_initializer (d);
-    d_finish_decl (d->sinit);
+    tree sinit = aggregate_initializer_decl (d);
+    DECL_INITIAL (sinit) = layout_struct_initializer (d);
+    d_finish_decl (sinit);
+    d->sinit = sinit;
 
     /* Put out the members.  There might be static constructors in the members
        list, and they cannot be put in separate object files.  */
@@ -512,7 +513,8 @@ public:
 	    if (fd2->isFuture ())
 	      continue;
 
-	    if (fd->leastAsSpecialized (fd2) || fd2->leastAsSpecialized (fd))
+	    if (fd->leastAsSpecialized (fd2) != MATCH::nomatch
+		|| fd2->leastAsSpecialized (fd) != MATCH::nomatch)
 	      {
 		error_at (make_location_t (fd->loc), "use of %qs",
 			  fd->toPrettyChars ());
@@ -539,7 +541,7 @@ public:
     if (d->semanticRun >= PASSobj)
       return;
 
-    if (d->type->ty == Terror)
+    if (d->type->ty == TY::Terror)
       {
 	error_at (make_location_t (d->loc),
 		  "had semantic errors when compiling");
@@ -562,11 +564,11 @@ public:
     d->csym = get_classinfo_decl (d);
     Dsymbol *vtblsym = d->vtblSymbol ();
     vtblsym->csym = get_vtable_decl (d);
-    d->sinit = aggregate_initializer_decl (d);
+    tree sinit = aggregate_initializer_decl (d);
 
     /* Generate static initializer.  */
-    DECL_INITIAL (d->sinit) = layout_class_initializer (d);
-    d_finish_decl (d->sinit);
+    DECL_INITIAL (sinit) = layout_class_initializer (d);
+    d_finish_decl (sinit);
 
     /* Put out the TypeInfo.  */
     if (have_typeinfo_p (Type::dtypeinfo))
@@ -613,7 +615,7 @@ public:
     if (d->semanticRun >= PASSobj)
       return;
 
-    if (d->type->ty == Terror)
+    if (d->type->ty == TY::Terror)
       {
 	error_at (make_location_t (d->loc),
 		  "had semantic errors when compiling");
@@ -656,7 +658,7 @@ public:
     if (d->semanticRun >= PASSobj)
       return;
 
-    if (d->errors || d->type->ty == Terror)
+    if (d->errors || d->type->ty == TY::Terror)
       {
 	error_at (make_location_t (d->loc),
 		  "had semantic errors when compiling");
@@ -695,7 +697,7 @@ public:
     if (d->semanticRun >= PASSobj)
       return;
 
-    if (d->type->ty == Terror)
+    if (d->type->ty == TY::Terror)
       {
 	error_at (make_location_t (d->loc),
 		  "had semantic errors when compiling");
@@ -713,8 +715,6 @@ public:
 	/* Do not store variables we cannot take the address of,
 	   but keep the values for purposes of debugging.  */
 	if (!d->type->isscalar ())
-	  DECL_INITIAL (decl) = build_expr (ie, false, true);
-	else
 	  {
 	    tree decl = get_symbol_decl (d);
 	    d_pushdecl (decl);
@@ -763,7 +763,7 @@ public:
 
 	/* Frontend should have already caught this.  */
 	gcc_assert (!integer_zerop (size)
-		    || d->type->toBasetype ()->ty == Tsarray);
+		    || d->type->toBasetype ()->ty == TY::Tsarray);
 
 	d_finish_decl (decl);
 
@@ -838,7 +838,7 @@ public:
     /* Check if any errors occurred when running semantic.  */
     if (TypeFunction *tf = d->type->isTypeFunction ())
       {
-	if (tf->next == NULL || tf->next->ty == Terror)
+	if (tf->next == NULL || tf->next->ty == TY::Terror)
 	  return;
       }
 
@@ -1317,9 +1317,9 @@ get_symbol_decl (Declaration *decl)
 
       /* In [pragma/inline], functions decorated with `pragma(inline)' affects
 	 whether they are inlined or not.  */
-      if (fd->inlining == PINLINEalways)
+      if (fd->inlining == PINLINE::always)
 	DECL_DECLARED_INLINE_P (decl->csym) = 1;
-      else if (fd->inlining == PINLINEnever)
+      else if (fd->inlining == PINLINE::never)
 	DECL_UNINLINABLE (decl->csym) = 1;
 
       /* Function was declared `naked'.  */
@@ -1333,13 +1333,6 @@ get_symbol_decl (Declaration *decl)
       if (fd->generated)
 	DECL_ARTIFICIAL (decl->csym) = 1;
 
-      /* Vector array operations are always compiler generated.  */
-      if (fd->isArrayOp)
-	{
-	  DECL_ARTIFICIAL (decl->csym) = 1;
-	  DECL_DECLARED_INLINE_P (decl->csym) = 1;
-	}
-
       /* Ensure and require contracts are lexically nested in the function they
 	 part of, but are always publicly callable.  */
       if (fd->ident == Identifier::idPool ("ensure")
@@ -1350,7 +1343,7 @@ get_symbol_decl (Declaration *decl)
 	DECL_FINAL_P (decl->csym) = 1;
 
       /* Function is of type `noreturn' or `typeof(*null)'.  */
-      if (fd->type->nextOf ()->ty == Tnoreturn)
+      if (fd->type->nextOf ()->ty == TY::Tnoreturn)
 	TREE_THIS_VOLATILE (decl->csym) = 1;
 
       /* Check whether this function is expanded by the frontend.  */
@@ -1377,10 +1370,10 @@ get_symbol_decl (Declaration *decl)
   if (decl->storage_class & STCvolatile)
     TREE_THIS_VOLATILE (decl->csym) = 1;
 
-  /* Protection attributes are used by the debugger.  */
-  if (decl->protection.kind == Prot::private_)
+  /* Visibility attributes are used by the debugger.  */
+  if (decl->visibility.kind == Visibility::private_)
     TREE_PRIVATE (decl->csym) = 1;
-  else if (decl->protection.kind == Prot::protected_)
+  else if (decl->visibility.kind == Visibility::protected_)
     TREE_PROTECTED (decl->csym) = 1;
 
   /* Likewise, so could the deprecated attribute.  */
@@ -1873,7 +1866,7 @@ make_thunk (FuncDeclaration *decl, int offset)
      forcing a D local thunk to be emitted.  */
   const char *ident;
 
-  if (decl->linkage == LINKcpp)
+  if (decl->linkage == LINK::cpp)
     ident = target.cpp.thunkMangle (decl, offset);
   else
     {
@@ -1889,7 +1882,9 @@ make_thunk (FuncDeclaration *decl, int offset)
   SET_DECL_ASSEMBLER_NAME (thunk, DECL_NAME (thunk));
 
   d_keep (thunk);
-  free (CONST_CAST (char *, ident));
+
+  if (decl->linkage != LINK::cpp)
+    free (CONST_CAST (char *, ident));
 
   if (!DECL_EXTERNAL (function))
     finish_thunk (thunk, function);
@@ -2235,7 +2230,7 @@ tree
 aggregate_initializer_decl (AggregateDeclaration *decl)
 {
   if (decl->sinit)
-    return decl->sinit;
+    return (tree) decl->sinit;
 
   /* Class is a reference, want the record type.  */
   tree type = build_ctype (decl->type);
@@ -2245,20 +2240,21 @@ aggregate_initializer_decl (AggregateDeclaration *decl)
 
   tree ident = mangle_internal_decl (decl, "__init", "Z");
 
-  decl->sinit = declare_extern_var (ident, type);
-  DECL_LANG_SPECIFIC (decl->sinit) = build_lang_decl (NULL);
+  tree sinit = declare_extern_var (ident, type);
+  DECL_LANG_SPECIFIC (sinit) = build_lang_decl (NULL);
 
-  DECL_CONTEXT (decl->sinit) = type;
-  TREE_READONLY (decl->sinit) = 1;
+  DECL_CONTEXT (sinit) = type;
+  TREE_READONLY (sinit) = 1;
 
   /* Honor struct alignment set by user.  */
   if (sd && sd->alignment != STRUCTALIGN_DEFAULT)
     {
-      SET_DECL_ALIGN (decl->sinit, sd->alignment * BITS_PER_UNIT);
-      DECL_USER_ALIGN (decl->sinit) = true;
+      SET_DECL_ALIGN (sinit, sd->alignment * BITS_PER_UNIT);
+      DECL_USER_ALIGN (sinit) = true;
     }
 
-  return decl->sinit;
+  decl->sinit = sinit;
+  return (tree) decl->sinit;
 }
 
 /* Generate the data for the static initializer.  */
@@ -2384,17 +2380,6 @@ create_field_decl (tree type, const char *name, int artificial, int ignored)
 			  name ? get_identifier (name) : NULL_TREE, type);
   DECL_ARTIFICIAL (decl) = artificial;
   DECL_IGNORED_P (decl) = ignored;
-
-  return decl;
-}
-
-/* Returns the module NAMESPACE_DECL context of DECL or NULL.  */
-
-static tree
-get_module_context (tree decl)
-{
-  while (decl && TREE_CODE (decl) != NAMESPACE_DECL)
-    decl = get_containing_scope (decl);
 
   return decl;
 }

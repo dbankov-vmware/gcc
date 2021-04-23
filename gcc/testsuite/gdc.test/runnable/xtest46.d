@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 // RUNNABLE_PHOBOS_TEST
-// PERMUTE_ARGS: -unittest -O -release -inline -fPIC -g
-=======
 // REQUIRED_ARGS: -preview=rvaluerefparam
 //
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 /* TEST_OUTPUT:
 ---
 Boo!double
@@ -4109,14 +4105,6 @@ void test1471()
 
 deprecated @disable int bug6389;
 static assert(!is(typeof(bug6389 = bug6389)));
-
-/***************************************************/
-
-void test10927()
-{
-    static assert( (1+2i) ^^ 3 == -11 - 2i );
-    auto a = (1+2i) ^^ 3;
-}
 
 /***************************************************/
 

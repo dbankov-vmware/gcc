@@ -582,13 +582,9 @@ extern(C++)
 {
     bool f13289_cpp_test();
 
-<<<<<<< HEAD
-    wchar_t f13289_cpp_wchar_t(wchar_t);
-=======
 
     wchar_t f13289_cpp_wchar_t(wchar_t);
 
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
     wchar f13289_d_wchar(wchar ch)
     {
@@ -1380,16 +1376,16 @@ extern(C++)
 __gshared char[32] traceBuf;
 __gshared size_t traceBufPos;
 
+// workaround for https://issues.dlang.org/show_bug.cgi?id=18986
+version(OSX)
+    enum cppCtorReturnsThis = false;
+else version(FreeBSD)
+    enum cppCtorReturnsThis = false;
+else
+    enum cppCtorReturnsThis = true;
+
 mixin template scopeAllocCpp(C)
 {
-    // workaround for https://issues.dlang.org/show_bug.cgi?id=18986
-    version(OSX)
-        enum cppCtorReturnsThis = false;
-    else version(FreeBSD)
-        enum cppCtorReturnsThis = false;
-    else
-        enum cppCtorReturnsThis = true;
-
     static if (cppCtorReturnsThis)
         scope C ptr = new C;
     else
@@ -1408,9 +1404,13 @@ void test15589b()
         mixin scopeAllocCpp!Cpp15589DerivedVirtual derivedVirtual;
         mixin scopeAllocCpp!Cpp15589IntroducingVirtual introducingVirtual;
 
-        introducingVirtual.ptr.destroy();
-        derivedVirtual.ptr.destroy();
-        derived.ptr.destroy();
+        // `scope` instances are destroyed automatically
+        static if (!cppCtorReturnsThis)
+        {
+            introducingVirtual.ptr.destroy();
+            derivedVirtual.ptr.destroy();
+            derived.ptr.destroy();
+        }
     }
     printf("traceBuf15589 %.*s\n", cast(int)traceBufPos, traceBuf.ptr);
     assert(traceBuf[0..traceBufPos] == "IbVvBbs");
@@ -1477,7 +1477,7 @@ extern(C++):
 class Base18966
 {
     this() @safe nothrow;
-    ~this();
+    ~this() @safe;
     void vf();
     int x;
 }

@@ -99,7 +99,7 @@ build_frontend_type (tree type)
 	  if (TYPE_MAIN_VARIANT (TREE_TYPE (type)) == char_type_node)
 	    return Type::tchar->addMod (dtype->mod)->pointerTo ()->addMod (mod);
 
-	  if (dtype->ty == Tfunction)
+	  if (dtype->ty == TY::Tfunction)
 	    return (TypePointer::create (dtype))->addMod (mod);
 
 	  return dtype->pointerTo ()->addMod (mod);
@@ -131,7 +131,7 @@ build_frontend_type (tree type)
 
       /* For now, skip support for cent/ucent until the frontend
 	 has better support for handling it.  */
-      for (size_t i = Tint8; i <= Tuns64; i++)
+      for (size_t i = (size_t) TY::Tint8; i <= (size_t) TY::Tuns64; i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -149,7 +149,7 @@ build_frontend_type (tree type)
     {
       unsigned size = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (type));
 
-      for (size_t i = Tfloat32; i <= Tfloat80; i++)
+      for (size_t i = (size_t) TY::Tfloat32; i <= (size_t) TY::Tfloat80; i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -165,7 +165,8 @@ build_frontend_type (tree type)
     case COMPLEX_TYPE:
     {
       unsigned size = TREE_INT_CST_LOW (TYPE_SIZE_UNIT (type));
-      for (size_t i = Tcomplex32; i <= Tcomplex80; i++)
+      for (size_t i = (size_t) TY::Tcomplex32; i <= (size_t) TY::Tcomplex80;
+	   i++)
 	{
 	  dtype = Type::basic[i];
 
@@ -236,7 +237,7 @@ build_frontend_type (tree type)
       sdecl->structsize = int_size_in_bytes (type);
       sdecl->alignsize = TYPE_ALIGN_UNIT (type);
       sdecl->alignment = STRUCTALIGN_DEFAULT;
-      sdecl->sizeok = SIZEOKdone;
+      sdecl->sizeok = Sizeok::done;
       sdecl->type = (TypeStruct::create (sdecl))->addMod (mod);
       sdecl->type->ctype = type;
       sdecl->type->merge2 ();
@@ -328,7 +329,7 @@ build_frontend_type (tree type)
 	     have no named parameters, and so can't be represented in D.  */
 	  if (args->length != 0 || varargs_p == VARARGnone)
 	    {
-	      dtype = TypeFunction::create (args, dtype, varargs_p, LINKc);
+	      dtype = TypeFunction::create (args, dtype, varargs_p, LINK::c);
 	      return dtype->addMod (mod);
 	    }
 	}
@@ -379,7 +380,7 @@ d_eval_constant_expression (const Loc &loc, tree cst)
       else if (code == STRING_CST)
 	{
 	  const void *string = TREE_STRING_POINTER (cst);
-	  size_t len = TREE_STRING_LENGTH (cst);
+	  size_t len = TREE_STRING_LENGTH (cst) - 1;
 	  return StringExp::create (loc, CONST_CAST (void *, string), len);
 	}
       else if (code == VECTOR_CST)
@@ -461,7 +462,7 @@ d_init_versions (void)
   VersionCondition::addPredefinedGlobalIdent ("GNU_InlineAsm");
 
   /* LP64 only means 64bit pointers in D.  */
-  if (global.params.isLP64)
+  if (POINTER_SIZE == 64)
     VersionCondition::addPredefinedGlobalIdent ("D_LP64");
 
   /* Setting `global.params.cov' forces module info generation which is
@@ -659,7 +660,7 @@ d_build_builtins_module (Module *m)
     members->push (build_alias_declaration ("__builtin_unwind_uint", t));
   }
 
-  m->members->push (LinkDeclaration::create (LINKc, members));
+  m->members->push (LinkDeclaration::create (Loc (), LINK::c, members));
 }
 
 /* Search for any `extern(C)' functions that match any known GCC library builtin
@@ -857,7 +858,7 @@ d_build_d_type_nodes (void)
 
   /* Calling build_ctype() links the front-end Type to the GCC node,
      and sets the TYPE_NAME to the D language type.  */
-  for (unsigned ty = 0; ty < TMAX; ty++)
+  for (unsigned ty = 0; ty < (unsigned) TY::TMAX; ty++)
     {
       if (Type::basic[ty] != NULL)
 	build_ctype (Type::basic[ty]);

@@ -8,11 +8,42 @@ TEST_OUTPUT:
 
 #pragma once
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <math.h>
 
+#ifdef CUSTOM_D_ARRAY_TYPE
+#define _d_dynamicArray CUSTOM_D_ARRAY_TYPE
+#else
+/// Represents a D [] array
+template<typename T>
+struct _d_dynamicArray final
+{
+    size_t length;
+    T *ptr;
 
-class ClassFromStruct
+    _d_dynamicArray() : length(0), ptr(NULL) { }
+
+    _d_dynamicArray(size_t length_in, T *ptr_in)
+        : length(length_in), ptr(ptr_in) { }
+
+    T& operator[](const size_t idx) {
+        assert(idx < length);
+        return ptr[idx];
+    }
+
+    const T& operator[](const size_t idx) const {
+        assert(idx < length);
+        return ptr[idx];
+    }
+};
+#endif
+#if !defined(_d_real)
+# define _d_real long double
+#endif
+
+class ClassFromStruct final
 {
 public:
     void foo();
@@ -27,7 +58,7 @@ public:
     virtual void foo();
 };
 
-struct StructFromStruct
+struct StructFromStruct final
 {
     void foo();
     StructFromStruct()
@@ -39,6 +70,62 @@ struct StructFromClass
 {
     virtual void foo();
 };
+
+struct Floats final
+{
+    float f;
+    double d;
+    _d_real r;
+    double nan;
+    double inf;
+    double nInf;
+    Floats() :
+        f(1.23F),
+        d(4.56),
+        r(7.89L),
+        nan(NAN),
+        inf(INFINITY),
+        nInf(-INFINITY)
+    {
+    }
+    Floats(float f, double d = 4.56, _d_real r = 7.89L, double nan = NAN, double inf = INFINITY, double nInf = -INFINITY) :
+        f(f),
+        d(d),
+        r(r),
+        nan(nan),
+        inf(inf),
+        nInf(nInf)
+        {}
+};
+
+struct Null final
+{
+    _d_dynamicArray< const char > null_;
+    Null() :
+        null_()
+    {
+    }
+    Null(_d_dynamicArray< const char > null_) :
+        null_(null_)
+        {}
+};
+
+struct Wrapper final
+{
+    Null n1;
+    Null n2;
+    Wrapper() :
+        n1(Null({ 5, "Hello" })),
+        n2(Null({}))
+    {
+    }
+    Wrapper(Null n1, Null n2 = Null({})) :
+        n1(n1),
+        n2(n2)
+        {}
+};
+
+extern const _d_dynamicArray< const char > helloWorld;
 ---
 */
 
@@ -61,3 +148,27 @@ extern (C++, struct) class StructFromClass
 {
     void foo() {}
 }
+
+extern(C++) struct Floats
+{
+    float f = 1.23f;
+    double d = 4.56;
+    real r = 7.89L;
+
+    double nan = double.nan;
+    double inf = double.infinity;
+    double nInf = -double.infinity;
+}
+
+extern (C++) struct Null
+{
+    string null_ = null;
+}
+
+extern (C++) struct Wrapper
+{
+    Null n1 = Null("Hello");
+    Null n2 = Null(null);
+}
+
+extern(C++) __gshared immutable string helloWorld = `"Hello\World!"`;

@@ -81,7 +81,7 @@ class UTFException : UnicodeException
     size_t  len;
 
     @safe pure nothrow @nogc
-    UTFException setSequence(scope uint[] data...)
+    UTFException setSequence(scope uint[] data...) return
     {
         assert(data.length <= 4);
 
@@ -1410,7 +1410,8 @@ do
     assert(str.decodeBack(i) == 'å' && i == 2 && str.empty);
 }
 
-// Gives the maximum value that a code unit for the given range type can hold.
+// For the given range, code unit values less than this
+// are guaranteed to be valid single-codepoint encodings.
 package template codeUnitLimit(S)
 if (isSomeChar!(ElementEncodingType!S))
 {
@@ -3003,7 +3004,7 @@ if (isInputRange!S && !isInfinite!S && isSomeChar!(ElementEncodingType!S))
  * See_Also:
  *     For a lazy, non-allocating version of these functions, see $(LREF byUTF).
  */
-dstring toUTF32(S)(S s)
+dstring toUTF32(S)(scope S s)
 if (isInputRange!S && !isInfinite!S && isSomeChar!(ElementEncodingType!S))
 {
     return toUTFImpl!dstring(s);
@@ -3022,7 +3023,7 @@ if (isInputRange!S && !isInfinite!S && isSomeChar!(ElementEncodingType!S))
     assert("𐐷"w.toUTF32.equal([0x00010437]));
 }
 
-private T toUTFImpl(T, S)(S s)
+private T toUTFImpl(T, S)(scope S s)
 {
     static if (is(S : T))
     {
@@ -3103,7 +3104,7 @@ if (isPointer!P && isSomeChar!(typeof(*P.init)))
     auto p6 = toUTFz!(immutable(dchar)*)("hello world"w);
 }
 
-private P toUTFzImpl(P, S)(S str) @safe pure
+private P toUTFzImpl(P, S)(return scope S str) @safe pure
 if (is(immutable typeof(*P.init) == typeof(str[0])))
 //immutable(C)[] -> C*, const(C)*, or immutable(C)*
 {
@@ -3146,7 +3147,7 @@ if (is(immutable typeof(*P.init) == typeof(str[0])))
     }
 }
 
-private P toUTFzImpl(P, S)(S str) @safe pure
+private P toUTFzImpl(P, S)(return scope S str) @safe pure
 if (is(typeof(str[0]) C) && is(immutable typeof(*P.init) == immutable C) && !is(C == immutable))
 //C[] or const(C)[] -> C*, const(C)*, or immutable(C)*
 {

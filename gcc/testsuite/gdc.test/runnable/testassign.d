@@ -1,8 +1,5 @@
 /*
-<<<<<<< HEAD
-=======
 REQUIRED_ARGS: -preview=rvaluerefparam
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 TEST_OUTPUT:
 ---
 \	S1	S2a	S2b	S3a	S3b	S4a	S4b

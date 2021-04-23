@@ -305,6 +305,9 @@ Enum(extern_stdcpp) String(c++14) Value(201402)
 EnumValue
 Enum(extern_stdcpp) String(c++17) Value(201703)
 
+EnumValue
+Enum(extern_stdcpp) String(c++20) Value(202002)
+
 fignore-unknown-pragmas
 D
 Ignore unsupported pragmas.
@@ -381,10 +384,6 @@ fpreview=intpromote
 D RejectNegative
 Use C-style integral promotion for unary '+', '-' and '~'.
 
-fpreview=markdown
-D RejectNegative
-Enable Markdown replacements in Ddoc.
-
 fpreview=nosharedaccess
 D RejectNegative
 Disable access to shared memory objects.
@@ -392,6 +391,10 @@ Disable access to shared memory objects.
 fpreview=rvaluerefparam
 D RejectNegative
 Enable rvalue arguments to ref parameters.
+
+fpreview=shortenedMethods
+D RejectNegative
+Allow use of '=>' for methods and top-level functions in addition to lambdas.
 
 frelease
 D
@@ -404,6 +407,14 @@ Turn off all revertable D language features.
 frevert=dip25
 D RejectNegative
 Revert DIP25: Sealed references.
+
+frevert=dtorfields
+D RejectNegative
+Don't destruct fields of partially constructed objects.
+
+frevert=markdown
+D RejectNegative
+Disable Markdown replacements in Ddoc.
 
 frtti
 D
@@ -420,10 +431,6 @@ Generate code for switches without a default case.
 ftransition=all
 D RejectNegative
 List information on all D language transitions.
-
-ftransition=complex
-D RejectNegative
-Give deprecation messages about all usages of complex or imaginary types.
 
 ftransition=field
 D RejectNegative

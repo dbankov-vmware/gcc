@@ -161,19 +161,11 @@ template Foo(T, int V)
     }
 
     try
-<<<<<<< HEAD
-	bar(1, 2);
-    catch(Object o)
-	x++;
-    finally
-	x--;
-=======
         bar(1, 2);
     catch(Object o)
         x++;
     finally
         x--;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
     Object o;
     synchronized (o)
@@ -281,12 +273,6 @@ class Test
     pure nothrow @safe @nogc unittest {}
     pure nothrow @safe @nogc invariant {}
     pure nothrow @safe @nogc invariant (true);
-<<<<<<< HEAD
-
-    pure nothrow @safe @nogc new (size_t sz) { return null; }
-    pure nothrow @safe @nogc delete (void* p) { }
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 
 template templ( T )
@@ -560,8 +546,6 @@ struct Foo3A(T)
     @disable this();
 }
 
-<<<<<<< HEAD
-=======
 // return ref, return scope, return ref scope
 ref int foo(return ref int a) @safe
 {
@@ -599,7 +583,6 @@ struct SafeS
     int* p;
 }
 
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 void test13x(@(10) int a, @(20) int, @(30) @(40) int[] arr...) {}
 
 enum Test14UDA1;

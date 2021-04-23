@@ -602,12 +602,6 @@ void fooB(void delegate (void delegate()) scope dg)
 //pragma(msg, fooB.mangleof);
 static assert(typeof(fooA).mangleof != typeof(fooB).mangleof);
 
-/***************************************************/
-
-alias noreturn = typeof(*null);
-alias fpd = noreturn function();
-int funcd(fpd);
-static assert(funcd.mangleof == "_D6mangle5funcdFPFZNnZi");
 
 /***************************************************/
 
@@ -617,6 +611,19 @@ static assert(testLive.mangleof == "_D6mangle8testLiveFNmZi");
 
 /***************************************************/
 
+alias noreturn = typeof(*null);
+alias fpd = noreturn function();
+int funcd(fpd);
+static assert(funcd.mangleof == "_D6mangle5funcdFPFZNnZi");
+
+/***************************************************/
+
+struct S21753 { void function() f1; }
+void fun21753(S21753 v)() {}
+alias fl21753 = (){};
+static assert((fun21753!(S21753(fl21753))).mangleof == "_D6mangle__T8fun21753VSQv6S21753S1f_DQBj10" ~ fl21753.stringof ~ "MFNaNbNiNfZvZQCbQp");
+
+/***************************************************/
 void main()
 {
     test10077h();

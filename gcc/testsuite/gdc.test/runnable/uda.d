@@ -688,9 +688,6 @@ void test20()
 }
 
 /************************************************/
-<<<<<<< HEAD
-
-=======
 // https://issues.dlang.org/show_bug.cgi?id=20831
 
 void foo20831(int f, float, @("test") string s = "test") {}
@@ -699,7 +696,6 @@ static if(is(typeof(foo20831) Params20831 == __parameters))
     static assert([__traits(getAttributes, Params20831[1..2])] == []);
 
 /************************************************/
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 int main()
 {

@@ -9,7 +9,15 @@
  * Source:    $(DRUNTIMESRC core/stdcpp/_typeinfo.d)
  */
 
+/* NOTE: This file has been patched from the original DMD distribution to
+ * work with the GDC compiler.
+ */
 module core.stdcpp.typeinfo;
+
+version (GNU)
+    import core.attribute;
+else
+    private enum weak = null;
 
 version (CppRuntime_DigitalMars)
 {
@@ -106,13 +114,18 @@ else version (CppRuntime_Gcc)
 
     extern (C++, "std"):
 
+    abstract
     class type_info
     {
-        void dtor1();                           // consume destructor slot in vtbl[]
-        void dtor2();                           // consume destructor slot in vtbl[]
+    @nogc:
+        @weak
+        ~this() {
+        }
+        @weak
         final const(char)* name()() const nothrow {
             return _name[0] == '*' ? _name + 1 : _name;
         }
+        @weak
         final bool before()(const type_info _arg) const {
             import core.stdc.string : strcmp;
             return (_name[0] == '*' && _arg._name[0] == '*')
@@ -125,22 +138,25 @@ else version (CppRuntime_Gcc)
         bool __do_catch(const type_info, void**, uint) const;
         bool __do_upcast(const __class_type_info, void**) const;
 
+    protected:
         const(char)* _name;
-        this(const(char)*);
+
+        extern(D) this(const(char)* name) { _name = name; }
     }
 
     class bad_cast : exception
     {
-        this();
-        //~this();
-        override const(char)* what() const;
+        extern(D) this() nothrow {}
+        @weak
+        override const(char)* what() const nothrow { return "bad cast"; }
     }
 
     class bad_typeid : exception
     {
-        this();
-        //~this();
-        override const(char)* what() const;
+    @nogc:
+        extern(D) this() nothrow {}
+        @weak
+        override const(char)* what() const nothrow { return "bad typeid"; }
     }
 }
 else

@@ -1,7 +1,7 @@
 /**
  * Collects functions for compile-time floating-point calculations.
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/root/ctfloat.d, root/_ctfloat.d)
@@ -29,8 +29,8 @@ extern (C++) struct CTFloat
         enum yl2x_supported = __traits(compiles, core.math.yl2x(1.0L, 2.0L));
     enum yl2xp1_supported = yl2x_supported;
 
-    static real_t fabs(real_t x);
-    static real_t ldexp(real_t n, int exp);
+    pure static real_t fabs(real_t x);
+    pure static real_t ldexp(real_t n, int exp);
 
     pure @trusted
     static bool isIdentical(real_t a, real_t b);

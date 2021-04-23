@@ -1,7 +1,7 @@
 /**
  * Provides a depth-first statement visitor.
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/sparse.d, _sparse.d)
@@ -14,6 +14,13 @@ module dmd.sapply;
 import dmd.statement;
 import dmd.visitor;
 
+bool walkPostorder(Statement s, StoppableVisitor v)
+{
+    scope PostorderStatementVisitor pv = new PostorderStatementVisitor(v);
+    s.accept(pv);
+    return v.stop;
+}
+
 /**************************************
  * A Statement tree walker that will visit each Statement s in the tree,
  * in depth-first evaluation order, and call fp(s,param) on it.
@@ -24,7 +31,7 @@ import dmd.visitor;
  * It's a bit slower than using virtual functions, but more encapsulated and less brittle.
  * Creating an iterator for this would be much more complex.
  */
-extern (C++) final class PostorderStatementVisitor : StoppableVisitor
+private extern (C++) final class PostorderStatementVisitor : StoppableVisitor
 {
     alias visit = typeof(super).visit;
 public:
@@ -171,9 +178,3 @@ public:
     }
 }
 
-bool walkPostorder(Statement s, StoppableVisitor v)
-{
-    scope PostorderStatementVisitor pv = new PostorderStatementVisitor(v);
-    s.accept(pv);
-    return v.stop;
-}

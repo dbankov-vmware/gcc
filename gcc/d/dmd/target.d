@@ -15,7 +15,7 @@
  * - $(LINK2 https://github.com/ldc-developers/ldc, LDC repository)
  * - $(LINK2 https://github.com/D-Programming-GDC/gcc, GDC repository)
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/target.d, _target.d)
@@ -25,15 +25,26 @@
 
 module dmd.target;
 
-import dmd.dclass;
-import dmd.dscope;
-import dmd.dsymbol;
-import dmd.expression;
-import dmd.globals;
-import dmd.mtype;
-import dmd.tokens : TOK;
-import dmd.root.ctfloat;
-import dmd.root.outbuffer;
+import dmd.globals : Param;
+
+enum CPU
+{
+    x87,
+    mmx,
+    sse,
+    sse2,
+    sse3,
+    ssse3,
+    sse4_1,
+    sse4_2,
+    avx,                // AVX1 instruction set
+    avx2,               // AVX2 instruction set
+    avx512,             // AVX-512 instruction set
+
+    // Special values that don't survive past the command line processing
+    baseline,           // (default) the minimum capability CPU
+    native              // the machine the compiler is being run on
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -47,12 +58,44 @@ import dmd.root.outbuffer;
  */
 extern (C++) struct Target
 {
+    import dmd.dscope : Scope;
+    import dmd.expression : Expression;
+    import dmd.func : FuncDeclaration;
+    import dmd.globals : LINK, Loc, d_int64;
+    import dmd.astenums : TY;
+    import dmd.mtype : Type, TypeFunction, TypeTuple;
+    import dmd.root.ctfloat : real_t;
+    import dmd.statement : Statement;
+
+    /// Bit decoding of the Target.OS
+    enum OS : ubyte
+    {
+        /* These are mutually exclusive; one and only one is set.
+         * Match spelling and casing of corresponding version identifiers
+         */
+        Freestanding = 0,
+        linux        = 1,
+        Windows      = 2,
+        OSX          = 4,
+        OpenBSD      = 8,
+        FreeBSD      = 0x10,
+        Solaris      = 0x20,
+        DragonFlyBSD = 0x40,
+
+        // Combination masks
+        all = linux | Windows | OSX | OpenBSD | FreeBSD | Solaris | DragonFlyBSD,
+        Posix = linux | OSX | OpenBSD | FreeBSD | Solaris | DragonFlyBSD,
+    }
+
+    OS os;
+    ubyte osMajor;
+
     // D ABI
-    uint ptrsize;             /// size of a pointer in bytes
-    uint realsize;            /// size a real consumes in memory
-    uint realpad;             /// padding added to the CPU real size to bring it up to realsize
-    uint realalignsize;       /// alignment for reals
-    uint classinfosize;       /// size of `ClassInfo`
+    ubyte ptrsize;            /// size of a pointer in bytes
+    ubyte realsize;           /// size a real consumes in memory
+    ubyte realpad;            /// padding added to the CPU real size to bring it up to realsize
+    ubyte realalignsize;      /// alignment for reals
+    ubyte classinfosize;      /// size of `ClassInfo`
     ulong maxStaticDataSize;  /// maximum size of static data
 
     /// C ABI
@@ -66,7 +109,16 @@ extern (C++) struct Target
 
     /// Architecture name
     const(char)[] architectureName;
+    CPU cpu = CPU.baseline; // CPU instruction set to target
+    bool is64bit;           // generate 64 bit code for x86_64; true by default for 64 bit dmd
+    bool isLP64;            // pointers are 64 bits
 
+    // Environmental
+    const(char)[] obj_ext;    /// extension for object files
+    const(char)[] lib_ext;    /// extension for static library files
+    const(char)[] dll_ext;    /// extension for dynamic library files
+    bool run_noext;           /// allow -run sources without extensions
+    bool mscoff = false;      // for Win32: write MsCoff object files instead of OMF
     /**
      * Values representing all properties for floating point types
      */
@@ -130,13 +182,6 @@ extern (C++) struct Target
     extern (C++) uint fieldalign(Type type);
 
     /**
-     * Size of the target OS critical section.
-     * Returns:
-     *      size in bytes
-     */
-    extern (C++) uint critsecsize();
-
-    /**
      * Type for the `va_list` type for the target; e.g., required for `_argptr`
      * declarations.
      * NOTE: For Posix/x86_64 this returns the type which will really
@@ -168,7 +213,7 @@ extern (C++) struct Target
      * Returns:
      *      true if the operation is supported or type is not a vector
      */
-    extern (C++) bool isVectorOpSupported(Type type, ubyte op, Type t2 = null);
+    extern (C++) bool isVectorOpSupported(Type type, uint op, Type t2 = null);
 
     /**
      * Default system linkage for the target.
@@ -229,6 +274,24 @@ extern (C++) struct Target
      *  Expression for the requested targetInfo
      */
     extern (C++) Expression getTargetInfo(const(char)* name, const ref Loc loc);
+
+    /**
+     * Params:
+     *  tf = type of function being called
+     * Returns: `true` if the callee invokes destructors for arguments.
+     */
+    extern (C++) bool isCalleeDestroyingArgs(TypeFunction tf);
+
+    /**
+     * Returns true if the implementation for object monitors is always defined
+     * in the D runtime library (rt/monitor_.d).
+     * Params:
+     *      fd = function with `synchronized` storage class.
+     *      fbody = entire function body of `fd`
+     * Returns:
+     *      `false` if the target backend handles synchronizing monitors.
+     */
+    extern (C++) bool libraryObjectMonitors(FuncDeclaration fd, Statement fbody);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -237,9 +300,23 @@ extern (C++) struct Target
  */
 struct TargetC
 {
-    uint longsize;            /// size of a C `long` or `unsigned long` type
-    uint long_doublesize;     /// size of a C `long double`
-    uint criticalSectionSize; /// size of os critical section
+    enum Runtime : ubyte
+    {
+        Unspecified,
+        Bionic,
+        DigitalMars,
+        Glibc,
+        Microsoft,
+        Musl,
+        Newlib,
+        UClibc,
+        WASI,
+    }
+
+    ubyte longsize;           /// size of a C `long` or `unsigned long` type
+    ubyte long_doublesize;    /// size of a C `long double`
+    ubyte wchar_tsize;        /// size of a C `wchar_t` type
+    Runtime runtime;          /// vendor of the C runtime to link against
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -248,9 +325,25 @@ struct TargetC
  */
 struct TargetCPP
 {
+    import dmd.dsymbol : Dsymbol;
+    import dmd.dclass : ClassDeclaration;
+    import dmd.func : FuncDeclaration;
+    import dmd.mtype : Parameter, Type;
+
+    enum Runtime : ubyte
+    {
+        Unspecified,
+        Clang,
+        DigitalMars,
+        Gcc,
+        Microsoft,
+        Sun
+    }
     bool reverseOverloads;    /// set if overloaded functions are grouped and in reverse order (such as in dmc and cl)
     bool exceptions;          /// set if catching C++ exceptions is supported
     bool twoDtorInVtable;     /// target C++ ABI puts deleting and non-deleting destructor into vtable
+    bool wrapDtorInExternD;   /// set if C++ dtors require a D wrapper to be callable from runtime
+    Runtime runtime;          /// vendor of the C++ runtime to link against
 
     /**
      * Mangle the given symbol for C++ ABI.
@@ -269,6 +362,17 @@ struct TargetCPP
      *      string mangling of C++ typeinfo
      */
     extern (C++) const(char)* typeInfoMangle(ClassDeclaration cd);
+
+    /**
+     * Get mangle name of a this-adjusting thunk to the given function
+     * declaration for C++ ABI.
+     * Params:
+     *      fd = function with C++ linkage
+     *      offset = call offset to the vptr
+     * Returns:
+     *      string mangling of C++ thunk, or null if unhandled
+     */
+    extern (C++) const(char)* thunkMangle(FuncDeclaration fd, int offset);
 
     /**
      * Gets vendor-specific type mangling for C++ ABI.
@@ -299,6 +403,16 @@ struct TargetCPP
      *      true if isFundamental was set by function
      */
     extern (C++) bool fundamentalType(const Type t, ref bool isFundamental);
+
+    /**
+     * Get the starting offset position for fields of an `extern(C++)` class
+     * that is derived from the given base class.
+     * Params:
+     *      baseClass = base class with C++ linkage
+     * Returns:
+     *      starting offset to lay out derived class fields
+     */
+    extern (C++) uint derivedClassOffset(ClassDeclaration baseClass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

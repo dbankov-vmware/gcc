@@ -10,12 +10,9 @@
  * Source:    $(DRUNTIMESRC core/thread/osthread.d)
  */
 
-<<<<<<< HEAD
 /* NOTE: This file has been patched from the original DMD distribution to
  * work with the GDC compiler.
  */
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 module core.thread.threadbase;
 
 import core.thread.context;
@@ -319,10 +316,7 @@ class ThreadBase
         // NOTE: This function may not be called until thread_init has
         //       completed.  See thread_suspendAll for more information
         //       on why this might occur.
-<<<<<<< HEAD
         version (GNU) pragma(inline, false);
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         return sm_this;
     }
 
@@ -363,15 +357,11 @@ class ThreadBase
     {
         static void resize(ref ThreadBase[] buf, size_t nlen)
         {
-<<<<<<< HEAD
             import core.exception: onOutOfMemoryError;
 
             auto newBuf = cast(ThreadBase*)realloc(buf.ptr, nlen * size_t.sizeof);
             if (newBuf is null) onOutOfMemoryError();
             buf = newBuf[0 .. nlen];
-=======
-            buf = (cast(ThreadBase*)realloc(buf.ptr, nlen * size_t.sizeof))[0 .. nlen];
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
         }
         auto buf = getAllImpl!resize;
         scope(exit) if (buf.ptr) free(buf.ptr);
@@ -434,13 +424,6 @@ class ThreadBase
         m_curr = &m_main;
     }
 
-<<<<<<< HEAD
-=======
-    private ~this() nothrow @nogc
-    {
-    }
-
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     //
     // Thread entry point.  Invokes the function or delegate passed on
     // construction (if any).
@@ -590,11 +573,9 @@ package(core.thread):
 
     static void initLocks() @nogc
     {
-        _slock[] = typeid(Mutex).initializer[];
-        (cast(Mutex)_slock.ptr).__ctor();
-
-        _criticalRegionLock[] = typeid(Mutex).initializer[];
-        (cast(Mutex)_criticalRegionLock.ptr).__ctor();
+        import core.lifetime : emplace;
+        emplace!Mutex(_slock[]);
+        emplace!Mutex(_criticalRegionLock[]);
     }
 
     static void termLocks() @nogc
@@ -775,15 +756,7 @@ package(core.thread):
 // GC Support Routines
 ///////////////////////////////////////////////////////////////////////////////
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc nothrow);
-=======
-private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc);
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
-=======
-private alias attachThread = externDFunc!("core.thread.osthread.attachThread", ThreadBase function(ThreadBase) @nogc nothrow);
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 extern (C) void _d_monitordelete_nogc(Object h) @nogc;
 
@@ -796,11 +769,7 @@ package void thread_term_tpl(ThreadT, MainThreadStore)(ref MainThreadStore _main
     assert(_mainThreadStore.ptr is cast(void*) ThreadBase.sm_main);
 
     // destruct manually as object.destroy is not @nogc
-<<<<<<< HEAD
     (cast(ThreadT) cast(void*) ThreadBase.sm_main).__dtor();
-=======
-    ThreadBase.sm_main.__dtor();
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     _d_monitordelete_nogc(ThreadBase.sm_main);
     if (typeid(ThreadT).initializer.ptr)
         _mainThreadStore[] = typeid(ThreadT).initializer[];
@@ -1000,15 +969,7 @@ package __gshared bool multiThreadedFlag = false;
 // Used for suspendAll/resumeAll below.
 package __gshared uint suspendDepth = 0;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow @nogc);
-=======
-private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow);
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
-=======
-private alias resume = externDFunc!("core.thread.osthread.resume", void function(ThreadBase) nothrow @nogc);
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 /**
  * Resume all threads but the calling thread for "stop the world" garbage
@@ -1121,11 +1082,8 @@ private void scanAllTypeImpl(scope ScanAllThreadsTypeFn scan, void* curStackTop)
     {
         static if (isStackGrowingDown)
         {
-<<<<<<< HEAD
             assert(c.tstack <= c.bstack, "stack bottom can't be less than top");
 
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             // NOTE: We can't index past the bottom of the stack
             //       so don't do the "+1" if isStackGrowingDown.
             if (c.tstack && c.tstack < c.bstack)
@@ -1133,11 +1091,8 @@ private void scanAllTypeImpl(scope ScanAllThreadsTypeFn scan, void* curStackTop)
         }
         else
         {
-<<<<<<< HEAD
             assert(c.bstack <= c.tstack, "stack top can't be less than bottom");
 
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
             if (c.bstack && c.bstack < c.tstack)
                 scan(ScanType.stack, c.bstack, c.tstack + 1);
         }
@@ -1381,8 +1336,8 @@ package
 
     void initLowlevelThreads() @nogc
     {
-        ll_lock[] = typeid(Mutex).initializer[];
-        lowlevelLock.__ctor();
+        import core.lifetime : emplace;
+        emplace(lowlevelLock());
     }
 
     void termLowlevelThreads() @nogc

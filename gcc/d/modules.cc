@@ -125,7 +125,7 @@ static Module *current_module_decl;
    by both module initialization and dso handlers.  */
 
 static FuncDeclaration *
-get_internal_fn (tree ident, const Prot &prot)
+get_internal_fn (tree ident, const Visibility &visibility)
 {
   Module *mod = current_module_decl;
   const char *name = IDENTIFIER_POINTER (ident);
@@ -144,7 +144,7 @@ get_internal_fn (tree ident, const Prot &prot)
   fd->generated = true;
   fd->loc = Loc (mod->srcfile.toChars (), 1, 0);
   fd->parent = mod;
-  fd->protection = prot;
+  fd->visibility = visibility;
   fd->semanticRun = PASSsemantic3done;
 
   return fd;
@@ -156,7 +156,9 @@ get_internal_fn (tree ident, const Prot &prot)
 static tree
 build_internal_fn (tree ident, tree expr)
 {
-  FuncDeclaration *fd = get_internal_fn (ident, Prot (Prot::private_));
+  Visibility visibility;
+  visibility.kind = Visibility::private_;
+  FuncDeclaration *fd = get_internal_fn (ident, visibility);
   tree decl = get_symbol_decl (fd);
 
   tree old_context = start_function (fd);
@@ -338,8 +340,9 @@ build_dso_cdtor_fn (bool ctor_p)
 	}
     }
    */
-  FuncDeclaration *fd = get_internal_fn (get_identifier (name),
-					 Prot (Prot::public_));
+  Visibility visibility;
+  visibility.kind = Visibility::public_;
+  FuncDeclaration *fd = get_internal_fn (get_identifier (name), visibility);
   tree decl = get_symbol_decl (fd);
 
   TREE_PUBLIC (decl) = 1;

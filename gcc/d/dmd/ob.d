@@ -1,7 +1,7 @@
 /**
  * Flow analysis for Ownership/Borrowing
  *
- * Copyright:   Copyright (C) 1999-2019 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/ob.d, _ob.d)
@@ -22,6 +22,7 @@ import dmd.root.rmem;
 import dmd.aggregate;
 import dmd.apply;
 import dmd.arraytypes;
+import dmd.astenums;
 import dmd.declaration;
 import dmd.dscope;
 import dmd.dsymbol;
@@ -287,7 +288,7 @@ struct PtrVarState
         assert(vars.length == deps.length);
         OutBuffer buf;
         depsToBuf(buf, vars);
-        string t = buf[];
+        auto t = buf[];
         printf("%.*s]\n", cast(int)t.length, t.ptr);
     }
 
@@ -1844,6 +1845,8 @@ void doDataFlowAnalysis(ref ObState obstate)
         {
             if (v.isOut())
                 state = PtrState.Undefined;
+            else if (v.isBorrowedPtr())
+                state = PtrState.Borrowed;
             else
                 state = PtrState.Owner;
         }

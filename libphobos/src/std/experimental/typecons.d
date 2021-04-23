@@ -23,12 +23,7 @@ module std.experimental.typecons;
 import std.meta; // : AliasSeq, allSatisfy;
 import std.traits;
 
-<<<<<<< HEAD
-import std.typecons : Tuple, tuple, Bind, DerivedFunctionType, mixinAll, staticIota,
-       GetOverloadedMethods;
-=======
 import std.typecons : Tuple, tuple, Bind, DerivedFunctionType, GetOverloadedMethods;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 private
 {
@@ -116,12 +111,8 @@ if (Targets.length >= 1 && allSatisfy!(isMutable, Targets))
             else
             {
                 enum foundFunc = findCovariantFunction!(TargetMembers[i], Source, SourceMembers);
-<<<<<<< HEAD
-                version (unittest) {}
-=======
 
                 version (StdUnittest) {}
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
                 else debug
                 {
                     static if (foundFunc == -1)
@@ -300,7 +291,7 @@ if (Targets.length >= 1 && allSatisfy!(isInterface, Targets))
                 }
 
                 import std.conv : to;
-                import std.functional : forward;
+                import core.lifetime : forward;
                 template generateFun(size_t i)
                 {
                     enum name = TargetMembers[i].name;

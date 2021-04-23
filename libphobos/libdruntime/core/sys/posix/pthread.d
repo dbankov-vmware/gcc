@@ -330,10 +330,6 @@ else version (DragonFlyBSD)
     enum PTHREAD_DONE_INIT  = 1;
 
     enum PTHREAD_MUTEX_INITIALIZER              = null;
-<<<<<<< HEAD
-=======
-    //enum PTHREAD_ONCE_INIT                      = { PTHREAD_NEEDS_INIT, NULL };
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     enum PTHREAD_ONCE_INIT                      = pthread_once_t.init;
     enum PTHREAD_COND_INITIALIZER               = null;
     enum PTHREAD_RWLOCK_INITIALIZER             = null;

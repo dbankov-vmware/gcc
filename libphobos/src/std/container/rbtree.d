@@ -1949,8 +1949,6 @@ assert(equal(rbt[], [5]));
     test!byte();
 }
 
-<<<<<<< HEAD
-=======
 // https://issues.dlang.org/show_bug.cgi?id=19626
 @safe pure unittest
 {
@@ -1958,7 +1956,6 @@ assert(equal(rbt[], [5]));
     alias t = RedBlackTree!T;
 }
 
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 import std.range.primitives : isInputRange, ElementType;
 import std.traits : isArray, isSomeString;
 

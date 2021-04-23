@@ -697,7 +697,8 @@ public:
       {
 	/* The break label may actually be some levels up.
 	   eg: on a try/finally wrapping a loop.  */
-	LabelStatement *label = this->func_->searchLabel (s->ident)->statement;
+	LabelDsymbol *sym = this->func_->searchLabel (s->ident, s->loc);
+	LabelStatement *label = sym->statement;
 	gcc_assert (label != NULL);
 	Statement *stmt = label->statement->getRelatedLabeled ();
 	this->do_jump (this->lookup_bc_label (stmt, bc_break));
@@ -713,7 +714,8 @@ public:
   {
     if (s->ident)
       {
-	LabelStatement *label = this->func_->searchLabel (s->ident)->statement;
+	LabelDsymbol *sym = this->func_->searchLabel (s->ident, s->loc);
+	LabelStatement *label = sym->statement;
 	gcc_assert (label != NULL);
 	this->do_jump (this->lookup_bc_label (label->statement,
 					      bc_continue));
@@ -747,7 +749,7 @@ public:
     if (this->is_return_label (s->ident))
       sym = this->func_->returnLabel;
     else
-      sym = this->func_->searchLabel (s->ident);
+      sym = this->func_->searchLabel (s->ident, s->loc);
 
     /* If no label found, there was an error.  */
     tree label = this->define_label (sym->statement, sym->ident);
@@ -931,7 +933,7 @@ public:
 
   void visit (ReturnStatement *s)
   {
-    if (s->exp == NULL || s->exp->type->toBasetype ()->ty == Tvoid)
+    if (s->exp == NULL || s->exp->type->toBasetype ()->ty == TY::Tvoid)
       {
 	/* Return has no value.  */
 	add_stmt (return_expr (NULL_TREE));
@@ -943,7 +945,7 @@ public:
       ? this->func_->tintro->nextOf () : tf->nextOf ();
 
     if ((this->func_->isMain () || this->func_->isCMain ())
-	&& type->toBasetype ()->ty == Tvoid)
+	&& type->toBasetype ()->ty == TY::Tvoid)
       type = Type::tint32;
 
     if (this->func_->shidden)
@@ -1027,7 +1029,7 @@ public:
 
 	add_stmt (return_expr (decl));
       }
-    else if (tf->next->ty == Tnoreturn)
+    else if (tf->next->ty == TY::Tnoreturn)
       {
 	/* Returning an expression that has no value, but has a side effect
 	   that should never return.  */
@@ -1445,7 +1447,7 @@ public:
 
     /* If the function has been annotated with `pragma(inline)', then mark
        the asm expression as being inline as well.  */
-    if (this->func_->inlining == PINLINEalways)
+    if (this->func_->inlining == PINLINE::always)
       ASM_INLINE_P (exp) = 1;
 
     add_stmt (exp);

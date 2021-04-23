@@ -8,7 +8,7 @@
  * - `invariant`
  * - `unittest`
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/func.d, _func.d)
@@ -22,6 +22,7 @@ import core.stdc.stdio;
 import core.stdc.string;
 import dmd.aggregate;
 import dmd.arraytypes;
+import dmd.astenums;
 import dmd.blockexit;
 import dmd.gluelayer;
 import dmd.dclass;
@@ -57,7 +58,7 @@ import dmd.tokens;
 import dmd.visitor;
 
 /// Inline Status
-enum ILS : int
+enum ILS : ubyte
 {
     uninitialized,       /// not computed yet
     no,                  /// cannot inline
@@ -374,7 +375,7 @@ extern (C++) class FuncDeclaration : Declaration
         return new FuncDeclaration(loc, endloc, id, storage_class, type);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override FuncDeclaration syntaxCopy(Dsymbol s)
     {
         //printf("FuncDeclaration::syntaxCopy('%s')\n", toChars());
         FuncDeclaration f = s ? cast(FuncDeclaration)s : new FuncDeclaration(loc, endloc, ident, storage_class, type.syntaxCopy());
@@ -387,10 +388,12 @@ extern (C++) class FuncDeclaration : Declaration
     /****************************************************
      * Resolve forward reference of function signature -
      * parameter types, return type, and attributes.
-     * Returns false if any errors exist in the signature.
+     * Returns:
+     *  false if any errors exist in the signature.
      */
     final bool functionSemantic()
     {
+        //printf("functionSemantic() %p %s\n", this, toChars());
         if (!_scope)
             return !errors;
 
@@ -1061,9 +1064,16 @@ extern (C++) class FuncDeclaration : Declaration
     }
 
     /********************************
-     * Labels are in a separate scope, one per function.
+     * Searches for a label with the given identifier. This function will insert a new
+     * `LabelDsymbol` into `labtab` if it does not contain a mapping for `ident`.
+     *
+     * Params:
+     *   ident = identifier of the requested label
+     *   loc   = location used when creating a new `LabelDsymbol`
+     *
+     * Returns: the `LabelDsymbol` for `ident`
      */
-    final LabelDsymbol searchLabel(Identifier ident)
+    final LabelDsymbol searchLabel(Identifier ident, const ref Loc loc = Loc.initial)
     {
         Dsymbol s;
         if (!labtab)
@@ -1072,7 +1082,7 @@ extern (C++) class FuncDeclaration : Declaration
         s = labtab.lookup(ident);
         if (!s)
         {
-            s = new LabelDsymbol(ident);
+            s = new LabelDsymbol(ident, loc);
             labtab.insert(s);
         }
         return cast(LabelDsymbol)s;
@@ -1185,7 +1195,7 @@ extern (C++) class FuncDeclaration : Declaration
     final const(char)* toFullSignature()
     {
         OutBuffer buf;
-        functionToBufferWithIdent(type.toTypeFunction(), &buf, toChars());
+        functionToBufferWithIdent(type.toTypeFunction(), &buf, toChars(), isStatic);
         return buf.extractChars();
     }
 
@@ -1226,14 +1236,14 @@ extern (C++) class FuncDeclaration : Declaration
 
     override final bool isExport() const
     {
-        return protection.kind == Prot.Kind.export_;
+        return visibility.kind == Visibility.Kind.export_;
     }
 
     override final bool isImportedSymbol() const
     {
         //printf("isImportedSymbol()\n");
-        //printf("protection = %d\n", protection);
-        return (protection.kind == Prot.Kind.export_) && !fbody;
+        //printf("protection = %d\n", visibility);
+        return (visibility.kind == Visibility.Kind.export_) && !fbody;
     }
 
     override final bool isCodeseg() const pure nothrow @nogc @safe
@@ -1326,7 +1336,7 @@ extern (C++) class FuncDeclaration : Declaration
             flags |= FUNCFLAG.returnInprocess;
 
         // Initialize for inferring STC.scope_
-        if (global.params.vsafe)
+        if (global.params.useDIP1000 == FeatureState.enabled)
             flags |= FUNCFLAG.inferScope;
     }
 
@@ -1708,17 +1718,17 @@ extern (C++) class FuncDeclaration : Declaration
 
         if (!isMember || !p.isClassDeclaration)
             return false;
-                                                             // https://issues.dlang.org/show_bug.cgi?id=19654
-        if (p.isClassDeclaration.classKind == ClassKind.objc && !p.isInterfaceDeclaration)
+
+        if (p.isClassDeclaration.classKind == ClassKind.objc)
             return .objc.isVirtual(this);
 
         version (none)
         {
             printf("FuncDeclaration::isVirtual(%s)\n", toChars());
-            printf("isMember:%p isStatic:%d private:%d ctor:%d !Dlinkage:%d\n", isMember(), isStatic(), protection == Prot.Kind.private_, isCtorDeclaration(), linkage != LINK.d);
-            printf("result is %d\n", isMember() && !(isStatic() || protection == Prot.Kind.private_ || protection == Prot.Kind.package_) && p.isClassDeclaration() && !(p.isInterfaceDeclaration() && isFinalFunc()));
+            printf("isMember:%p isStatic:%d private:%d ctor:%d !Dlinkage:%d\n", isMember(), isStatic(), visibility == Visibility.Kind.private_, isCtorDeclaration(), linkage != LINK.d);
+            printf("result is %d\n", isMember() && !(isStatic() || visibility == Visibility.Kind.private_ || visibility == Visibility.Kind.package_) && p.isClassDeclaration() && !(p.isInterfaceDeclaration() && isFinalFunc()));
         }
-        return !(isStatic() || protection.kind == Prot.Kind.private_ || protection.kind == Prot.Kind.package_) && !(p.isInterfaceDeclaration() && isFinalFunc());
+        return !(isStatic() || visibility.kind == Visibility.Kind.private_ || visibility.kind == Visibility.Kind.package_) && !(p.isInterfaceDeclaration() && isFinalFunc());
     }
 
     final bool isFinalFunc() const
@@ -1747,14 +1757,14 @@ extern (C++) class FuncDeclaration : Declaration
     {
         auto ad = isThis();
         ClassDeclaration cd = ad ? ad.isClassDeclaration() : null;
-        return (ad && !(cd && cd.isCPPclass()) && global.params.useInvariants == CHECKENABLE.on && (protection.kind == Prot.Kind.protected_ || protection.kind == Prot.Kind.public_ || protection.kind == Prot.Kind.export_) && !naked);
+        return (ad && !(cd && cd.isCPPclass()) && global.params.useInvariants == CHECKENABLE.on && (visibility.kind == Visibility.Kind.protected_ || visibility.kind == Visibility.Kind.public_ || visibility.kind == Visibility.Kind.export_) && !naked);
     }
 
     bool addPostInvariant()
     {
         auto ad = isThis();
         ClassDeclaration cd = ad ? ad.isClassDeclaration() : null;
-        return (ad && !(cd && cd.isCPPclass()) && ad.inv && global.params.useInvariants == CHECKENABLE.on && (protection.kind == Prot.Kind.protected_ || protection.kind == Prot.Kind.public_ || protection.kind == Prot.Kind.export_) && !naked);
+        return (ad && !(cd && cd.isCPPclass()) && ad.inv && global.params.useInvariants == CHECKENABLE.on && (visibility.kind == Visibility.Kind.protected_ || visibility.kind == Visibility.Kind.public_ || visibility.kind == Visibility.Kind.export_) && !naked);
     }
 
     override const(char)* kind() const
@@ -2500,7 +2510,8 @@ extern (C++) class FuncDeclaration : Declaration
         if (type)
         {
             TypeFunction fdtype = type.isTypeFunction();
-            return fdtype.parameterList;
+            if (fdtype) // Could also be TypeError
+                return fdtype.parameterList;
         }
 
         return ParameterList(null, VarArg.none);
@@ -2538,7 +2549,7 @@ extern (C++) class FuncDeclaration : Declaration
         {
             tf = new TypeFunction(ParameterList(fparams), treturn, LINK.c, stc);
             fd = new FuncDeclaration(Loc.initial, Loc.initial, id, STC.static_, tf);
-            fd.protection = Prot(Prot.Kind.public_);
+            fd.visibility = Visibility(Visibility.Kind.public_);
             fd.linkage = LINK.c;
 
             st.insert(fd);
@@ -2581,19 +2592,16 @@ extern (C++) class FuncDeclaration : Declaration
      * using NRVO is possible.
      *
      * Returns:
-     *      true if the result cannot be returned by hidden reference.
+     *      `false` if the result cannot be returned by hidden reference.
      */
-    final bool checkNrvo()
+    final bool checkNRVO()
     {
-        if (!nrvo_can)
-            return true;
-
-        if (returns is null)
-            return true;
+        if (!nrvo_can || returns is null)
+            return false;
 
         auto tf = type.toTypeFunction();
         if (tf.isref)
-            return true;
+            return false;
 
         foreach (rs; *returns)
         {
@@ -2601,24 +2609,23 @@ extern (C++) class FuncDeclaration : Declaration
             {
                 auto v = ve.var.isVarDeclaration();
                 if (!v || v.isOut() || v.isRef())
-                    return true;
+                    return false;
                 else if (nrvo_var is null)
                 {
-                    if (!v.isDataseg() && !v.isParameter() && v.toParent2() == this)
-                    {
-                        //printf("Setting nrvo to %s\n", v.toChars());
-                        nrvo_var = v;
-                    }
-                    else
-                        return true;
+                    // Variables in the data segment (e.g. globals, TLS or not),
+                    // parameters and closure variables cannot be NRVOed.
+                    if (v.isDataseg() || v.isParameter() || v.toParent2() != this)
+                        return false;
+                    //printf("Setting nrvo to %s\n", v.toChars());
+                    nrvo_var = v;
                 }
                 else if (nrvo_var != v)
-                    return true;
+                    return false;
             }
             else //if (!exp.isLvalue())    // keep NRVO-ability
-                return true;
+                return false;
         }
-        return false;
+        return true;
     }
 
     override final inout(FuncDeclaration) isFuncDeclaration() inout
@@ -2710,30 +2717,22 @@ extern (D) int overloadApply(Dsymbol fstart, scope int delegate(Dsymbol) dg, Sco
         import dmd.access : checkSymbolAccess;
         if (auto od = d.isOverDeclaration())
         {
-            if (od.hasOverloads)
+            /* The scope is needed here to check whether a function in
+               an overload set was added by means of a private alias (or a
+               selective import). If the scope where the alias is created
+               is imported somewhere, the overload set is visible, but the private
+               alias is not.
+            */
+            if (sc)
             {
-                /* The scope is needed here to check whether a function in
-                   an overload set was added by means of a private alias (or a
-                   selective import). If the scope where the alias is created
-                   is imported somewhere, the overload set is visible, but the private
-                   alias is not.
-                 */
-                if (sc)
+                if (checkSymbolAccess(sc, od))
                 {
-                    if (checkSymbolAccess(sc, od))
-                    {
-                        if (int r = overloadApply(od.aliassym, dg, sc))
-                            return r;
-                    }
+                    if (int r = overloadApply(od.aliassym, dg, sc))
+                        return r;
                 }
-                else if (int r = overloadApply(od.aliassym, dg, sc))
-                    return r;
             }
-            else
-            {
-                if (int r = dg(od.aliassym))
-                    return r;
-            }
+            else if (int r = overloadApply(od.aliassym, dg, sc))
+                return r;
             next = od.overnext;
         }
         else if (auto fa = d.isFuncAliasDeclaration())
@@ -2890,7 +2889,8 @@ enum FuncResolveFlag : ubyte
 {
     standard = 0,       /// issue error messages, solve the call.
     quiet = 1,          /// do not issue error message on no match, just return `null`.
-    overloadOnly = 2,   /// only resolve overloads.
+    overloadOnly = 2,   /// only resolve overloads, i.e. do not issue error on ambiguous
+                        /// matches and need explicit this.
 }
 
 /*******************************************
@@ -2956,7 +2956,7 @@ FuncDeclaration resolveFuncCall(const ref Loc loc, Scope* sc, Dsymbol s,
     /* Failed to find a best match.
      * Do nothing or print error.
      */
-    if (m.last <= MATCH.nomatch)
+    if (m.last == MATCH.nomatch)
     {
         // error was caused on matched function, not on the matching itself,
         // so return the function to produce a better diagnostic
@@ -3063,14 +3063,13 @@ FuncDeclaration resolveFuncCall(const ref Loc loc, Scope* sc, Dsymbol s,
             return null;
         }
 
-        auto fullFdPretty = fd.toPrettyChars();
         .error(loc, "%smethod `%s` is not callable using a %sobject",
-               funcBuf.peekChars(), fullFdPretty, thisBuf.peekChars());
+               funcBuf.peekChars(), fd.toPrettyChars(), thisBuf.peekChars());
 
         if (mismatches.isNotShared)
-            .errorSupplemental(loc, "Consider adding `shared` to %s", fullFdPretty);
+            .errorSupplemental(fd.loc, "Consider adding `shared` here");
         else if (mismatches.isMutable)
-            .errorSupplemental(loc, "Consider adding `const` or `inout` to %s", fullFdPretty);
+            .errorSupplemental(fd.loc, "Consider adding `const` or `inout` here");
         return null;
     }
 
@@ -3454,13 +3453,14 @@ extern (C++) final class FuncLiteralDeclaration : FuncDeclaration
         //printf("FuncLiteralDeclaration() id = '%s', type = '%s'\n", this.ident.toChars(), type.toChars());
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override FuncLiteralDeclaration syntaxCopy(Dsymbol s)
     {
         //printf("FuncLiteralDeclaration::syntaxCopy('%s')\n", toChars());
         assert(!s);
         auto f = new FuncLiteralDeclaration(loc, endloc, type.syntaxCopy(), tok, fes, ident);
         f.treq = treq; // don't need to copy
-        return FuncDeclaration.syntaxCopy(f);
+        FuncDeclaration.syntaxCopy(f);
+        return f;
     }
 
     override bool isNested() const
@@ -3581,11 +3581,12 @@ extern (C++) final class CtorDeclaration : FuncDeclaration
         //printf("CtorDeclaration(loc = %s) %s\n", loc.toChars(), toChars());
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override CtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto f = new CtorDeclaration(loc, endloc, storage_class, type.syntaxCopy());
-        return FuncDeclaration.syntaxCopy(f);
+        FuncDeclaration.syntaxCopy(f);
+        return f;
     }
 
     override const(char)* kind() const
@@ -3633,11 +3634,12 @@ extern (C++) final class PostBlitDeclaration : FuncDeclaration
         super(loc, endloc, id, stc, null);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override PostBlitDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto dd = new PostBlitDeclaration(loc, endloc, storage_class, ident);
-        return FuncDeclaration.syntaxCopy(dd);
+        FuncDeclaration.syntaxCopy(dd);
+        return dd;
     }
 
     override bool isVirtual() const
@@ -3685,11 +3687,12 @@ extern (C++) final class DtorDeclaration : FuncDeclaration
         super(loc, endloc, id, stc, null);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override DtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto dd = new DtorDeclaration(loc, endloc, storage_class, ident);
-        return FuncDeclaration.syntaxCopy(dd);
+        FuncDeclaration.syntaxCopy(dd);
+        return dd;
     }
 
     override const(char)* kind() const
@@ -3749,11 +3752,12 @@ extern (C++) class StaticCtorDeclaration : FuncDeclaration
         super(loc, endloc, Identifier.generateIdWithLoc(name, loc), STC.static_ | stc, null);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override StaticCtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto scd = new StaticCtorDeclaration(loc, endloc, storage_class);
-        return FuncDeclaration.syntaxCopy(scd);
+        FuncDeclaration.syntaxCopy(scd);
+        return scd;
     }
 
     override final inout(AggregateDeclaration) isThis() inout
@@ -3801,11 +3805,12 @@ extern (C++) final class SharedStaticCtorDeclaration : StaticCtorDeclaration
         super(loc, endloc, "_sharedStaticCtor", stc);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override SharedStaticCtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto scd = new SharedStaticCtorDeclaration(loc, endloc, storage_class);
-        return FuncDeclaration.syntaxCopy(scd);
+        FuncDeclaration.syntaxCopy(scd);
+        return scd;
     }
 
     override inout(SharedStaticCtorDeclaration) isSharedStaticCtorDeclaration() inout
@@ -3835,11 +3840,12 @@ extern (C++) class StaticDtorDeclaration : FuncDeclaration
         super(loc, endloc, Identifier.generateIdWithLoc(name, loc), STC.static_ | stc, null);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override StaticDtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto sdd = new StaticDtorDeclaration(loc, endloc, storage_class);
-        return FuncDeclaration.syntaxCopy(sdd);
+        FuncDeclaration.syntaxCopy(sdd);
+        return sdd;
     }
 
     override final inout(AggregateDeclaration) isThis() inout
@@ -3887,11 +3893,12 @@ extern (C++) final class SharedStaticDtorDeclaration : StaticDtorDeclaration
         super(loc, endloc, "_sharedStaticDtor", stc);
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override SharedStaticDtorDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto sdd = new SharedStaticDtorDeclaration(loc, endloc, storage_class);
-        return FuncDeclaration.syntaxCopy(sdd);
+        FuncDeclaration.syntaxCopy(sdd);
+        return sdd;
     }
 
     override inout(SharedStaticDtorDeclaration) isSharedStaticDtorDeclaration() inout
@@ -3915,11 +3922,12 @@ extern (C++) final class InvariantDeclaration : FuncDeclaration
         this.fbody = fbody;
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override InvariantDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto id = new InvariantDeclaration(loc, endloc, storage_class, null, null);
-        return FuncDeclaration.syntaxCopy(id);
+        FuncDeclaration.syntaxCopy(id);
+        return id;
     }
 
     override bool isVirtual() const
@@ -3964,11 +3972,12 @@ extern (C++) final class UnitTestDeclaration : FuncDeclaration
         this.codedoc = codedoc;
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override UnitTestDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto utd = new UnitTestDeclaration(loc, endloc, storage_class, codedoc);
-        return FuncDeclaration.syntaxCopy(utd);
+        FuncDeclaration.syntaxCopy(utd);
+        return utd;
     }
 
     override inout(AggregateDeclaration) isThis() inout
@@ -4014,12 +4023,13 @@ extern (C++) final class NewDeclaration : FuncDeclaration
         this.parameterList = parameterList;
     }
 
-    override Dsymbol syntaxCopy(Dsymbol s)
+    override NewDeclaration syntaxCopy(Dsymbol s)
     {
         assert(!s);
         auto parameterList = parameterList.syntaxCopy();
         auto f = new NewDeclaration(loc, endloc, storage_class, parameterList);
-        return FuncDeclaration.syntaxCopy(f);
+        FuncDeclaration.syntaxCopy(f);
+        return f;
     }
 
     override const(char)* kind() const

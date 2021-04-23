@@ -1,6 +1,4 @@
 // https://issues.dlang.org/show_bug.cgi?id=9701
-<<<<<<< HEAD
-=======
 /*
 TEST_OUTPUT:
 ---
@@ -8,7 +6,6 @@ compilable/test9701.d(68): Deprecation: enum member `test9701.Enum.value7` is de
 compilable/test9701.d(68): Deprecation: enum member `test9701.Enum.value8` is deprecated - message
 ---
 */
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 template AliasSeq(TList...)
 {
@@ -66,9 +63,6 @@ static assert(__traits(getAttributes, value3) == AliasSeq!("uda0", uda4));
 static assert(__traits(getAttributes, value4) == AliasSeq!("uda0", uda5, uda6));
 static assert(__traits(getAttributes, value5) == AliasSeq!("uda0", "uda7", uda8));
 static assert(__traits(getAttributes, value6) == AliasSeq!("uda0", uda9, "uda10"));
-<<<<<<< HEAD
-=======
 
 // Test that messages are correctly displayed
 static assert(Enum.value7 != Enum.value8);
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f

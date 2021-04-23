@@ -10,6 +10,9 @@
  * Source:    $(DRUNTIMESRC core/stdcpp/_exception.d)
  */
 
+/* NOTE: This file has been patched from the original DMD distribution to
+ * work with the GDC compiler.
+ */
 module core.stdcpp.exception;
 
 import core.stdcpp.xutility : __cplusplus, CppStdRevision;
@@ -20,6 +23,11 @@ version (CppRuntime_Gcc)
     version = GenericBaseException;
 version (CppRuntime_Clang)
     version = GenericBaseException;
+
+version (GNU)
+    import core.attribute;
+else
+    private enum weak = null;
 
 extern (C++, "std"):
 @nogc:
@@ -68,15 +76,17 @@ version (GenericBaseException)
     {
     @nogc:
         ///
-        this() nothrow {}
+        extern(D) this() nothrow {}
         ///
+        @weak
         ~this() nothrow {} // HACK: this should extern, but then we have link errors!
 
         ///
+        @weak
         const(char)* what() const nothrow { return "unknown"; } // HACK: this should extern, but then we have link errors!
 
     protected:
-        this(const(char)*, int = 1) nothrow { this(); } // compat with MS derived classes
+        extern(D) this(const(char)*, int = 1) nothrow { this(); } // compat with MS derived classes
     }
 }
 else version (CppRuntime_Microsoft)
@@ -86,17 +96,20 @@ else version (CppRuntime_Microsoft)
     {
     @nogc:
         ///
-        this(const(char)* message = "unknown", int = 1) nothrow { msg = message; }
+        extern(D) this(const(char)* message = "unknown", int = 1) nothrow { msg = message; }
         ///
-        extern(D) ~this() nothrow {}
+        @weak
+        ~this() nothrow {}
 
         ///
-        extern(D) const(char)* what() const nothrow { return msg != null ? msg : "unknown exception"; }
+        @weak
+        const(char)* what() const nothrow { return msg != null ? msg : "unknown exception"; }
 
         // TODO: do we want this? exceptions are classes... ref types.
 //        final ref exception opAssign(ref const(exception) e) nothrow { msg = e.msg; return this; }
 
     protected:
+        @weak
         void _Doraise() const {}
 
     protected:
@@ -111,6 +124,15 @@ else
 class bad_exception : exception
 {
 @nogc:
+    extern(D) private static immutable msg = "bad exception";
+
     ///
     this(const(char)* message = "bad exception") { super(message); }
+
+    version (GenericBaseException)
+    {
+        ///
+        @weak
+        override const(char)* what() const nothrow { return msg.ptr; }
+    }
 }

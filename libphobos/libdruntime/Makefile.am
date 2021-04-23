@@ -19,7 +19,8 @@
 include $(top_srcdir)/d_rules.am
 
 # Make sure GDC can find libdruntime include files
-D_EXTRA_DFLAGS=-fpreview=dip1000 -nostdinc -I $(srcdir) -I .
+D_EXTRA_DFLAGS=-fpreview=dip1000 -fpreview=fieldwise -fpreview=dtorfields \
+	       -nostdinc -I $(srcdir) -I .
 
 # D flags for compilation
 AM_DFLAGS= \
@@ -166,32 +167,34 @@ install-data-local:
 DRUNTIME_CSOURCES = core/stdc/errno_.c
 
 DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
-	core/checkedint.d core/cpuid.d core/demangle.d core/exception.d \
-<<<<<<< HEAD
-	core/internal/abort.d core/internal/arrayop.d \
-	core/internal/attributes.d core/internal/convert.d \
-	core/internal/hash.d core/internal/spinlock.d core/internal/string.d \
-	core/internal/traits.d core/math.d core/memory.d core/runtime.d \
-	core/simd.d core/stdc/assert_.d core/stdc/complex.d core/stdc/config.d \
-=======
-	core/gc/config.d core/gc/gcinterface.d core/gc/registry.d \
-	core/internal/abort.d core/internal/array/appending.d \
-	core/internal/array/capacity.d core/internal/array/casting.d \
-	core/internal/array/comparison.d core/internal/array/concatenation.d \
-	core/internal/array/construction.d core/internal/array/equality.d \
-	core/internal/array/operations.d core/internal/array/utils.d \
-	core/internal/atomic.d core/internal/attributes.d \
-	core/internal/convert.d core/internal/dassert.d \
-	core/internal/destruction.d core/internal/elf/dl.d \
-	core/internal/elf/io.d core/internal/entrypoint.d \
-	core/internal/execinfo.d core/internal/hash.d core/internal/lifetime.d \
+	core/builtins.d core/checkedint.d core/cpuid.d core/demangle.d \
+	core/exception.d core/gc/config.d core/gc/gcinterface.d \
+	core/gc/registry.d core/internal/abort.d \
+	core/internal/array/appending.d core/internal/array/capacity.d \
+	core/internal/array/casting.d core/internal/array/comparison.d \
+	core/internal/array/concatenation.d core/internal/array/construction.d \
+	core/internal/array/equality.d core/internal/array/operations.d \
+	core/internal/array/utils.d core/internal/atomic.d \
+	core/internal/attributes.d core/internal/backtrace/dwarf.d \
+	core/internal/backtrace/elf.d core/internal/backtrace/handler.d \
+	core/internal/backtrace/libunwind.d core/internal/backtrace/macho.d \
+	core/internal/backtrace/unwind.d core/internal/container/array.d \
+	core/internal/container/common.d core/internal/container/hashtab.d \
+	core/internal/container/treap.d core/internal/convert.d \
+	core/internal/dassert.d core/internal/destruction.d \
+	core/internal/elf/dl.d core/internal/elf/io.d \
+	core/internal/entrypoint.d core/internal/execinfo.d \
+	core/internal/gc/bits.d core/internal/gc/impl/conservative/gc.d \
+	core/internal/gc/impl/manual/gc.d core/internal/gc/impl/proto/gc.d \
+	core/internal/gc/os.d core/internal/gc/pooltable.d \
+	core/internal/gc/proxy.d core/internal/hash.d core/internal/lifetime.d \
 	core/internal/moving.d core/internal/parseoptions.d \
-	core/internal/postblit.d core/internal/spinlock.d \
-	core/internal/string.d core/internal/switch_.d core/internal/traits.d \
-	core/internal/utf.d core/internal/util/array.d core/lifetime.d \
+	core/internal/postblit.d core/internal/qsort.d \
+	core/internal/spinlock.d core/internal/string.d \
+	core/internal/switch_.d core/internal/traits.d core/internal/utf.d \
+	core/internal/util/array.d core/internal/util/math.d core/lifetime.d \
 	core/math.d core/memory.d core/runtime.d core/simd.d \
 	core/stdc/assert_.d core/stdc/complex.d core/stdc/config.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/stdc/ctype.d core/stdc/errno.d core/stdc/fenv.d \
 	core/stdc/float_.d core/stdc/inttypes.d core/stdc/limits.d \
 	core/stdc/locale.d core/stdc/math.d core/stdc/signal.d \
@@ -199,69 +202,22 @@ DRUNTIME_DSOURCES = core/atomic.d core/attribute.d core/bitop.d \
 	core/stdc/stdio.d core/stdc/stdlib.d core/stdc/string.d \
 	core/stdc/tgmath.d core/stdc/time.d core/stdc/wchar_.d \
 	core/stdc/wctype.d core/sync/barrier.d core/sync/condition.d \
-<<<<<<< HEAD
-	core/sync/config.d core/sync/exception.d core/sync/mutex.d \
-	core/sync/rwmutex.d core/sync/semaphore.d core/thread/context.d \
-	core/thread/fiber.d core/thread/osthread.d core/thread/package.d \
-	core/thread/threadbase.d core/thread/threadgroup.d core/thread/types.d \
-	core/time.d core/vararg.d core/volatile.d gc/bits.d gc/config.d \
-	gc/gcinterface.d gc/impl/conservative/gc.d gc/impl/manual/gc.d gc/os.d \
-	gc/pooltable.d gc/proxy.d gcc/attribute.d gcc/attributes.d \
-	gcc/backtrace.d gcc/builtins.d gcc/deh.d gcc/emutls.d gcc/gthread.d \
-	gcc/sections/common.d gcc/sections/elf.d gcc/sections/macho.d \
-	gcc/sections/package.d gcc/sections/pecoff.d gcc/unwind/arm.d \
-=======
 	core/sync/config.d core/sync/event.d core/sync/exception.d \
 	core/sync/mutex.d core/sync/rwmutex.d core/sync/semaphore.d \
 	core/thread/context.d core/thread/fiber.d core/thread/osthread.d \
 	core/thread/package.d core/thread/threadbase.d \
 	core/thread/threadgroup.d core/thread/types.d core/time.d \
-	core/vararg.d core/volatile.d gc/bits.d gc/impl/conservative/gc.d \
-	gc/impl/manual/gc.d gc/impl/proto/gc.d gc/os.d gc/pooltable.d \
-	gc/proxy.d gcc/attribute.d gcc/backtrace.d gcc/builtins.d gcc/deh.d \
-	gcc/emutls.d gcc/gthread.d gcc/sections/android.d \
-	gcc/sections/elf_shared.d gcc/sections/osx.d gcc/sections/package.d \
-	gcc/sections/win32.d gcc/sections/win64.d gcc/unwind/arm.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+	core/vararg.d core/volatile.d gcc/attribute.d gcc/attributes.d \
+	gcc/backtrace.d gcc/builtins.d gcc/deh.d gcc/emutls.d gcc/gthread.d \
+	gcc/sections/common.d gcc/sections/elf.d gcc/sections/macho.d \
+	gcc/sections/package.d gcc/sections/pecoff.d gcc/unwind/arm.d \
 	gcc/unwind/arm_common.d gcc/unwind/c6x.d gcc/unwind/generic.d \
 	gcc/unwind/package.d gcc/unwind/pe.d object.d rt/aApply.d rt/aApplyR.d \
-<<<<<<< HEAD
 	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/cast_.d \
 	rt/config.d rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d \
 	rt/invariant.d rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d \
-<<<<<<< HEAD
-	rt/obj.d rt/qsort.d rt/sections.d rt/switch_.d rt/tlsgc.d \
-	rt/util/array.d rt/util/container/array.d rt/util/container/common.d \
-=======
-	rt/profilegc.d rt/qsort.d rt/sections.d rt/tlsgc.d \
-	rt/typeinfo/ti_Acdouble.d rt/typeinfo/ti_Acfloat.d \
-	rt/typeinfo/ti_Acreal.d rt/typeinfo/ti_Adouble.d \
-	rt/typeinfo/ti_Afloat.d rt/typeinfo/ti_Ag.d rt/typeinfo/ti_Aint.d \
-	rt/typeinfo/ti_Along.d rt/typeinfo/ti_Areal.d rt/typeinfo/ti_Ashort.d \
-	rt/typeinfo/ti_C.d rt/typeinfo/ti_byte.d rt/typeinfo/ti_cdouble.d \
-	rt/typeinfo/ti_cent.d rt/typeinfo/ti_cfloat.d rt/typeinfo/ti_char.d \
-	rt/typeinfo/ti_creal.d rt/typeinfo/ti_dchar.d \
-	rt/typeinfo/ti_delegate.d rt/typeinfo/ti_double.d \
-	rt/typeinfo/ti_float.d rt/typeinfo/ti_idouble.d \
-	rt/typeinfo/ti_ifloat.d rt/typeinfo/ti_int.d rt/typeinfo/ti_ireal.d \
-	rt/typeinfo/ti_long.d rt/typeinfo/ti_n.d rt/typeinfo/ti_ptr.d \
-	rt/typeinfo/ti_real.d rt/typeinfo/ti_short.d rt/typeinfo/ti_ubyte.d \
-	rt/typeinfo/ti_ucent.d rt/typeinfo/ti_uint.d rt/typeinfo/ti_ulong.d \
-	rt/typeinfo/ti_ushort.d rt/typeinfo/ti_void.d rt/typeinfo/ti_wchar.d \
-	rt/util/container/array.d rt/util/container/common.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
-	rt/util/container/hashtab.d rt/util/container/treap.d rt/util/random.d \
-	rt/util/typeinfo.d rt/util/utility.d
-=======
-	rt/aaA.d rt/adi.d rt/arrayassign.d rt/arraycat.d rt/backtrace/dwarf.d \
-	rt/backtrace/elf.d rt/backtrace/macho.d rt/cast_.d rt/config.d \
-	rt/critical_.d rt/deh.d rt/dmain2.d rt/ehalloc.d rt/invariant.d \
-	rt/lifetime.d rt/memory.d rt/minfo.d rt/monitor_.d rt/profilegc.d \
-	rt/qsort.d rt/sections.d rt/tlsgc.d rt/util/container/array.d \
-	rt/util/container/common.d rt/util/container/hashtab.d \
-	rt/util/container/treap.d rt/util/random.d rt/util/typeinfo.d \
+	rt/profilegc.d rt/sections.d rt/tlsgc.d rt/util/typeinfo.d \
 	rt/util/utility.d
->>>>>>> 3ebd2877d6d... Import dmd v2.094.0: dmd 3a55c54a8, druntime 67958c0f, phobos f85ca8dbe
 
 DRUNTIME_DSOURCES_STDCXX = core/stdcpp/allocator.d core/stdcpp/array.d \
 	core/stdcpp/exception.d core/stdcpp/memory.d core/stdcpp/new_.d \
@@ -270,7 +226,6 @@ DRUNTIME_DSOURCES_STDCXX = core/stdcpp/allocator.d core/stdcpp/array.d \
 	core/stdcpp/vector.d core/stdcpp/xutility.d
 
 DRUNTIME_DSOURCES_BIONIC = core/sys/bionic/err.d \
-<<<<<<< HEAD
 	core/sys/bionic/fcntl.d core/sys/bionic/stdlib.d \
 	core/sys/bionic/string.d core/sys/bionic/unistd.d
 
@@ -284,19 +239,6 @@ DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/config.d \
 	core/sys/darwin/mach/semaphore.d core/sys/darwin/mach/stab.d \
 	core/sys/darwin/mach/thread_act.d core/sys/darwin/netinet/in_.d \
 	core/sys/darwin/pthread.d core/sys/darwin/stdlib.d \
-=======
-	core/sys/bionic/fcntl.d core/sys/bionic/string.d \
-	core/sys/bionic/unistd.d
-
-DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/crt_externs.d \
-	core/sys/darwin/dlfcn.d core/sys/darwin/err.d \
-	core/sys/darwin/execinfo.d core/sys/darwin/mach/dyld.d \
-	core/sys/darwin/mach/getsect.d core/sys/darwin/mach/kern_return.d \
-	core/sys/darwin/mach/loader.d core/sys/darwin/mach/nlist.d \
-	core/sys/darwin/mach/port.d core/sys/darwin/mach/semaphore.d \
-	core/sys/darwin/mach/stab.d core/sys/darwin/mach/thread_act.d \
-	core/sys/darwin/netinet/in_.d core/sys/darwin/pthread.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/darwin/string.d core/sys/darwin/sys/attr.d \
 	core/sys/darwin/sys/cdefs.d core/sys/darwin/sys/event.d \
 	core/sys/darwin/sys/mman.d core/sys/darwin/sys/sysctl.d
@@ -304,12 +246,8 @@ DRUNTIME_DSOURCES_DARWIN = core/sys/darwin/crt_externs.d \
 DRUNTIME_DSOURCES_DRAGONFLYBSD = core/sys/dragonflybsd/dlfcn.d \
 	core/sys/dragonflybsd/err.d core/sys/dragonflybsd/execinfo.d \
 	core/sys/dragonflybsd/netinet/in_.d core/sys/dragonflybsd/pthread_np.d \
-<<<<<<< HEAD
 	core/sys/dragonflybsd/stdlib.d core/sys/dragonflybsd/string.d \
 	core/sys/dragonflybsd/sys/_bitset.d \
-=======
-	core/sys/dragonflybsd/string.d core/sys/dragonflybsd/sys/_bitset.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/dragonflybsd/sys/_cpuset.d core/sys/dragonflybsd/sys/cdefs.d \
 	core/sys/dragonflybsd/sys/elf.d core/sys/dragonflybsd/sys/elf32.d \
 	core/sys/dragonflybsd/sys/elf64.d \
@@ -318,28 +256,18 @@ DRUNTIME_DSOURCES_DRAGONFLYBSD = core/sys/dragonflybsd/dlfcn.d \
 	core/sys/dragonflybsd/sys/mman.d core/sys/dragonflybsd/sys/socket.d \
 	core/sys/dragonflybsd/sys/sysctl.d core/sys/dragonflybsd/time.d
 
-<<<<<<< HEAD
 DRUNTIME_DSOURCES_FREEBSD = core/sys/freebsd/config.d \
 	core/sys/freebsd/dlfcn.d core/sys/freebsd/err.d \
 	core/sys/freebsd/execinfo.d core/sys/freebsd/netinet/in_.d \
 	core/sys/freebsd/pthread_np.d core/sys/freebsd/stdlib.d \
-=======
-DRUNTIME_DSOURCES_FREEBSD = core/sys/freebsd/dlfcn.d \
-	core/sys/freebsd/err.d core/sys/freebsd/execinfo.d \
-	core/sys/freebsd/netinet/in_.d core/sys/freebsd/pthread_np.d \
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 	core/sys/freebsd/string.d core/sys/freebsd/sys/_bitset.d \
 	core/sys/freebsd/sys/_cpuset.d core/sys/freebsd/sys/cdefs.d \
 	core/sys/freebsd/sys/elf.d core/sys/freebsd/sys/elf32.d \
 	core/sys/freebsd/sys/elf64.d core/sys/freebsd/sys/elf_common.d \
 	core/sys/freebsd/sys/event.d core/sys/freebsd/sys/link_elf.d \
 	core/sys/freebsd/sys/mman.d core/sys/freebsd/sys/mount.d \
-<<<<<<< HEAD
 	core/sys/freebsd/sys/sysctl.d core/sys/freebsd/time.d \
 	core/sys/freebsd/unistd.d
-=======
-	core/sys/freebsd/time.d core/sys/freebsd/unistd.d
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_LINUX = core/sys/linux/config.d \
 	core/sys/linux/dlfcn.d core/sys/linux/elf.d core/sys/linux/epoll.d \
@@ -358,7 +286,6 @@ DRUNTIME_DSOURCES_LINUX = core/sys/linux/config.d \
 
 DRUNTIME_DSOURCES_NETBSD = core/sys/netbsd/dlfcn.d \
 	core/sys/netbsd/err.d core/sys/netbsd/execinfo.d \
-<<<<<<< HEAD
 	core/sys/netbsd/stdlib.d core/sys/netbsd/string.d \
 	core/sys/netbsd/sys/elf.d core/sys/netbsd/sys/elf32.d \
 	core/sys/netbsd/sys/elf64.d core/sys/netbsd/sys/elf_common.d \
@@ -374,20 +301,6 @@ DRUNTIME_DSOURCES_OPENBSD = core/sys/openbsd/dlfcn.d \
 	core/sys/openbsd/sys/link_elf.d core/sys/openbsd/sys/mman.d \
 	core/sys/openbsd/sys/sysctl.d core/sys/openbsd/time.d \
 	core/sys/openbsd/unistd.d
-=======
-	core/sys/netbsd/string.d core/sys/netbsd/sys/elf.d \
-	core/sys/netbsd/sys/elf32.d core/sys/netbsd/sys/elf64.d \
-	core/sys/netbsd/sys/elf_common.d core/sys/netbsd/sys/event.d \
-	core/sys/netbsd/sys/featuretest.d core/sys/netbsd/sys/link_elf.d \
-	core/sys/netbsd/sys/mman.d core/sys/netbsd/time.d
-
-DRUNTIME_DSOURCES_OPENBSD = core/sys/openbsd/dlfcn.d \
-	core/sys/openbsd/err.d core/sys/openbsd/string.d \
-	core/sys/openbsd/sys/cdefs.d core/sys/openbsd/sys/elf.d \
-	core/sys/openbsd/sys/elf32.d core/sys/openbsd/sys/elf64.d \
-	core/sys/openbsd/sys/elf_common.d core/sys/openbsd/sys/link_elf.d \
-	core/sys/openbsd/sys/mman.d core/sys/openbsd/time.d
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_POSIX = core/sys/posix/aio.d \
 	core/sys/posix/arpa/inet.d core/sys/posix/config.d \
@@ -419,7 +332,6 @@ DRUNTIME_DSOURCES_POSIX = core/sys/posix/aio.d \
 DRUNTIME_DSOURCES_SOLARIS = core/sys/solaris/dlfcn.d \
 	core/sys/solaris/elf.d core/sys/solaris/err.d \
 	core/sys/solaris/execinfo.d core/sys/solaris/libelf.d \
-<<<<<<< HEAD
 	core/sys/solaris/link.d core/sys/solaris/stdlib.d \
 	core/sys/solaris/sys/elf.d core/sys/solaris/sys/elf_386.d \
 	core/sys/solaris/sys/elf_SPARC.d core/sys/solaris/sys/elf_amd64.d \
@@ -427,14 +339,6 @@ DRUNTIME_DSOURCES_SOLARIS = core/sys/solaris/dlfcn.d \
 	core/sys/solaris/sys/link.d core/sys/solaris/sys/priocntl.d \
 	core/sys/solaris/sys/procset.d core/sys/solaris/sys/types.d \
 	core/sys/solaris/time.d
-=======
-	core/sys/solaris/link.d core/sys/solaris/sys/elf.d \
-	core/sys/solaris/sys/elf_386.d core/sys/solaris/sys/elf_SPARC.d \
-	core/sys/solaris/sys/elf_amd64.d core/sys/solaris/sys/elf_notes.d \
-	core/sys/solaris/sys/elftypes.d core/sys/solaris/sys/link.d \
-	core/sys/solaris/sys/priocntl.d core/sys/solaris/sys/procset.d \
-	core/sys/solaris/sys/types.d core/sys/solaris/time.d
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/aclapi.d core/sys/windows/aclui.d \
@@ -503,7 +407,6 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/sqlext.d core/sys/windows/sqltypes.d \
 	core/sys/windows/sqlucode.d core/sys/windows/sspi.d \
 	core/sys/windows/stacktrace.d core/sys/windows/stat.d \
-<<<<<<< HEAD
 	core/sys/windows/stdc/malloc.d core/sys/windows/stdc/time.d \
 	core/sys/windows/subauth.d core/sys/windows/threadaux.d \
 	core/sys/windows/tlhelp32.d core/sys/windows/tmschema.d \
@@ -521,24 +424,5 @@ DRUNTIME_DSOURCES_WINDOWS = core/sys/windows/accctrl.d \
 	core/sys/windows/winspool.d core/sys/windows/winsvc.d \
 	core/sys/windows/winuser.d core/sys/windows/winver.d \
 	core/sys/windows/wtsapi32.d core/sys/windows/wtypes.d
-=======
-	core/sys/windows/stdc/time.d core/sys/windows/subauth.d \
-	core/sys/windows/threadaux.d core/sys/windows/tlhelp32.d \
-	core/sys/windows/tmschema.d core/sys/windows/unknwn.d \
-	core/sys/windows/uuid.d core/sys/windows/vfw.d \
-	core/sys/windows/w32api.d core/sys/windows/winbase.d \
-	core/sys/windows/winber.d core/sys/windows/wincon.d \
-	core/sys/windows/wincrypt.d core/sys/windows/windef.d \
-	core/sys/windows/windows.d core/sys/windows/winerror.d \
-	core/sys/windows/wingdi.d core/sys/windows/winhttp.d \
-	core/sys/windows/wininet.d core/sys/windows/winioctl.d \
-	core/sys/windows/winldap.d core/sys/windows/winnetwk.d \
-	core/sys/windows/winnls.d core/sys/windows/winnt.d \
-	core/sys/windows/winperf.d core/sys/windows/winreg.d \
-	core/sys/windows/winsock2.d core/sys/windows/winspool.d \
-	core/sys/windows/winsvc.d core/sys/windows/winuser.d \
-	core/sys/windows/winver.d core/sys/windows/wtsapi32.d \
-	core/sys/windows/wtypes.d
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 DRUNTIME_DISOURCES = __main.di

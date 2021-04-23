@@ -188,7 +188,7 @@ struct Region(ParentAllocator = NullAllocator,
     */
     void[] alignedAllocate(size_t n, uint a) pure nothrow @trusted @nogc
     {
-        import std.math : isPowerOf2;
+        import std.math.traits : isPowerOf2;
         assert(a.isPowerOf2);
 
         const rounded = goodAllocSize(n);
@@ -975,8 +975,6 @@ version (Posix) @system nothrow @nogc unittest
     assert((() nothrow @safe @nogc => alloc.owns(b))() == Ternary.yes);
     // reducing the brk does not work on OSX
     version (Darwin) {} else
-<<<<<<< HEAD
-=======
     {
         assert((() nothrow @nogc => alloc.deallocate(b))());
         // Check that expand and deallocate work well
@@ -1026,7 +1024,6 @@ shared struct SharedRegion(ParentAllocator = NullAllocator,
     }
 
     private void* roundedEnd() const pure nothrow @trusted @nogc
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     {
         return cast(void*) roundDownToAlignment(cast(size_t) _end, alignment);
     }
@@ -1187,7 +1184,7 @@ shared struct SharedRegion(ParentAllocator = NullAllocator,
     void[] alignedAllocate(size_t n, uint a) pure nothrow @trusted @nogc
     {
         import core.atomic : cas, atomicLoad;
-        import std.math : isPowerOf2;
+        import std.math.traits : isPowerOf2;
 
         assert(a.isPowerOf2);
         if (n == 0) return null;

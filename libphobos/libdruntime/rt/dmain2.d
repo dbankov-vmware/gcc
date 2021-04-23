@@ -9,6 +9,9 @@
  * Source: $(DRUNTIMESRC rt/_dmain2.d)
  */
 
+/* NOTE: This file has been patched from the original DMD distribution to
+ * work with the GDC compiler.
+ */
 module rt.dmain2;
 
 import rt.memory;
@@ -26,7 +29,7 @@ version (Windows)
     import core.sys.windows.basetsd : HANDLE;
     import core.sys.windows.shellapi : CommandLineToArgvW;
     import core.sys.windows.winbase : FreeLibrary, GetCommandLineW, GetProcAddress,
-        IsDebuggerPresent, LoadLibraryA, LoadLibraryW, LocalFree, WriteFile;
+        IsDebuggerPresent, LoadLibraryW, LocalFree, WriteFile;
     import core.sys.windows.wincon : CONSOLE_SCREEN_BUFFER_INFO, GetConsoleOutputCP,
         GetConsoleScreenBufferInfo;
     import core.sys.windows.winnls : CP_UTF8, MultiByteToWideChar, WideCharToMultiByte;
@@ -81,73 +84,6 @@ version (CRuntime_Microsoft)
     extern(C) void init_msvc();
 }
 
-<<<<<<< HEAD
-=======
-/***********************************
- * These are a temporary means of providing a GC hook for DLL use.  They may be
- * replaced with some other similar functionality later.
- */
-extern (C)
-{
-    void* gc_getProxy();
-    void  gc_setProxy(void* p);
-    void  gc_clrProxy();
-
-    alias void* function()      gcGetFn;
-    alias void  function(void*) gcSetFn;
-    alias void  function()      gcClrFn;
-}
-
-version (Windows)
-{
-    /*******************************************
-     * Loads a DLL written in D with the name 'name'.
-     * Returns:
-     *      opaque handle to the DLL if successfully loaded
-     *      null if failure
-     */
-    extern (C) void* rt_loadLibrary(const char* name)
-    {
-        return initLibrary(.LoadLibraryA(name));
-    }
-
-    extern (C) void* rt_loadLibraryW(const WCHAR* name)
-    {
-        return initLibrary(.LoadLibraryW(name));
-    }
-
-    void* initLibrary(void* mod)
-    {
-        // BUG: LoadLibrary() call calls rt_init(), which fails if proxy is not set!
-        // (What? LoadLibrary() is a Windows API call, it shouldn't call rt_init().)
-        if (mod is null)
-            return mod;
-        gcSetFn gcSet = cast(gcSetFn) GetProcAddress(mod, "gc_setProxy");
-        if (gcSet !is null)
-        {   // BUG: Set proxy, but too late
-            gcSet(gc_getProxy());
-        }
-        return mod;
-    }
-
-    /*************************************
-     * Unloads DLL that was previously loaded by rt_loadLibrary().
-     * Input:
-     *      ptr     the handle returned by rt_loadLibrary()
-     * Returns:
-     *      1   succeeded
-     *      0   some failure happened
-     */
-    extern (C) int rt_unloadLibrary(void* ptr)
-    {
-        gcClrFn gcClr  = cast(gcClrFn) GetProcAddress(ptr, "gc_clrProxy");
-        if (gcClr !is null)
-            gcClr();
-        return FreeLibrary(ptr) != 0;
-    }
-}
-
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 /* To get out-of-band access to the args[] passed to main().
  */
 
@@ -324,64 +260,6 @@ extern (C) int _d_run_main(int argc, char** argv, MainFunc mainFunc)
     _cArgs.argc = argc;
     _cArgs.argv = argv;
 
-<<<<<<< HEAD
-    int result;
-
-    version (OSX)
-    {   /* OSX does not provide a way to get at the top of the
-         * stack, except for the magic value 0xC0000000.
-         * But as far as the gc is concerned, argv is at the top
-         * of the main thread's stack, so save the address of that.
-         */
-        __osx_stack_end = cast(void*)&argv;
-    }
-
-    version (FreeBSD) version (D_InlineAsm_X86)
-    {
-        /*
-         * FreeBSD/i386 sets the FPU precision mode to 53 bit double.
-         * Make it 64 bit extended.
-         */
-        ushort fpucw;
-        asm
-        {
-            fstsw   fpucw;
-            or      fpucw, 0b11_00_111111; // 11: use 64 bit extended-precision
-                                           // 111111: mask all FP exceptions
-            fldcw   fpucw;
-        }
-    }
-    version (CRuntime_Microsoft)
-    {
-        // enable full precision for reals
-        version (D_InlineAsm_X86_64)
-        {
-            asm
-            {
-                push    RAX;
-                fstcw   word ptr [RSP];
-                or      [RSP], 0b11_00_111111; // 11: use 64 bit extended-precision
-                                               // 111111: mask all FP exceptions
-                fldcw   word ptr [RSP];
-                pop     RAX;
-            }
-        }
-        else version (D_InlineAsm_X86)
-        {
-            asm
-            {
-                push    EAX;
-                fstcw   word ptr [ESP];
-                or      [ESP], 0b11_00_111111; // 11: use 64 bit extended-precision
-                // 111111: mask all FP exceptions
-                fldcw   word ptr [ESP];
-                pop     EAX;
-            }
-        }
-    }
-
-=======
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     version (Windows)
     {
         /* Because we want args[] to be UTF-8, and Windows doesn't guarantee that,
@@ -511,15 +389,8 @@ private extern (C) int _d_run_main2(char[][] args, size_t totalArgsLength, MainF
     version (CRuntime_Microsoft)
     {
         // enable full precision for reals
-        version (GNU)
+        version (D_InlineAsm_X86_64)
         {
-            size_t fpu_cw;
-            asm { "fstcw %0" : "=m" (fpu_cw); }
-            fpu_cw |= 0b11_00_111111;  // 11: use 64 bit extended-precision
-                                       // 111111: mask all FP exceptions
-            asm { "fldcw %0" : "=m" (fpu_cw); }
-        }
-        else version (Win64)
             asm
             {
                 push    RAX;
@@ -529,7 +400,8 @@ private extern (C) int _d_run_main2(char[][] args, size_t totalArgsLength, MainF
                 fldcw   word ptr [RSP];
                 pop     RAX;
             }
-        else version (Win32)
+        }
+        else version (D_InlineAsm_X86)
         {
             asm
             {
@@ -540,6 +412,14 @@ private extern (C) int _d_run_main2(char[][] args, size_t totalArgsLength, MainF
                 fldcw   word ptr [ESP];
                 pop     EAX;
             }
+        }
+        else version (GNU_InlineAsm)
+        {
+            size_t fpu_cw;
+            asm { "fstcw %0" : "=m" (fpu_cw); }
+            fpu_cw |= 0b11_00_111111;  // 11: use 64 bit extended-precision
+                                       // 111111: mask all FP exceptions
+            asm { "fldcw %0" : "=m" (fpu_cw); }
         }
     }
 
@@ -575,11 +455,7 @@ private extern (C) int _d_run_main2(char[][] args, size_t totalArgsLength, MainF
     version (Windows)
     {
         if (IsDebuggerPresent())
-<<<<<<< HEAD
-            trapExceptions = false;
-=======
             useExceptionTrap = false;
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     }
 
     void tryExec(scope void delegate() dg)

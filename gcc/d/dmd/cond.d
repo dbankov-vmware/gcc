@@ -3,7 +3,7 @@
  *
  * Specification: $(LINK2 https://dlang.org/spec/version.html, Conditional Compilation)
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/cond.d, _cond.d)
@@ -15,6 +15,7 @@ module dmd.cond;
 
 import core.stdc.string;
 import dmd.arraytypes;
+import dmd.astenums;
 import dmd.ast_node;
 import dmd.dcast;
 import dmd.dmodule;
@@ -42,7 +43,7 @@ import dmd.func;
 /***********************************************************
  */
 
-enum Include
+enum Include : ubyte
 {
     notComputed,        /// not computed yet
     yes,                /// include the conditional code
@@ -130,8 +131,8 @@ extern (C++) final class StaticForeach : RootObject
     {
         return new StaticForeach(
             loc,
-            aggrfe ? cast(ForeachStatement)aggrfe.syntaxCopy() : null,
-            rangefe ? cast(ForeachRangeStatement)rangefe.syntaxCopy() : null
+            aggrfe ? aggrfe.syntaxCopy() : null,
+            rangefe ? rangefe.syntaxCopy() : null
         );
     }
 
@@ -173,6 +174,7 @@ extern (C++) final class StaticForeach : RootObject
             aggrfe.aggr = new TupleExp(aggr.loc, es);
             aggrfe.aggr = aggrfe.aggr.expressionSemantic(sc);
             aggrfe.aggr = aggrfe.aggr.optimize(WANTvalue);
+            aggrfe.aggr = aggrfe.aggr.ctfeInterpret();
         }
         else
         {
@@ -255,7 +257,8 @@ extern (C++) final class StaticForeach : RootObject
         auto ty = new TypeTypeof(loc, new TupleExp(loc, e));
         sdecl.members.push(new VarDeclaration(loc, ty, fid, null, 0));
         auto r = cast(TypeStruct)sdecl.type;
-        r.vtinfo = TypeInfoStructDeclaration.create(r); // prevent typeinfo from going to object file
+        if (global.params.useTypeInfo && Type.dtypeinfo)
+            r.vtinfo = TypeInfoStructDeclaration.create(r); // prevent typeinfo from going to object file
         return r;
     }
 
@@ -364,20 +367,30 @@ extern (C++) final class StaticForeach : RootObject
         sfe.push(new ReturnStatement(aloc, res[0]));
         s1.push(createForeach(aloc, pparams[0], new CompoundStatement(aloc, sfe)));
         s1.push(new ExpStatement(aloc, new AssertExp(aloc, IntegerExp.literal!0)));
-        auto ety = new TypeTypeof(aloc, wrapAndCall(aloc, new CompoundStatement(aloc, s1)));
+        Type ety = new TypeTypeof(aloc, wrapAndCall(aloc, new CompoundStatement(aloc, s1)));
         auto aty = ety.arrayOf();
         auto idres = Identifier.generateId("__res");
         auto vard = new VarDeclaration(aloc, aty, idres, null);
         auto s2 = new Statements();
-        s2.push(new ExpStatement(aloc, vard));
-        auto catass = new CatAssignExp(aloc, new IdentifierExp(aloc, idres), res[1]);
-        s2.push(createForeach(aloc, pparams[1], new ExpStatement(aloc, catass)));
-        s2.push(new ReturnStatement(aloc, new IdentifierExp(aloc, idres)));
+
+        // Run 'typeof' gagged to avoid duplicate errors and if it fails just create
+        // an empty foreach to expose them.
+        uint olderrors = global.startGagging();
+        ety = ety.typeSemantic(aloc, sc);
+        if (global.endGagging(olderrors))
+            s2.push(createForeach(aloc, pparams[1], null));
+        else
+        {
+            s2.push(new ExpStatement(aloc, vard));
+            auto catass = new CatAssignExp(aloc, new IdentifierExp(aloc, idres), res[1]);
+            s2.push(createForeach(aloc, pparams[1], new ExpStatement(aloc, catass)));
+            s2.push(new ReturnStatement(aloc, new IdentifierExp(aloc, idres)));
+        }
 
         Expression aggr = void;
         Type indexty = void;
 
-        if (rangefe && (indexty = ety.typeSemantic(aloc, sc)).isintegral())
+        if (rangefe && (indexty = ety).isintegral())
         {
             rangefe.lwr.type = indexty;
             rangefe.upr.type = indexty;
@@ -440,11 +453,6 @@ extern (C++) final class StaticForeach : RootObject
             aggrfe.aggr = aggrfe.aggr.expressionSemantic(sc);
             sc = sc.endCTFE();
             aggrfe.aggr = aggrfe.aggr.optimize(WANTvalue);
-            auto tab = aggrfe.aggr.type.toBasetype();
-            if (tab.ty != Ttuple)
-            {
-                aggrfe.aggr = aggrfe.aggr.ctfeInterpret();
-            }
         }
 
         if (aggrfe && aggrfe.aggr.type.toBasetype().ty == Terror)
@@ -483,15 +491,15 @@ extern (C++) class DVCondition : Condition
     Identifier ident;
     Module mod;
 
-    extern (D) this(Module mod, uint level, Identifier ident)
+    extern (D) this(const ref Loc loc, Module mod, uint level, Identifier ident)
     {
-        super(Loc.initial);
+        super(loc);
         this.mod = mod;
         this.level = level;
         this.ident = ident;
     }
 
-    override final Condition syntaxCopy()
+    override final DVCondition syntaxCopy()
     {
         return this; // don't need to copy
     }
@@ -548,10 +556,11 @@ extern (C++) final class DebugCondition : DVCondition
      *           Only used if `ident` is `null`.
      *   ident = Identifier required for this condition to pass.
      *           If `null`, this conditiion will use an integer level.
+     *  loc = Location in the source file
      */
-    extern (D) this(Module mod, uint level, Identifier ident)
+    extern (D) this(const ref Loc loc, Module mod, uint level, Identifier ident)
     {
-        super(mod, level, ident);
+        super(loc, mod, level, ident);
     }
 
     override int include(Scope* sc)
@@ -655,6 +664,7 @@ extern (C++) final class VersionCondition : DVCondition
             case "CRuntime_Glibc":
             case "CRuntime_Microsoft":
             case "CRuntime_Musl":
+            case "CRuntime_Newlib":
             case "CRuntime_UClibc":
             case "CRuntime_WASI":
             case "Cygwin":
@@ -822,10 +832,11 @@ extern (C++) final class VersionCondition : DVCondition
      *           Only used if `ident` is `null`.
      *   ident = Identifier required for this condition to pass.
      *           If `null`, this conditiion will use an integer level.
+     *  loc = Location in the source file
      */
-    extern (D) this(Module mod, uint level, Identifier ident)
+    extern (D) this(const ref Loc loc, Module mod, uint level, Identifier ident)
     {
-        super(mod, level, ident);
+        super(loc, mod, level, ident);
     }
 
     override int include(Scope* sc)
@@ -891,7 +902,7 @@ extern (C++) final class StaticIfCondition : Condition
         this.exp = exp;
     }
 
-    override Condition syntaxCopy()
+    override StaticIfCondition syntaxCopy()
     {
         return new StaticIfCondition(loc, exp.syntaxCopy());
     }
@@ -958,7 +969,7 @@ extern (C++) final class StaticIfCondition : Condition
  * Returns:
  *      true if found
  */
-bool findCondition(Identifiers* ids, Identifier ident)
+bool findCondition(Identifiers* ids, Identifier ident) @safe nothrow pure
 {
     if (ids)
     {
@@ -977,7 +988,7 @@ private void printDepsConditional(Scope* sc, DVCondition condition, const(char)[
     if (!global.params.moduleDeps || global.params.moduleDepsFile)
         return;
     OutBuffer* ob = global.params.moduleDeps;
-    Module imod = sc ? sc.instantiatingModule() : condition.mod;
+    Module imod = sc ? sc._module : condition.mod;
     if (!imod)
         return;
     ob.writestring(depType);

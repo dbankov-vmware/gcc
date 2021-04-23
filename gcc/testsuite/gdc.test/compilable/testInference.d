@@ -263,17 +263,11 @@ void test8234()
 
 import core.demangle : demangle;
 
-import core.demangle : demangle;
-
 void foo8504()()
 {
     static assert(typeof(foo8504!()).stringof == "void()");
     static assert(typeof(foo8504!()).mangleof == "FZv");
-<<<<<<< HEAD
-    static assert(demangle(foo8504!().mangleof) == "void testInference.foo8504!().foo8504()");
-=======
 //    static assert(demangle(foo8504!().mangleof) == "void testInference.foo8504!().foo8504()");
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 
 auto toDelegate8504a(F)(auto ref F fp) { return fp; }

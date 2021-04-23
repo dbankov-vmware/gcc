@@ -32,19 +32,9 @@ import gcc.attributes;
 
 extern(C)
 {
-<<<<<<< HEAD
-    int _d_isbaseof(ClassInfo, ClassInfo);
-    void _d_createTrace(Object, void*);
-=======
     int _d_isbaseof(ClassInfo, ClassInfo) @nogc nothrow pure @safe;
     void _d_createTrace(Throwable, void*);
     void _d_print_throwable(Throwable t);
-
-    // Not used in GDC but declaration required by rt/sections.d
-    struct FuncTable
-    {
-    }
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 }
 
 /**

@@ -14089,7 +14089,7 @@ fi
 
 
   gdc_save_DFLAGS=$GDCFLAGS
-  GDCFLAGS="-fno-moduleinfo -nostdinc -I $phobos_cv_abs_srcdir/libdruntime -nophoboslib $GDCFLAGS"
+  GDCFLAGS="-fno-druntime -nostdinc -I $phobos_cv_abs_srcdir/libdruntime -nophoboslib $GDCFLAGS"
 
     ac_ext=d
 ac_compile='$GDC -c $GDCFLAGS conftest.$ac_ext >&5'
@@ -14098,7 +14098,7 @@ ac_compiler_gnu=yes
 
     GDCFLAGS="$GDCFLAGS -g -Werror -ffunction-sections -fdata-sections"
     cat > conftest.$ac_ext <<_ACEOF
-module mod;
+module object;
 int foo; void bar() { }
 
 extern(C) int main() {

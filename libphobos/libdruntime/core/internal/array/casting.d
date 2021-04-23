@@ -35,10 +35,13 @@ private void onArrayCastError()(string fromType, size_t fromSize, string toType,
     size_t index = 0;
     void add(const(char)[] m)
     {
+        import core.stdc.string : memcpy;
+
         auto N = msgLength - 1 - index;
         if (N > m.length)
             N = m.length;
-        msg[index .. index + N] = m[0 .. N];
+        // prevent superfluous and betterC-unfriendly checks via direct memcpy
+        memcpy(msg + index, m.ptr, N);
         index += N;
     }
 
@@ -69,7 +72,7 @@ Params:
 Returns:
     `from` reinterpreted as `TTo[]`
  */
-TTo[] __ArrayCast(TFrom, TTo)(TFrom[] from) @nogc pure @trusted
+TTo[] __ArrayCast(TFrom, TTo)(return scope TFrom[] from) @nogc pure @trusted
 {
     const fromSize = from.length * TFrom.sizeof;
     const toLength = fromSize / TTo.sizeof;

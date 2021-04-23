@@ -82,6 +82,7 @@ D_FRONTEND_OBJS = \
 	d/attrib.o \
 	d/ast_node.o \
 	d/astcodegen.o \
+	d/astenums.o \
 	d/bitarray.o \
 	d/blockexit.o \
 	d/builtin.o \
@@ -92,6 +93,7 @@ D_FRONTEND_OBJS = \
 	d/complex.o \
 	d/cond.o \
 	d/constfold.o \
+	d/cparse.o \
 	d/cppmangle.o \
 	d/ctfeexpr.o \
 	d/ctfloat.o \
@@ -215,7 +217,7 @@ d_OBJS = $(D_ALL_OBJS) d/d-spec.o
 
 d21$(exeext): $(D_ALL_OBJS) attribs.o $(BACKEND) $(LIBDEPS) $(d.prev)
 	@$(call LINK_PROGRESS,$(INDEX.d),start)
-	+$(DLLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+	+$(DLLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -static-libphobos -o $@ \
 		$(D_ALL_OBJS) attribs.o $(BACKEND) $(LIBS) $(BACKENDLIBS)
 	@$(call LINK_PROGRESS,$(INDEX.d),end)
 

@@ -465,6 +465,7 @@ proc gdc-permute-options { options } {
 
 proc gdc-do-test { testcases } {
     global dg-do-what-default
+    global subdir
     global verbose
 
     # If a testcase doesn't have special options, use these.
@@ -501,6 +502,7 @@ proc gdc-do-test { testcases } {
 	regexp -- "(.*)/(.+)/(.+)\.(.+)$" $test match base type name ext
 
 	# Convert to DG test.
+	set imports [format "-I%s" $type]
 	set cleanup_extra_files ""
 	set compilable_do_what "compile"
 	set filename "[gdc-convert-test $base $type/$name.$ext]"
@@ -521,7 +523,7 @@ proc gdc-do-test { testcases } {
 		    } else {
 			set dg-do-what-default "link"
 		    }
-		    gdc-dg-runtest $filename $flags "-I$subdir"
+		    gdc-dg-runtest $filename $flags $imports
 		}
 	    }
 
@@ -529,7 +531,7 @@ proc gdc-do-test { testcases } {
 		for { set i 0 } { $i<[llength $options] } { incr i } {
 		    set flags [lindex $options $i]
 		    set dg-do-what-default $compilable_do_what
-		    gdc-dg-runtest $filename $flags "-I$subdir"
+		    gdc-dg-runtest $filename $flags $imports
 		}
 	    }
 
@@ -537,7 +539,7 @@ proc gdc-do-test { testcases } {
 		for { set i 0 } { $i<[llength $options] } { incr i } {
 		    set flags [lindex $options $i]
 		    set dg-do-what-default "assemble"
-		    gdc-dg-runtest $filename $flags "-I$subdir"
+		    gdc-dg-runtest $filename $flags $imports
 		}
 	    }
 	}

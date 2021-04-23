@@ -49,21 +49,12 @@ void bar() pure @safe
 /*
 TEST_OUTPUT:
 ---
-<<<<<<< HEAD
-fail_compilation/fail10968.d(66): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(67): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(68): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(71): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(72): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(73): Error: struct fail10968.SD is not copyable because it is annotated with `@disable`
-=======
-fail_compilation/fail10968.d(72): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(73): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(74): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(77): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(78): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
-fail_compilation/fail10968.d(79): Error: struct `fail10968.SD` is not copyable because it is annotated with `@disable`
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
+fail_compilation/fail10968.d(72): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
+fail_compilation/fail10968.d(73): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
+fail_compilation/fail10968.d(74): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
+fail_compilation/fail10968.d(77): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
+fail_compilation/fail10968.d(78): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
+fail_compilation/fail10968.d(79): Error: struct `fail10968.SD` is not copyable because it has a disabled postblit
 ---
 */
 

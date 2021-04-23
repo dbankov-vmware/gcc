@@ -1,5 +1,21 @@
-// PERMUTE_ARGS: -inline -g -O
-
+/* PERMUTE_ARGS: -inline -g -O
+TEST_OUTPUT:
+---
+runnable/testcontracts.d(323): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(324): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(325): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(326): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(328): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(329): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(330): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(331): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(502): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(503): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(504): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(505): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+runnable/testcontracts.d(505): Deprecation: Usage of the `body` keyword is deprecated. Use `do` instead.
+---
+*/
 extern(C) int printf(const char*, ...);
 
 /*******************************************/
@@ -422,11 +438,7 @@ void test6417()
 }
 
 /*******************************************/
-<<<<<<< HEAD
-// 6549
-=======
 // https://issues.dlang.org/show_bug.cgi?id=6549
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 class C6549
 {
@@ -476,11 +488,7 @@ void test6549()
 }
 
 /*******************************************/
-<<<<<<< HEAD
-// 7218
-=======
 // https://issues.dlang.org/show_bug.cgi?id=7218
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
 
 void test7218()
 {
@@ -1285,81 +1293,6 @@ class DIP1009_8
 
 /*******************************************/
 
-//******************************************/
-// DIP 1009
-
-int dip1009_1(int x)
-  in  (x > 0, "x must be positive!")
-  out (r; r < 0, "r must be negative!")
-  in (true, "cover trailing comma case",)
-  out (; true, "cover trailing comma case",)
-{
-    return -x;
-}
-
-int dip1009_2(int x)
-  in  (x > 0)
-  out (r; r < 0)
-{
-    return -x;
-}
-
-int dip1009_3(int x)
-in  (x > 0,)
-out (r; r < 0,)
-do
-{
-    return -x;
-}
-
-void dip1009_4(int x)
-  in  (x > 0)
-  out (; x > 1)
-{
-    x += 1;
-}
-
-interface DIP1009_5
-{
-    void dip1009_5(int x)
-      in  (x > 0)
-      out (; x > 1);
-}
-
-int dip1009_6(int x, int y)
-  in  (x > 0)
-  out (r; r > 1)
-  out (; x > 0)
-  in  (y > 0)
-  in  (x + y > 1)
-  out (r; r > 1)
-{
-    return x+y;
-}
-
-int dip1009_7(int x)
-  in (x > 0)
-  in { assert(x > 1); }
-  out { assert(x > 2); }
-  out (; x > 3)
-  out (r; r > 3)
-{
-    x += 2;
-    return x;
-}
-
-class DIP1009_8
-{
-    private int x = 4;
-    invariant (x > 0, "x must stay positive");
-    invariant (x > 1, "x must be greater than one",);
-    invariant (x > 2);
-    invariant (x > 3,);
-    void foo(){ x = 5; }
-}
-
-/*******************************************/
-
 int main()
 {
     test1();
@@ -1383,10 +1316,7 @@ int main()
     test15524();
     test15524a();
     test14779();
-<<<<<<< HEAD
-=======
     test15984();
->>>>>>> 0b935ce9fab... Import dmd v2.093.0: dmd 021d1a0c6, druntime 54197db1, phobos 76caec12f
     dip1009_1(1);
     dip1009_2(1);
     dip1009_3(1);

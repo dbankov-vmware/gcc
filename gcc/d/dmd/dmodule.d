@@ -3,7 +3,7 @@
  *
  * Specification: $(LINK2 https://dlang.org/spec/module.html, Modules)
  *
- * Copyright:   Copyright (C) 1999-2020 by The D Language Foundation, All Rights Reserved
+ * Copyright:   Copyright (C) 1999-2021 by The D Language Foundation, All Rights Reserved
  * Authors:     $(LINK2 http://www.digitalmars.com, Walter Bright)
  * License:     $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Source:      $(LINK2 https://github.com/dlang/dmd/blob/master/src/dmd/dmodule.d, _dmodule.d)
@@ -19,6 +19,7 @@ import core.stdc.string;
 import dmd.aggregate;
 import dmd.arraytypes;
 import dmd.astcodegen;
+import dmd.astenums;
 import dmd.compiler;
 import dmd.gluelayer;
 import dmd.dimport;
@@ -34,6 +35,8 @@ import dmd.globals;
 import dmd.id;
 import dmd.identifier;
 import dmd.parse;
+import dmd.cparse;
+import dmd.root.array;
 import dmd.root.file;
 import dmd.root.filename;
 import dmd.root.outbuffer;
@@ -43,79 +46,96 @@ import dmd.root.rootobject;
 import dmd.root.string;
 import dmd.semantic2;
 import dmd.semantic3;
+import dmd.target;
+import dmd.utils;
 import dmd.visitor;
 
-version(Windows) {
-    extern (C) char* getcwd(char* buffer, size_t maxlen);
-} else {
-    import core.sys.posix.unistd : getcwd;
-}
+enum package_d  = "package." ~ mars_ext;
+enum package_di = "package." ~ hdr_ext;
 
-/* ===========================  ===================== */
 /********************************************
  * Look for the source file if it's different from filename.
  * Look for .di, .d, directory, and along global.path.
  * Does not open the file.
- * Input:
- *      filename        as supplied by the user
- *      global.path
+ * Params:
+ *      filename = as supplied by the user
+ *      path = path to look for filename
  * Returns:
- *      NULL if it's not different from filename.
+ *      the found file name or
+ *      `null` if it is not different from filename.
  */
-private const(char)[] lookForSourceFile(const(char)[] filename)
+private const(char)[] lookForSourceFile(const char[] filename, const char*[] path)
 {
-    /* Search along global.path for .di file, then .d file.
+    //printf("lookForSourceFile(`%.*s`)\n", cast(int)filename.length, filename.ptr);
+    /* Search along path[] for .di file, then .d file.
      */
-    const sdi = FileName.forceExt(filename, global.hdr_ext);
+    const sdi = FileName.forceExt(filename, hdr_ext);
     if (FileName.exists(sdi) == 1)
         return sdi;
     scope(exit) FileName.free(sdi.ptr);
-    const sd = FileName.forceExt(filename, global.mars_ext);
+
+    const sd = FileName.forceExt(filename, mars_ext);
     if (FileName.exists(sd) == 1)
         return sd;
     scope(exit) FileName.free(sd.ptr);
+
+    const sc = FileName.forceExt(filename, c_ext);
+    if (FileName.exists(sc) == 1)
+        return sc;
+    scope(exit) FileName.free(sc.ptr);
+
     if (FileName.exists(filename) == 2)
     {
         /* The filename exists and it's a directory.
          * Therefore, the result should be: filename/package.d
          * iff filename/package.d is a file
          */
-        const ni = FileName.combine(filename, "package.di");
+        const ni = FileName.combine(filename, package_di);
         if (FileName.exists(ni) == 1)
             return ni;
         FileName.free(ni.ptr);
-        const n = FileName.combine(filename, "package.d");
+
+        const n = FileName.combine(filename, package_d);
         if (FileName.exists(n) == 1)
             return n;
         FileName.free(n.ptr);
     }
     if (FileName.absolute(filename))
         return null;
-    if (!global.path)
+    if (!path.length)
         return null;
-    for (size_t i = 0; i < global.path.dim; i++)
+    foreach (entry; path)
     {
-        const p = (*global.path)[i].toDString();
+        const p = entry.toDString();
+
         const(char)[] n = FileName.combine(p, sdi);
         if (FileName.exists(n) == 1) {
             return n;
         }
         FileName.free(n.ptr);
+
         n = FileName.combine(p, sd);
         if (FileName.exists(n) == 1) {
             return n;
         }
         FileName.free(n.ptr);
+
+        n = FileName.combine(p, sc);
+        if (FileName.exists(n) == 1) {
+            return n;
+        }
+        FileName.free(n.ptr);
+
         const b = FileName.removeExt(filename);
         n = FileName.combine(p, b);
         FileName.free(b.ptr);
         if (FileName.exists(n) == 2)
         {
-            const n2i = FileName.combine(n, "package.di");
+            const n2i = FileName.combine(n, package_di);
             if (FileName.exists(n2i) == 1)
                 return n2i;
             FileName.free(n2i.ptr);
-            const n2 = FileName.combine(n, "package.d");
+            const n2 = FileName.combine(n, package_d);
             if (FileName.exists(n2) == 1) {
                 return n2;
             }
@@ -169,11 +189,11 @@ void removeHdrFilesAndFail(ref Param params, ref Modules modules)
  * Returns:
  *  the filename of the child package or module
  */
-private const(char)[] getFilename(Identifiers* packages, Identifier ident)
+private const(char)[] getFilename(Identifier[] packages, Identifier ident)
 {
     const(char)[] filename = ident.toString();
 
-    if (packages == null || packages.dim == 0)
+    if (packages.length == 0)
         return filename;
 
     OutBuffer buf;
@@ -203,7 +223,7 @@ private const(char)[] getFilename(Identifiers* packages, Identifier ident)
         dotmods.writeByte('.');
     }
 
-    foreach (pid; *packages)
+    foreach (pid; packages)
     {
         const p = pid.toString();
         buf.writestring(p);
@@ -222,13 +242,6 @@ private const(char)[] getFilename(Identifiers* packages, Identifier ident)
     filename = buf.extractSlice()[0 .. $ - 1];
 
     return filename;
-}
-
-enum PKG : int
-{
-    unknown,     // not yet determined whether it's a package.d or not
-    module_,      // already determined that's an actual package.d
-    package_,     // already determined that's an actual package
 }
 
 /***********************************************************
@@ -269,52 +282,49 @@ extern (C++) class Package : ScopeDsymbol
      *      *pparent        the rightmost package, i.e. pkg2, or NULL if no packages
      *      *ppkg           the leftmost package, i.e. pkg1, or NULL if no packages
      */
-    extern (D) static DsymbolTable resolve(Identifiers* packages, Dsymbol* pparent, Package* ppkg)
+    extern (D) static DsymbolTable resolve(Identifier[] packages, Dsymbol* pparent, Package* ppkg)
     {
         DsymbolTable dst = Module.modules;
         Dsymbol parent = null;
         //printf("Package::resolve()\n");
         if (ppkg)
             *ppkg = null;
-        if (packages)
+        foreach (pid; packages)
         {
-            for (size_t i = 0; i < packages.dim; i++)
+            Package pkg;
+            Dsymbol p = dst.lookup(pid);
+            if (!p)
             {
-                Identifier pid = (*packages)[i];
-                Package pkg;
-                Dsymbol p = dst.lookup(pid);
-                if (!p)
-                {
-                    pkg = new Package(Loc.initial, pid);
-                    dst.insert(pkg);
-                    pkg.parent = parent;
+                pkg = new Package(Loc.initial, pid);
+                dst.insert(pkg);
+                pkg.parent = parent;
+                pkg.symtab = new DsymbolTable();
+            }
+            else
+            {
+                pkg = p.isPackage();
+                assert(pkg);
+                // It might already be a module, not a package, but that needs
+                // to be checked at a higher level, where a nice error message
+                // can be generated.
+                // dot net needs modules and packages with same name
+                // But we still need a symbol table for it
+                if (!pkg.symtab)
                     pkg.symtab = new DsymbolTable();
-                }
-                else
-                {
-                    pkg = p.isPackage();
-                    assert(pkg);
-                    // It might already be a module, not a package, but that needs
-                    // to be checked at a higher level, where a nice error message
-                    // can be generated.
-                    // dot net needs modules and packages with same name
-                    // But we still need a symbol table for it
-                    if (!pkg.symtab)
-                        pkg.symtab = new DsymbolTable();
-                }
-                parent = pkg;
-                dst = pkg.symtab;
-                if (ppkg && !*ppkg)
-                    *ppkg = pkg;
-                if (pkg.isModule())
-                {
-                    // Return the module so that a nice error message can be generated
-                    if (ppkg)
-                        *ppkg = cast(Package)p;
-                    break;
-                }
+            }
+            parent = pkg;
+            dst = pkg.symtab;
+            if (ppkg && !*ppkg)
+                *ppkg = pkg;
+            if (pkg.isModule())
+            {
+                // Return the module so that a nice error message can be generated
+                if (ppkg)
+                    *ppkg = cast(Package)p;
+                break;
             }
         }
+
         if (pparent)
             *pparent = parent;
         return dst;
@@ -388,12 +398,13 @@ extern (C++) class Package : ScopeDsymbol
         if (isPkgMod != PKG.unknown)
             return;
 
-        Identifiers packages;
+        Identifier[] packages;
         for (Dsymbol s = this.parent; s; s = s.parent)
-            packages.insert(0, s.ident);
+            packages ~= s.ident;
+        reverse(packages);
 
-        if (lookForSourceFile(getFilename(&packages, ident)))
-            Module.load(Loc(), &packages, this.ident);
+        if (lookForSourceFile(getFilename(packages, ident), global.path ? (*global.path)[] : null))
+            Module.load(Loc(), packages, this.ident);
         else
             isPkgMod = PKG.package_;
     }
@@ -439,6 +450,7 @@ extern (C++) final class Module : Package
     uint errors;                // if any errors in file
     uint numlines;              // number of lines in source file
     bool isHdrFile;             // if it is a header (.di) file
+    bool isCFile;               // if it is a C (.c) file
     bool isDocFile;             // if it is a documentation input file, not D source
     bool hasAlwaysInlines;      // contains references to functions that must be inlined
     bool isPackageFile;         // if it is a package.d
@@ -446,6 +458,7 @@ extern (C++) final class Module : Package
     Strings contentImportedFiles; // array of files whose content was imported
     int needmoduleinfo;
     int selfimports;            // 0: don't know, 1: does not, 2: does
+    Dsymbol[void*] tagSymTab;   /// ImportC: tag symbols that conflict with other symbols used as the index
 
     /*************************************
      * Return true if module imports itself.
@@ -455,11 +468,11 @@ extern (C++) final class Module : Package
         //printf("Module::selfImports() %s\n", toChars());
         if (selfimports == 0)
         {
-            for (size_t i = 0; i < amodules.dim; i++)
-                amodules[i].insearch = 0;
+            foreach (Module m; amodules)
+                m.insearch = 0;
             selfimports = imports(this) + 1;
-            for (size_t i = 0; i < amodules.dim; i++)
-                amodules[i].insearch = 0;
+            foreach (Module m; amodules)
+                m.insearch = 0;
         }
         return selfimports == 2;
     }
@@ -474,20 +487,19 @@ extern (C++) final class Module : Package
         //printf("Module::rootImports() %s\n", toChars());
         if (rootimports == 0)
         {
-            for (size_t i = 0; i < amodules.dim; i++)
-                amodules[i].insearch = 0;
+            foreach (Module m; amodules)
+                m.insearch = 0;
             rootimports = 1;
-            for (size_t i = 0; i < amodules.dim; ++i)
+            foreach (Module m; amodules)
             {
-                Module m = amodules[i];
                 if (m.isRoot() && imports(m))
                 {
                     rootimports = 2;
                     break;
                 }
             }
-            for (size_t i = 0; i < amodules.dim; i++)
-                amodules[i].insearch = 0;
+            foreach (Module m; amodules)
+                m.insearch = 0;
         }
         return rootimports == 2;
     }
@@ -519,7 +531,7 @@ extern (C++) final class Module : Package
     Identifiers* versionidsNot; // forward referenced version identifiers
 
     MacroTable macrotable;      // document comment macros
-    Escape* escapetable;        // document comment escapes
+    Escape* _escapetable;       // document comment escapes
 
     size_t nameoffset;          // offset of module name from start of ModuleInfo
     size_t namelen;             // length of module name in characters
@@ -528,10 +540,10 @@ extern (C++) final class Module : Package
     {
         super(loc, ident);
         const(char)[] srcfilename;
-        //printf("Module::Module(filename = '%s', ident = '%s')\n", filename, ident.toChars());
+        //printf("Module::Module(filename = '%.*s', ident = '%s')\n", cast(int)filename.length, filename.ptr, ident.toChars());
         this.arg = filename;
-        srcfilename = FileName.defaultExt(filename, global.mars_ext);
-        if (global.run_noext && global.params.run &&
+        srcfilename = FileName.defaultExt(filename, mars_ext);
+        if (target.run_noext && global.params.run &&
             !FileName.ext(filename) &&
             FileName.exists(srcfilename) == 0 &&
             FileName.exists(filename) == 1)
@@ -539,24 +551,24 @@ extern (C++) final class Module : Package
             FileName.free(srcfilename.ptr);
             srcfilename = FileName.removeExt(filename); // just does a mem.strdup(filename)
         }
-        else if (!FileName.equalsExt(srcfilename, global.mars_ext) &&
-                 !FileName.equalsExt(srcfilename, global.hdr_ext) &&
-                 !FileName.equalsExt(srcfilename, "dd"))
+        else if (!FileName.equalsExt(srcfilename, mars_ext) &&
+                 !FileName.equalsExt(srcfilename, hdr_ext) &&
+                 !FileName.equalsExt(srcfilename, c_ext) &&
+                 !FileName.equalsExt(srcfilename, dd_ext))
         {
 
             error("source file name '%.*s' must have .%.*s extension",
                   cast(int)srcfilename.length, srcfilename.ptr,
-                  cast(int)global.mars_ext.length, global.mars_ext.ptr);
+                  cast(int)mars_ext.length, mars_ext.ptr);
             fatal();
         }
 
         srcfile = FileName(srcfilename);
-        objfile = setOutfilename(global.params.objname, global.params.objdir, filename, global.obj_ext);
+        objfile = setOutfilename(global.params.objname, global.params.objdir, filename, target.obj_ext);
         if (doDocComment)
             setDocfile();
         if (doHdrGen)
-            hdrfile = setOutfilename(global.params.hdrname, global.params.hdrdir, arg, global.hdr_ext);
-        escapetable = new Escape();
+            hdrfile = setOutfilename(global.params.hdrname, global.params.hdrdir, arg, hdr_ext);
     }
 
     extern (D) this(const(char)[] filename, Identifier ident, int doDocComment, int doHdrGen)
@@ -574,7 +586,12 @@ extern (C++) final class Module : Package
         return new Module(Loc.initial, filename, ident, doDocComment, doHdrGen);
     }
 
-    static Module load(Loc loc, Identifiers* packages, Identifier ident)
+    extern (C++) static Module load(Loc loc, Identifiers* packages, Identifier ident)
+    {
+        return load(loc, packages ? (*packages)[] : null, ident);
+    }
+
+    extern (D) static Module load(Loc loc, Identifier[] packages, Identifier ident)
     {
         //printf("Module::load(ident = '%s')\n", ident.toChars());
         // Build module filename by turning:
@@ -583,7 +600,7 @@ extern (C++) final class Module : Package
         //  foo\bar\baz
         const(char)[] filename = getFilename(packages, ident);
         // Look for the source file
-        if (const result = lookForSourceFile(filename))
+        if (const result = lookForSourceFile(filename, global.path ? (*global.path)[] : null))
             filename = result; // leaks
 
         auto m = new Module(loc, filename, ident, 0, 0);
@@ -593,13 +610,10 @@ extern (C++) final class Module : Package
         if (global.params.verbose)
         {
             OutBuffer buf;
-            if (packages)
+            foreach (pid; packages)
             {
-                foreach (pid; *packages)
-                {
-                    buf.writestring(pid.toString());
-                    buf.writeByte('.');
-                }
+                buf.writestring(pid.toString());
+                buf.writeByte('.');
             }
             buf.printf("%s\t(%s)", ident.toChars(), m.srcfile.toChars());
             message("import    %s", buf.peekChars());
@@ -675,7 +689,7 @@ extern (C++) final class Module : Package
 
     extern (D) void setDocfile()
     {
-        docfile = setOutfilename(global.params.docname, global.params.docdir, arg, global.doc_ext);
+        docfile = setOutfilename(global.params.docname, global.params.docdir, arg, doc_ext);
     }
 
     /**
@@ -707,7 +721,7 @@ extern (C++) final class Module : Package
         else
         {
             // if module is not named 'package' but we're trying to read 'package.d', we're looking for a package module
-            bool isPackageMod = (strcmp(toChars(), "package") != 0) && (strcmp(srcfile.name(), "package.d") == 0 || (strcmp(srcfile.name(), "package.di") == 0));
+            bool isPackageMod = (strcmp(toChars(), "package") != 0) && (strcmp(srcfile.name(), package_d) == 0 || (strcmp(srcfile.name(), package_di) == 0));
             if (isPackageMod)
                 .error(loc, "importing package '%s' requires a 'package.d' file which cannot be found in '%s'", toChars(), srcfile.toChars());
             else
@@ -735,6 +749,9 @@ extern (C++) final class Module : Package
     /**
      * Reads the file from `srcfile` and loads the source buffer.
      *
+     * If makefile module dependency is requested, we add this module
+     * to the list of dependencies from here.
+     *
      * Params:
      *  loc = the location
      *
@@ -749,6 +766,11 @@ extern (C++) final class Module : Package
         //printf("Module::read('%s') file '%s'\n", toChars(), srcfile.toChars());
         auto readResult = File.read(srcfile.toChars());
 
+        if (global.params.emitMakeDeps)
+        {
+            global.params.makeDeps.push(srcfile.toChars());
+        }
+
         return loadSourceBuffer(loc, readResult);
     }
 
@@ -761,8 +783,6 @@ extern (C++) final class Module : Package
     /// ditto
     extern (D) Module parseModule(AST)()
     {
-
-
         enum Endian { little, big}
         enum SourceEncoding { utf16, utf32}
 
@@ -883,8 +903,8 @@ extern (C++) final class Module : Package
 
         const(char)* srcname = srcfile.toChars();
         //printf("Module::parse(srcname = '%s')\n", srcname);
-        isPackageFile = (strcmp(srcfile.name(), "package.d") == 0 ||
-                         strcmp(srcfile.name(), "package.di") == 0);
+        isPackageFile = (strcmp(srcfile.name(), package_d) == 0 ||
+                         strcmp(srcfile.name(), package_di) == 0);
         const(char)[] buf = cast(const(char)[]) srcBuffer.data;
 
         bool needsReencoding = true;
@@ -1005,7 +1025,7 @@ extern (C++) final class Module : Package
          * but do not have to if they have the .dd extension.
          * https://issues.dlang.org/show_bug.cgi?id=15465
          */
-        if (FileName.equalsExt(arg, "dd"))
+        if (FileName.equalsExt(arg, dd_ext))
         {
             comment = buf.ptr; // the optional Ddoc, if present, is handled above.
             isDocFile = true;
@@ -1015,10 +1035,24 @@ extern (C++) final class Module : Package
         }
         /* If it has the extension ".di", it is a "header" file.
          */
-        if (FileName.equalsExt(arg, "di"))
+        if (FileName.equalsExt(arg, hdr_ext))
         {
             isHdrFile = true;
         }
+
+        /* If it has the extension ".c", it is a "C" file.
+         */
+        if (FileName.equalsExt(arg, c_ext))
+        {
+            isCFile = true;
+
+            scope p = new CParser!AST(this, buf, cast(bool) docfile, target.c);
+            p.nextToken();
+            members = p.parseModule();
+            md = p.md;
+            numlines = p.scanloc.linnum;
+        }
+        else
         {
             scope p = new Parser!AST(this, buf, cast(bool) docfile);
             p.nextToken();
@@ -1040,10 +1074,25 @@ extern (C++) final class Module : Package
             this.ident = md.id;
             Package ppack = null;
             dst = Package.resolve(md.packages, &this.parent, &ppack);
+
+            // Mark the package path as accessible from the current module
+            // https://issues.dlang.org/show_bug.cgi?id=21661
+            // Code taken from Import.addPackageAccess()
+            if (md.packages.length > 0)
+            {
+                // module a.b.c.d;
+                auto p = ppack; // a
+                addAccessiblePackage(p, Visibility(Visibility.Kind.private_));
+                foreach (id; md.packages[1 .. $]) // [b, c]
+                {
+                    p = cast(Package) p.symtab.lookup(id);
+                    addAccessiblePackage(p, Visibility(Visibility.Kind.private_));
+                }
+            }
             assert(dst);
             Module m = ppack ? ppack.isModule() : null;
-            if (m && (strcmp(m.srcfile.name(), "package.d") != 0 &&
-                      strcmp(m.srcfile.name(), "package.di") != 0))
+            if (m && (strcmp(m.srcfile.name(), package_d) != 0 &&
+                      strcmp(m.srcfile.name(), package_di) != 0))
             {
                 .error(md.loc, "package name '%s' conflicts with usage as a module name in file %s", ppack.toPrettyChars(), m.srcfile.toChars());
             }
@@ -1198,7 +1247,7 @@ extern (C++) final class Module : Package
             s.importAll(sc);
         }
         sc = sc.pop();
-        sc.pop(); // 2 pops because Scope::createGlobal() created 2
+        sc.pop(); // 2 pops because Scope.createGlobal() created 2
     }
 
     /**********************************
@@ -1275,7 +1324,7 @@ extern (C++) final class Module : Package
         return s;
     }
 
-    override bool isPackageAccessible(Package p, Prot protection, int flags = 0)
+    override bool isPackageAccessible(Package p, Visibility visibility, int flags = 0)
     {
         if (insearch) // don't follow import cycles
             return false;
@@ -1283,8 +1332,8 @@ extern (C++) final class Module : Package
         scope (exit)
             insearch = false;
         if (flags & IgnorePrivateImports)
-            protection = Prot(Prot.Kind.public_); // only consider public imports
-        return super.isPackageAccessible(p, protection);
+            visibility = Visibility(Visibility.Kind.public_); // only consider public imports
+        return super.isPackageAccessible(p, visibility);
     }
 
     override Dsymbol symtabInsert(Dsymbol s)
@@ -1359,7 +1408,7 @@ extern (C++) final class Module : Package
             memcpy(todo, deferred.tdata(), len * Dsymbol.sizeof);
             deferred.setDim(0);
 
-            for (size_t i = 0; i < len; i++)
+            foreach (i; 0..len)
             {
                 Dsymbol s = todo[i];
                 s.dsymbolSemantic(null);
@@ -1410,11 +1459,8 @@ extern (C++) final class Module : Package
 
     extern (D) static void clearCache()
     {
-        for (size_t i = 0; i < amodules.dim; i++)
-        {
-            Module m = amodules[i];
+        foreach (Module m; amodules)
             m.searchCacheIdent = null;
-        }
     }
 
     /************************************
@@ -1427,15 +1473,11 @@ extern (C++) final class Module : Package
         //printf("%s Module::imports(%s)\n", toChars(), m.toChars());
         version (none)
         {
-            for (size_t i = 0; i < aimports.dim; i++)
-            {
-                Module mi = cast(Module)aimports.data[i];
-                printf("\t[%d] %s\n", i, mi.toChars());
-            }
+            foreach (i, Module mi; aimports)
+                printf("\t[%d] %s\n", cast(int) i, mi.toChars());
         }
-        for (size_t i = 0; i < aimports.dim; i++)
+        foreach (Module mi; aimports)
         {
-            Module mi = aimports[i];
             if (mi == m)
                 return true;
             if (!mi.insearch)
@@ -1500,6 +1542,16 @@ extern (C++) final class Module : Package
             buf.prependstring(package_.ident.toChars());
         }
     }
+
+    /** Lazily initializes and returns the escape table.
+    Turns out it eats a lot of memory.
+    */
+    extern(D) Escape* escapetable()
+    {
+        if (!_escapetable)
+            _escapetable = new Escape();
+        return _escapetable;
+    }
 }
 
 /***********************************************************
@@ -1508,11 +1560,11 @@ extern (C++) struct ModuleDeclaration
 {
     Loc loc;
     Identifier id;
-    Identifiers* packages;  // array of Identifier's representing packages
+    Identifier[] packages;  // array of Identifier's representing packages
     bool isdeprecated;      // if it is a deprecated module
     Expression msg;
 
-    extern (D) this(const ref Loc loc, Identifiers* packages, Identifier id, Expression msg, bool isdeprecated)
+    extern (D) this(const ref Loc loc, Identifier[] packages, Identifier id, Expression msg, bool isdeprecated)
     {
         this.loc = loc;
         this.packages = packages;
@@ -1524,13 +1576,10 @@ extern (C++) struct ModuleDeclaration
     extern (C++) const(char)* toChars() const
     {
         OutBuffer buf;
-        if (packages && packages.dim)
+        foreach (pid; packages)
         {
-            foreach (pid; *packages)
-            {
-                buf.writestring(pid.toString());
-                buf.writeByte('.');
-            }
+            buf.writestring(pid.toString());
+            buf.writeByte('.');
         }
         buf.writestring(id.toString());
         return buf.extractChars();
